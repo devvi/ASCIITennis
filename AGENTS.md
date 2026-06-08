@@ -40,6 +40,13 @@ Read the TASK file and execute strictly phase by phase.
 - `opencode test <request>` — write/run tests
 - `opencode review <request>` — review code
 
+## CI: Automated PR Review
+
+Every pull request is automatically reviewed by opencode:
+- Opens a PR review with code quality, bug, and security feedback
+- Reviewer can comment `/oc fix <suggestion>` to request changes
+- opencode will implement the fix and commit to the same PR
+
 ## Setup
 
 No setup required. Initialize the project from scratch.
