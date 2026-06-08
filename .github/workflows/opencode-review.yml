@@ -11,6 +11,9 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
+      - run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
       - uses: anomalyco/opencode/github@latest
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
