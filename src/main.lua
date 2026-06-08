@@ -23,6 +23,7 @@ function init_game()
   point_winner = nil
   point_timer = 0
   rally_hits = 0
+  serve_timer = 0
 end
 
 function start_match()
@@ -32,6 +33,11 @@ function start_match()
   human_player.z = 3
   human_player.state = PLAYER_IDLE
   human_player.hit_timer = 0
+
+  ai_player.x = 0
+  ai_player.z = COURT_LENGTH - 2
+  ai_player.state = PLAYER_IDLE
+  ai_player.hit_timer = 0
 
   score = scoring.new()
   server = 0
@@ -43,25 +49,35 @@ end
 
 function setup_serve()
   ball_obj = ball.new()
-  local server_side_x = (math.random() - 0.5) * 3
-  ball_obj.x = server_side_x
+  serve_timer = 30
+
+  if server == 0 then
+    human_player.x = (math.random() - 0.5) * 2
+    human_player.z = 2
+    ball_obj.x = human_player.x
+    ball_obj.z = human_player.z
+  else
+    ai_player.x = (math.random() - 0.5) * 2
+    ai_player.z = COURT_LENGTH - 2
+    ball_obj.x = ai_player.x
+    ball_obj.z = ai_player.z
+  end
   ball_obj.y = 1.0
-  ball_obj.z = 3
   ball_obj.state = BALL_HELD
 end
 
 function do_serve()
-  local serve_target_x = (math.random() - 0.5) * COURT_WIDTH * 0.8
-  local serve_target_z = COURT_LENGTH * 0.7
-  ball.serve(ball_obj, human_player.x, human_player.z, serve_target_x, serve_target_z)
+  if server == 0 then
+    local serve_target_x = (math.random() - 0.5) * COURT_WIDTH * 0.8
+    local serve_target_z = COURT_LENGTH * 0.7
+    ball.serve(ball_obj, human_player.x, human_player.z, serve_target_x, serve_target_z)
+  else
+    local serve_target_x = (math.random() - 0.5) * COURT_WIDTH * 0.8
+    local serve_target_z = 1 + math.random() * 3
+    ball.serve(ball_obj, ai_player.x, ai_player.z, serve_target_x, serve_target_z)
+  end
   game_state = STATE_PLAYING
-end
-
-function do_ai_serve()
-  local serve_target_x = (math.random() - 0.5) * COURT_WIDTH * 0.8
-  local serve_target_z = 1 + math.random() * 3
-  ball.serve(ball_obj, ai_player.x, ai_player.z, serve_target_x, serve_target_z)
-  game_state = STATE_PLAYING
+  rally_hits = 0
 end
 
 function resolve_point(winner)
@@ -69,12 +85,13 @@ function resolve_point(winner)
   point_winner = winner
   point_timer = 60
   game_state = STATE_POINT_SCORED
-  rally_hits = 0
+
+  if result == "game" then
+    server = 1 - server
+  end
 
   if result == "match" then
     game_state = STATE_GAME_OVER
-  elseif result == "set" then
-    -- continue to next set
   end
 end
 
@@ -91,14 +108,20 @@ function update_menu()
 end
 
 function update_serving()
-  if input.get_serve() then
-    do_serve()
+  serve_timer = serve_timer - 1
+
+  if server == 0 then
+    if input.get_serve() then
+      do_serve()
+    end
+  else
+    if serve_timer <= 0 then
+      do_serve()
+    end
   end
 end
 
 function update_playing()
-  -- input already updated in TIC()
-
   local dx, dz = input.get_movement()
   player.move(human_player, dx, dz)
   player.update(human_player, 1)
@@ -115,9 +138,7 @@ function update_playing()
 
   local ai_action = ai.update(ai_player, ball_obj, 1)
   if ai_action then
-    local target_x = ai_action.target_x
-    local target_z = ai_action.target_z
-    ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, target_x, target_z, ai_action.hit_type)
+    ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type)
     rally_hits = rally_hits + 1
   end
   player.update(ai_player, 1)
@@ -181,7 +202,11 @@ function draw_game()
   render.hud(score)
 
   if game_state == STATE_SERVING then
-    print("Press B to serve", 50, 120)
+    if server == 0 then
+      print("Your serve - Press B", 50, 120)
+    else
+      print("AI serving...", 60, 120)
+    end
   end
 
   if game_state == STATE_POINT_SCORED then
