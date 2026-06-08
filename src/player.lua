@@ -7,7 +7,7 @@ function player.new(is_ai)
     state = PLAYER_IDLE,
     hit_timer = 0,
     swing_duration = 15,
-    speed = 0.12,
+    speed = PLAYER_SPEED,
     is_ai = is_ai or false,
   end
 end

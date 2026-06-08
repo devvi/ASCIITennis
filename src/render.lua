@@ -52,25 +52,15 @@ function render.ball(b)
   end
 end
 
-function render.hud(score, server)
-  local p0 = score.points[1]
-  local p1 = score.points[2]
-  local p0s = scoring.point_name(p0)
-  local p1s = scoring.point_name(p1)
-
+function render.hud(score)
+  local display = scoring.display(score)
   print("SCORE", 2, 1)
-  print("Player: " .. p0s, 2, 9)
-  print("AI:     " .. p1s, 2, 17)
+  print("Player", 2, 9)
+  print("AI", 2, 17)
+  print(display, 50, 1)
   print("Games " .. score.games[1] .. "-" .. score.games[2], 2, 25)
   if score.sets[1] > 0 or score.sets[2] > 0 then
     print("Sets " .. score.sets[1] .. "-" .. score.sets[2], 2, 33)
-  end
-  if score.deuce then
-    print("DEUCE", 2, 41)
-    if score.advantage ~= nil then
-      local adv_name = score.advantage == 0 and "Player" or "AI"
-      print("Adv: " .. adv_name, 2, 49)
-    end
   end
 end
 

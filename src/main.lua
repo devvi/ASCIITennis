@@ -53,14 +53,14 @@ end
 function do_serve()
   local serve_target_x = (math.random() - 0.5) * COURT_WIDTH * 0.8
   local serve_target_z = COURT_LENGTH * 0.7
-  ball.serve(ball_obj, human_player.x, human_player.z, serve_target_x, serve_target_z, 18)
+  ball.serve(ball_obj, human_player.x, human_player.z, serve_target_x, serve_target_z)
   game_state = STATE_PLAYING
 end
 
 function do_ai_serve()
   local serve_target_x = (math.random() - 0.5) * COURT_WIDTH * 0.8
   local serve_target_z = 1 + math.random() * 3
-  ball.serve(ball_obj, ai_player.x, ai_player.z, serve_target_x, serve_target_z, 16)
+  ball.serve(ball_obj, ai_player.x, ai_player.z, serve_target_x, serve_target_z)
   game_state = STATE_PLAYING
 end
 
@@ -178,7 +178,7 @@ function draw_game()
     render.player(ai_player, "A")
   end
 
-  render.hud(score, server)
+  render.hud(score)
 
   if game_state == STATE_SERVING then
     print("Press B to serve", 50, 120)

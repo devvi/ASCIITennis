@@ -5,11 +5,11 @@ NET_HEIGHT = 0.914
 PLAYER_EYE_Y = 1.7
 BALL_RADIUS = 0.05
 
--- physics
-GRAVITY = -0.163
-BOUNCE_FACTOR = 0.7
-SPIN_FACTOR = 0.02
-AIR_RESISTANCE = 0.01
+-- physics (per-frame values at 60fps)
+GRAVITY = -0.04
+BOUNCE_FACTOR = 0.6
+SPIN_FACTOR = 0.003
+AIR_RESISTANCE = 0.005
 
 -- hit types
 HIT_FLAT = 1
@@ -19,10 +19,10 @@ HIT_LOB = 4
 
 -- hit parameters {speed, arc, spin}
 HIT_PARAMS = {
-  [HIT_FLAT] = {speed = 25, arc = 0.0, spin = 0.0},
-  [HIT_TOPSPIN] = {speed = 22, arc = 0.3, spin = 0.8},
-  [HIT_SLICE] = {speed = 20, arc = -0.1, spin = -0.6},
-  [HIT_LOB] = {speed = 15, arc = 0.8, spin = 0.1},
+  [HIT_FLAT] = {speed = 0.55, arc = 0.0, spin = 0.0},
+  [HIT_TOPSPIN] = {speed = 0.45, arc = 0.6, spin = 0.8},
+  [HIT_SLICE] = {speed = 0.40, arc = -0.1, spin = -0.6},
+  [HIT_LOB] = {speed = 0.30, arc = 1.5, spin = 0.1},
 }
 
 -- button mappings
@@ -46,6 +46,9 @@ STATE_GAME_OVER = "game_over"
 PLAYER_IDLE = "idle"
 PLAYER_MOVING = "moving"
 PLAYER_HITTING = "hitting"
+
+-- player
+PLAYER_SPEED = 0.08
 
 -- ball states
 BALL_HELD = "held"

@@ -55,13 +55,18 @@ function ball.update(b, dt)
   end
 end
 
-function ball.serve(b, from_x, from_z, target_x, target_z, speed)
+function ball.serve(b, from_x, from_z, target_x, target_z)
+  local dx = target_x - from_x
+  local dz = target_z - from_z
+  local dist = math.sqrt(dx*dx + dz*dz)
+  if dist < 0.01 then dist = 0.01 end
+  local serve_speed = 0.45
   b.x = from_x
   b.y = 1.5
   b.z = from_z
-  b.vx = (target_x - from_x) * speed / 20
-  b.vz = speed
-  b.vy = 2.0
+  b.vx = (dx / dist) * serve_speed
+  b.vz = (dz / dist) * serve_speed
+  b.vy = 1.2
   b.spin_x = 0
   b.spin_z = 0
   b.bounces = 0
@@ -83,7 +88,7 @@ function ball.hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type)
   b.z = hit_z
   b.vx = (dx / dist) * speed
   b.vz = (dz / dist) * speed
-  b.vy = 1.5 + params.arc * 4
+  b.vy = 1.5 + params.arc * 2
   b.spin_x = math.random() * params.spin * 2 - params.spin
   b.spin_z = params.spin * 0.5
   b.bounces = 0
