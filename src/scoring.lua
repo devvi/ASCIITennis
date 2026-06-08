@@ -68,16 +68,8 @@ end
 function scoring.award_game(s, winner)
   s.games[winner + 1] = s.games[winner + 1] + 1
 
-  if s.games[winner + 1] >= GAMES_TO_WIN_SET then
-    if s.games[winner + 1] - s.games[1 - winner + 1] >= 2 then
-      return scoring.award_set(s, winner)
-    end
-    if s.games[1 - winner + 1] == GAMES_TO_WIN_SET - 1 then
-      return scoring.award_set(s, winner)
-    end
-  end
-
-  if s.games[winner + 1] == 6 and s.games[1 - winner + 1] <= 4 then
+  if s.games[winner + 1] >= GAMES_TO_WIN_SET
+    and s.games[winner + 1] - s.games[1 - winner + 1] >= 2 then
     return scoring.award_set(s, winner)
   end
 

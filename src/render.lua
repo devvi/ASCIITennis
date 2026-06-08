@@ -4,8 +4,6 @@ function render.court()
   for _, line in ipairs(court.lines) do
     camera.draw_line(line.x1, 0, line.z1, line.x2, 0, line.z2)
   end
-  local half = COURT_WIDTH / 2
-  camera.draw_rect(-half, 0, half, COURT_LENGTH)
 end
 
 function render.net()

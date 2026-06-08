@@ -38,6 +38,22 @@ function camera.project_char(world_x, world_y, world_z)
 end
 
 function camera.draw_line(x1, y1, z1, x2, y2, z2)
+  local near = 0.02
+  if (z1 - camera.z <= near) and (z2 - camera.z <= near) then return end
+
+  if z1 - camera.z <= near then
+    local t = (near - (z1 - camera.z)) / ((z2 - camera.z) - (z1 - camera.z) + 0.001)
+    x1 = x1 + (x2 - x1) * t
+    y1 = y1 + (y2 - y1) * t
+    z1 = camera.z + near
+  end
+  if z2 - camera.z <= near then
+    local t = (near - (z2 - camera.z)) / ((z1 - camera.z) - (z2 - camera.z) + 0.001)
+    x2 = x2 + (x1 - x2) * t
+    y2 = y2 + (y1 - y2) * t
+    z2 = camera.z + near
+  end
+
   local p1 = {camera.project(x1, y1, z1)}
   local p2 = {camera.project(x2, y2, z2)}
   if not p1[1] or not p2[1] then return end

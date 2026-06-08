@@ -41,7 +41,6 @@ function ai.update(ai_player, ball, dt)
       end
     else
       ai_player.reaction_counter = 0
-      local ball_dir = ball.vz > 0 and -1 or 1
       local target_z_offset = (ball.z - COURT_LENGTH / 2) * 0.3
       ai_player.target_z = base_z + target_z_offset
       ai_player.target_x = court_center_x + ball.x * 0.5
