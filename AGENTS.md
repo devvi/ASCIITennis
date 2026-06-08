@@ -7,14 +7,14 @@ All work follows a strict three-phase process:
 ### /research
 Analyze the issue/request.
 Outputs:
-- `docs/PRD/<issue-number>.md` — product requirements, feature list, acceptance criteria
-- `docs/TASKS/<issue-number>.md` — related modules, impacts, summary
+- `docs/PRD/<issue-number>-<feature-name>.md` — product requirements, feature list, acceptance criteria
+- `docs/TASKS/<issue-number>-<feature-name>.md` — related modules, impacts, summary
 
 ### /plan
 Using the research doc, create a phased plan.
 Outputs:
-- `docs/DESIGN/<issue-number>.md` — architecture, data structures, module design
-- Append phases to `docs/TASKS/<issue-number>.md`
+- `docs/DESIGN/<issue-number>-<feature-name>.md` — architecture, data structures, module design
+- Append phases to `docs/TASKS/<issue-number>-<feature-name>.md`
 
 Format:
 - Phase 1: Data structures
