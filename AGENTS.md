@@ -5,14 +5,17 @@
 All work follows a strict three-phase process:
 
 ### /research
-Analyze the issue/request, then write findings to `docs/TASKS/<issue-number>.md`.
-Format:
-- **Related modules**: list affected areas
-- **Impacts**: systems that will be affected
-- **Summary**: brief analysis of what's needed
+Analyze the issue/request.
+Outputs:
+- `docs/PRD/<issue-number>.md` — product requirements, feature list, acceptance criteria
+- `docs/TASKS/<issue-number>.md` — related modules, impacts, summary
 
 ### /plan
-Using the research doc, create a phased implementation plan appended to `docs/TASKS/<issue-number>.md`.
+Using the research doc, create a phased plan.
+Outputs:
+- `docs/DESIGN/<issue-number>.md` — architecture, data structures, module design
+- Append phases to `docs/TASKS/<issue-number>.md`
+
 Format:
 - Phase 1: Data structures
 - Phase 2: Core logic
@@ -28,8 +31,8 @@ Read the TASK file and execute strictly phase by phase.
 
 ## Workflow
 
-1. `opencode research this` — research & save to docs/TASKS/
-2. `opencode plan this` — create phased plan
+1. `opencode research this` — research & save to docs/PRD/ and docs/TASKS/
+2. `opencode plan this` — create design & phased plan
 3. `opencode implement this` — execute per plan
 
 ## Commands

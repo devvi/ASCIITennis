@@ -23,8 +23,20 @@ Comment on the issue:
 /opencode research this
 ```
 
-opencode analyzes the request and writes `docs/TASKS/<issue-number>.md` with:
+opencode analyzes the request and writes two documents:
 
+**`docs/PRD/<issue-number>.md`** — Product requirements:
+```markdown
+## Features
+- feature 1
+- feature 2
+
+## Acceptance Criteria
+- [ ] criterion 1
+- [ ] criterion 2
+```
+
+**`docs/TASKS/<issue-number>.md`** — Initial analysis:
 ```markdown
 ## Related modules
 - module A
@@ -33,9 +45,6 @@ opencode analyzes the request and writes `docs/TASKS/<issue-number>.md` with:
 ## Impacts
 - system X
 - system Y
-
-## Summary
-Brief analysis of what's needed
 ```
 
 ### Phase 2: Plan
@@ -44,8 +53,22 @@ Brief analysis of what's needed
 /opencode plan this
 ```
 
-opencode reads the research doc and appends a phased plan:
+opencode reads the research doc and creates:
 
+**`docs/DESIGN/<issue-number>.md`** — Technical design:
+```markdown
+## Architecture
+- module layout
+- data flow
+
+## Data Structures
+- struct definitions
+
+## Module Design
+- component interfaces
+```
+
+Then appends phases to **`docs/TASKS/<issue-number>.md>`**:
 ```markdown
 ## Plan
 
@@ -71,9 +94,9 @@ opencode executes the plan **strictly phase by phase**:
 
 ```
 docs/
-├── PRD/           # Product requirement docs
-├── DESIGN/        # Design documents
-└── TASKS/         # Task breakdowns (<issue-number>.md)
+├── PRD/           # Product requirements (<issue-number>.md)
+├── DESIGN/        # Technical design (<issue-number>.md)
+└── TASKS/         # Task breakdowns & phases (<issue-number>.md)
 ```
 
 ---
