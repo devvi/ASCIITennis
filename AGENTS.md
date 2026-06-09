@@ -10,6 +10,8 @@ Outputs:
 - `docs/PRD/<issue-number>-<feature-name>.md` — product requirements, feature list, acceptance criteria
 - `docs/TASKS/<issue-number>-<feature-name>.md` — related modules, impacts, summary
 
+**IMPORTANT:** If creating a PR to merge research docs, the PR description MUST NOT include any closing keywords (Closes/Fixes/Resolves) referencing the parent issue. Parent issue stays open for subsequent phases.
+
 ### /plan
 Using the research doc, create a phased plan.
 Outputs:
