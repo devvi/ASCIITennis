@@ -47,6 +47,8 @@ opencode analyzes the request and writes two documents:
 - system Y
 ```
 
+> **Important:** The research PR description must NOT include closing keywords (Closes/Fixes/Resolves) for the parent issue. Parent stays open for plan + implement.
+
 ### Phase 2: Plan
 
 ```
@@ -78,6 +80,8 @@ Then appends phases to **`docs/TASKS/<issue-number>.md>`**:
 ### Phase 4: Testing
 ```
 
+Then creates one GitHub Issue per phase using `gh issue create` with label `phase`. The returned issue numbers are recorded in the TASKS doc.
+
 ### Phase 3: Implement
 
 ```
@@ -87,8 +91,9 @@ Then appends phases to **`docs/TASKS/<issue-number>.md>`**:
 opencode executes the plan **strictly phase by phase**:
 - No extra features beyond the plan
 - No scope creep
-- Commit after each completed phase
-- Final commit opens a PR
+- Commit after each completed phase, referencing its phase issue (`Closes #N`)
+- After all phases, create the final PR with `Closes #parent-issue` + all phase issues
+- All issues auto-close on merge
 
 ### Directory Structure
 
@@ -130,9 +135,9 @@ opencode implements the fix and commits it to the same PR branch.
 
 | Command | Where | What it does |
 |---------|-------|-------------|
-| `/opencode research this` | Issue comment | Analyze and document |
-| `/opencode plan this` | Issue comment | Create phased plan |
-| `/opencode implement this` | Issue comment | Execute plan, open PR |
+| `/opencode research this` | Issue comment | Analyze and document (no close keywords for parent) |
+| `/opencode plan this` | Issue comment | Create phased plan + `gh issue create` per phase |
+| `/opencode implement this` | Issue comment | Execute phase by phase, each commit closes a phase issue; final PR closes parent |
 | `/opencode explain this issue` | Issue comment | Explain the issue |
 | `/oc <suggestion>` | PR review comment | Apply fix to PR |
 | _(automatic)_ | PR opened/updated | Code review |
