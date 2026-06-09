@@ -15,6 +15,7 @@ Using the research doc, create a phased plan.
 Outputs:
 - `docs/DESIGN/<issue-number>-<feature-name>.md` — architecture, data structures, module design
 - Append phases to `docs/TASKS/<issue-number>-<feature-name>.md`
+- Create a GitHub Issue for each phase (title: `[<issue-number>] Phase N: <name>`), labels: `phase`, parent issue in body
 
 Format:
 - Phase 1: Data structures
@@ -22,12 +23,22 @@ Format:
 - Phase 3: UI/output
 - Phase 4: Testing
 
+**Create GitHub Issues for each phase:**
+After writing the DESIGN and TASKS docs, use `gh` to create one issue per phase:
+```
+gh issue create --title "[<parent-issue>] Phase <N>: <name>" \
+  --label "phase" \
+  --body "Parent: #<parent-issue>\nSee docs/DESIGN/<parent-issue>.md for design details.\n\n### Tasks\n- [ ] Task 1\n- [ ] Task 2"
+```
+Record the returned issue numbers in `docs/TASKS/<issue-number>-<feature-name>.md` under each phase.
+
 ### /implement
 Read the TASK file and execute strictly phase by phase.
 **Rules:**
 - No extra features beyond what's in the plan
 - No scope creep
 - Commit after each completed phase
+- Reference the corresponding phase issue in the commit message (`Closes #N`)
 
 ## Workflow
 
