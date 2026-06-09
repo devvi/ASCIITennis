@@ -34,13 +34,17 @@ gh issue create --title "[<parent-issue>] Phase <N>: <name>" \
 ```
 Record the returned issue numbers in `docs/TASKS/<issue-number>-<feature-name>.md` under each phase.
 
+**You MUST run the `gh issue create` commands above — do not just write them as documentation.**
+
+**IMPORTANT:** Do NOT include closing keywords for the parent issue in the plan PR/commit. Parent stays open.
+
 ### /implement
 Read the TASK file and execute strictly phase by phase.
 **Rules:**
 - No extra features beyond what's in the plan
 - No scope creep
-- Commit after each completed phase
-- Reference the corresponding phase issue in the commit message (`Closes #N`)
+- Commit after each completed phase, with `Closes #<phase-issue-n>` to close that phase issue
+- After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` plus `Closes #<phase-1>, Closes #<phase-2>, ...` to auto-close the parent and all phase issues on merge
 
 ## Workflow
 
