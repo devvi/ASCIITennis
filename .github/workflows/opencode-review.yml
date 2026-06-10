@@ -29,6 +29,9 @@ jobs:
           echo "exit_code=$?" >> $GITHUB_OUTPUT
         continue-on-error: true
 
+      - name: Cleanup test output
+        run: rm -f test-output.log
+
       - name: Fix failing tests
         if: steps.test.outputs.exit_code != '0'
         uses: anomalyco/opencode/github@latest
@@ -39,7 +42,7 @@ jobs:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
           prompt: |
-            Tests are failing on this branch. Read `test-output.log` for the
+            Tests are failing on this branch. Run `npm test` to see the
             full test output. Fix ALL failures so `npm test` passes.
             After fixing, run `npm test` again to verify.
             Commit and push the fixes to the same branch.
