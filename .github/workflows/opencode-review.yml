@@ -14,7 +14,38 @@ jobs:
       - run: |
           git config user.name "opencode-agent[bot]"
           git config user.email "opencode-agent[bot]@users.noreply.github.com"
-      - uses: anomalyco/opencode/github@latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Run tests
+        id: test
+        run: |
+          npm test &> test-output.log
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Fix failing tests
+        if: steps.test.outputs.exit_code != '0'
+        uses: anomalyco/opencode/github@latest
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: deepseek/deepseek-v4-flash
+          use_github_token: true
+          prompt: |
+            Tests are failing on this branch. Read `test-output.log` for the
+            full test output. Fix ALL failures so `npm test` passes.
+            After fixing, run `npm test` again to verify.
+            Commit and push the fixes to the same branch.
+            Do NOT create a new PR.
+
+      - name: Code review
+        if: steps.test.outputs.exit_code == '0'
+        uses: anomalyco/opencode/github@latest
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -23,8 +54,11 @@ jobs:
           use_github_token: true
           prompt: |
             Review this pull request:
-            - Does the code follow the project's conventions?
-            - Are there any potential bugs or edge cases?
-            - Are there security concerns?
-            - Does the implementation match the described intent?
+            - Code follow conventions?
+            - Potential bugs or edge cases?
+            - Security concerns?
+            - Implementation match intent?
+            - Adequate test coverage? (TDD mandatory)
+            - Edge cases covered?
+            - Test descriptions clear?
             - Suggest improvements if any

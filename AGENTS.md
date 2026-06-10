@@ -20,10 +20,10 @@ Outputs:
 - Create a GitHub Issue for each phase (title: `[<issue-number>] Phase N: <name>`), labels: `phase`, parent issue in body
 
 Format:
-- Phase 1: Data structures
-- Phase 2: Core logic
-- Phase 3: UI/output
-- Phase 4: Testing
+- Phase 1: Tests (write test cases first — TDD)
+- Phase 2: Data structures
+- Phase 3: Core logic
+- Phase 4: UI/output
 
 **Create GitHub Issues for each phase:**
 After writing the DESIGN and TASKS docs, use `gh` to create one issue per phase:
@@ -43,6 +43,7 @@ Read the TASK file and execute strictly phase by phase.
 **Rules:**
 - No extra features beyond what's in the plan
 - No scope creep
+- **TDD is mandatory:** Phase 1 must write test cases first, before any implementation code. For phases 2-4, write tests alongside or before the code they test.
 - Commit after each completed phase, with `Closes #<phase-issue-n>` to close that phase issue
 - After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` plus `Closes #<phase-1>, Closes #<phase-2>, ...` to auto-close the parent and all phase issues on merge
 
@@ -67,9 +68,22 @@ Every pull request is automatically reviewed by opencode:
 - Reviewer can comment `/oc fix <suggestion>` to request changes
 - opencode will implement the fix and commit to the same PR
 
+## Testing
+
+Uses **Vitest** (Node.js). Tests live in `tests/*.test.js`.
+
+```bash
+npm test          # run once
+npm run test:watch  # watch mode
+```
+
+**TDD is mandatory:** write tests before or alongside implementation code.
+
 ## Setup
 
-No setup required. Initialize the project from scratch.
+```bash
+npm install
+```
 
 ## Architecture
 

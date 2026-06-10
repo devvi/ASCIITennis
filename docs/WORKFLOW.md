@@ -7,7 +7,7 @@ Two automated pipelines driven by opencode + GitHub Actions:
 | Pipeline | Trigger | What happens |
 |----------|---------|-------------|
 | **Issue → Feature** | Create Issue, comment `/opencode research/plan/implement` | Research, plan, code, submit PR |
-| **PR Review** | Open/update PR | Auto review, `/oc fix` applies changes |
+| **PR Review** | Open/update PR | Run tests → **auto-fix if fail (self-healing loop)** → code review on pass, `/oc fix` applies manual changes |
 
 ---
 
@@ -74,10 +74,10 @@ Then appends phases to **`docs/TASKS/<issue-number>.md>`**:
 ```markdown
 ## Plan
 
-### Phase 1: Data structures
-### Phase 2: Core logic
-### Phase 3: UI/output
-### Phase 4: Testing
+### Phase 1: Tests (write test cases first — TDD)
+### Phase 2: Data structures
+### Phase 3: Core logic
+### Phase 4: UI/output
 ```
 
 Then creates one GitHub Issue per phase using `gh issue create` with label `phase`. The returned issue numbers are recorded in the TASKS doc.
@@ -91,6 +91,7 @@ Then creates one GitHub Issue per phase using `gh issue create` with label `phas
 opencode executes the plan **strictly phase by phase**:
 - No extra features beyond the plan
 - No scope creep
+- **TDD is mandatory:** Phase 1 must write test cases first, before any implementation code. For phases 2-4, write tests alongside or before the code they test.
 - Commit after each completed phase, referencing its phase issue (`Closes #N`)
 - After all phases, create the final PR with `Closes #parent-issue` + all phase issues
 - All issues auto-close on merge
@@ -106,20 +107,31 @@ docs/
 
 ---
 
-## 2. PR Review Pipeline
+## 2. PR Review Pipeline (Self-Healing)
 
 Automatically triggered when a PR is opened or updated.
 
-### Auto Review
+### Step 1: Run Tests
 
-opencode posts a PR review covering:
+CI runs `npm test`. Output saved to `test-output.log`.
+
+### Step 2: Auto-Fix (if tests fail)
+
+If tests fail, opencode reads `test-output.log`, fixes all failures, runs `npm test` to verify, then commits and pushes to the same branch.
+
+The push triggers a new `synchronize` event, restarting the workflow from Step 1 — creating a **self-healing loop** until tests pass.
+
+### Step 3: Code Review (if tests pass)
+
+Once tests pass, opencode posts a PR review covering:
 - Code quality and conventions
 - Potential bugs and edge cases
 - Security concerns
 - Implementation vs intent
+- Test coverage & quality (TDD is mandatory)
 - Improvement suggestions
 
-### Fix on Comment
+### Manual Fix on Comment
 
 Reviewer comments on a specific code line:
 
@@ -140,7 +152,8 @@ opencode implements the fix and commits it to the same PR branch.
 | `/opencode implement this` | Issue comment | Execute phase by phase, each commit closes a phase issue; final PR closes parent |
 | `/opencode explain this issue` | Issue comment | Explain the issue |
 | `/oc <suggestion>` | PR review comment | Apply fix to PR |
-| _(automatic)_ | PR opened/updated | Code review |
+| _(automatic)_ | PR opened/updated | Run tests → **auto-fix if fail** → code review on pass |
+| _(automatic)_ | Push / PR open | CI runs `npm test` (must pass before merge) |
 
 ---
 
@@ -149,8 +162,10 @@ opencode implements the fix and commits it to the same PR branch.
 ```
 .github/workflows/
 ├── opencode.yml          # Issue → Feature pipeline + interactive commands
-└── opencode-review.yml   # Automated PR review
+├── opencode-review.yml   # Automated PR review (includes test quality check)
+└── test.yml              # CI: runs npm test on push/PR, must pass before merge
 ```
 
 - `opencode.yml` — Triggered by `/opencode` and `/oc` in comments; also on issue/PR events
-- `opencode-review.yml` — Triggered on PR open/sync/reopen; posts review automatically
+- `opencode-review.yml` — Triggered on PR open/sync/reopen; posts review automatically (checks test coverage)
+- `test.yml` — Triggered on push to main and PRs to main; runs `vitest` and fails if tests don't pass

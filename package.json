@@ -1,0 +1,14 @@
+{
+  "name": "ascii-tennis",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "npx serve ."
+  },
+  "devDependencies": {
+    "vitest": "^3.1.0"
+  }
+}
