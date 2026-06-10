@@ -7,6 +7,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: write
       pull-requests: write
       issues: write
@@ -36,6 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: deepseek/deepseek-v4-flash
+          use_github_token: true
           prompt: |
             Tests are failing on this branch. Read `test-output.log` for the
             full test output. Fix ALL failures so `npm test` passes.
@@ -51,6 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: deepseek/deepseek-v4-flash
+          use_github_token: true
           prompt: |
             Review this pull request:
             - Code follow conventions?
