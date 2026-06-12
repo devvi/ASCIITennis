@@ -1,0 +1,152 @@
+import { describe, it, expect } from 'vitest';
+import {
+  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
+  BALL_RADIUS, COURT_LENGTH, NET_HEIGHT,
+  HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
+} from '../src/constants.js';
+import { ball } from '../src/ball.js';
+import { court } from '../src/court.js';
+
+describe('ball', () => {
+  it('new() creates ball in held state', () => {
+    const b = ball.new();
+    expect(b.state).toBe(BALL_HELD);
+    expect(b.x).toBe(0);
+    expect(b.y).toBe(1.0);
+    expect(b.z).toBe(0);
+    expect(b.bounces).toBe(0);
+  });
+
+  it('update does nothing when ball is held', () => {
+    const b = ball.new();
+    ball.update(b);
+    expect(b.x).toBe(0);
+    expect(b.y).toBe(1.0);
+  });
+
+  it('serve puts ball in play', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15);
+    expect(b.state).toBe(BALL_IN_PLAY);
+    expect(b.x).toBe(0);
+    expect(b.z).toBe(2);
+    expect(b.y).toBe(1.5);
+    expect(b.bounces).toBe(0);
+  });
+
+  it('serve with zero distance target does not crash', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 0, 2);
+    expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('update moves ball when in play', () => {
+    const b = ball.new();
+    court.init();
+    ball.serve(b, 0, 2, 0, 15);
+    const oldZ = b.z;
+    ball.update(b);
+    expect(b.z).not.toBe(oldZ);
+  });
+
+  it('hit applies flat parameters', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT);
+    expect(b.state).toBe(BALL_IN_PLAY);
+    expect(b.vx).toBeDefined();
+    expect(b.vy).toBeDefined();
+    expect(b.vz).toBeDefined();
+  });
+
+  it('hit applies topspin parameters', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_TOPSPIN);
+    expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('hit applies slice parameters', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_SLICE);
+    expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('hit applies lob parameters', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_LOB);
+    expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('hit defaults to flat for unknown hit type', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, 99);
+    expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('detects bounce when ball hits ground', () => {
+    const b = ball.new();
+    court.init();
+    ball.serve(b, 0, 2, 0, 3);
+    b.y = BALL_RADIUS;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.y).toBeGreaterThanOrEqual(BALL_RADIUS);
+  });
+
+  it('increments bounces on ground contact', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.bounces).toBe(1);
+  });
+
+  it('ball becomes out after 3 bounces', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    for (let i = 0; i < 5; i++) {
+      b.y = BALL_RADIUS - 0.01;
+      b.vy = -0.1;
+      ball.update(b);
+    }
+    expect(b.state).toBe(BALL_OUT);
+  });
+
+  it('detects net hit', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.x = 0;
+    b.y = NET_HEIGHT - 0.1;
+    b.z = COURT_LENGTH / 2 - 5;
+    b.vz = 10;
+    b.vy = 0;
+    ball.update(b);
+    expect(b.state).toBe(BALL_NET);
+  });
+
+  it('ball goes out when past baseline', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.z = COURT_LENGTH + 3;
+    ball.update(b);
+    expect(b.state).toBe(BALL_OUT);
+  });
+
+  it('ball goes out when behind player', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.z = -3;
+    ball.update(b);
+    expect(b.state).toBe(BALL_OUT);
+  });
+});
