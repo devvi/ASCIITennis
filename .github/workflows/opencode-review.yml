@@ -59,14 +59,26 @@ jobs:
           use_github_token: true
           prompt: |
             Review this pull request for critical issues:
+
+            ### Code & Logic
             - Potential bugs or logic errors?
             - Security vulnerabilities?
             - Implementation match documented intent?
+
+            ### PR Description
+            - Does PR body contain closing keywords (Closes/Fixes/Resolves)
+              that violate project conventions? Research/plan PRs MUST NOT
+              close the parent issue — it stays open for later phases.
+            - Does PR body reference the wrong issue number?
+
+            ### Tests
             - Test coverage adequate? (TDD mandatory)
 
-            Fix any critical issues found (bugs, security, logic errors).
-            After fixing, run `npm test` to verify.
-            Commit and push fixes to the same branch. Do NOT create a new PR.
+            Fix any critical issues found (bugs, security, logic errors,
+            PR description violations). For PR description issues, use
+            `gh pr edit <number> --body '<correct body>'` to fix.
+            For code issues, commit and push fixes to the same branch.
+            After fixing, run `npm test` to verify. Do NOT create a new PR.
 
             If no critical issues found, just post a normal code review
             covering code quality, edge cases, and improvement suggestions.
