@@ -53,7 +53,7 @@ Read the TASK file and execute strictly phase by phase.
 - Keyboard `keydown`/`keyup` events update virtual button states correctly
 - Mouse `mousedown`/`mouseup` events set BTN_A and BTN_B correctly
 - `update()` correctly snapshots previous frame state for pressed/released detection
-- Commit after each completed phase, with `Closes #<phase-issue-n>` to close that phase issue
+- After each completed phase, commit and push, then **close the phase issue immediately** using `gh issue close <phase-issue-n>`
 - After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` plus `Closes #<phase-1>, Closes #<phase-2>, ...` to auto-close the parent and all phase issues on merge
 
 ## Workflow
