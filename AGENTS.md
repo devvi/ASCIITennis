@@ -44,6 +44,15 @@ Read the TASK file and execute strictly phase by phase.
 - No extra features beyond what's in the plan
 - No scope creep
 - **TDD is mandatory:** Phase 1 must write test cases first, before any implementation code. For phases 2-4, write tests alongside or before the code they test.
+
+**Input test cases are mandatory:** Every test-writing phase MUST include test cases for the input module (`src/input.js`), covering at minimum:
+- `pressed()`, `held()`, `released()` state management
+- `get_movement()` returns correct dx/dz for directional keys
+- `get_shot_type()` returns correct shot (flat/topspin/slice/lob) for combo inputs
+- `get_serve()` returns true on BTN_B or BTN_A press
+- Keyboard `keydown`/`keyup` events update virtual button states correctly
+- Mouse `mousedown`/`mouseup` events set BTN_A and BTN_B correctly
+- `update()` correctly snapshots previous frame state for pressed/released detection
 - Commit after each completed phase, with `Closes #<phase-issue-n>` to close that phase issue
 - After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` plus `Closes #<phase-1>, Closes #<phase-2>, ...` to auto-close the parent and all phase issues on merge
 

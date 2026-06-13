@@ -12,6 +12,7 @@ const KEY_MAP = {
   "s": BTN_DOWN, "S": BTN_DOWN, "ArrowDown": BTN_DOWN,
   "a": BTN_LEFT, "A": BTN_LEFT, "ArrowLeft": BTN_LEFT,
   "d": BTN_RIGHT, "D": BTN_RIGHT, "ArrowRight": BTN_RIGHT,
+  " ": BTN_B, "Enter": BTN_B,
 };
 
 function onKeyDown(e) {

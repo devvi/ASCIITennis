@@ -236,8 +236,6 @@ function draw_game() {
 }
 
 function gameLoop() {
-  input.update();
-
   if (game_state === STATE_MENU) {
     update_menu();
   } else if (game_state === STATE_SERVING) {
@@ -250,7 +248,17 @@ function gameLoop() {
     update_game_over();
   }
 
+  input.update();
   draw_game();
+  window.__gs = {
+    game_state, human_x: human_player.x, human_z: human_player.z,
+    human_state: human_player.state,
+    ball_x: ball_obj?.x, ball_y: ball_obj?.y, ball_z: ball_obj?.z,
+    ball_vx: ball_obj?.vx, ball_vy: ball_obj?.vy, ball_vz: ball_obj?.vz,
+    ball_state: ball_obj?.state,
+    score_sets: score?.sets, score_games: score?.games, score_points: score?.points,
+    server,
+  };
   requestAnimationFrame(gameLoop);
 }
 

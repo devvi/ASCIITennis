@@ -92,6 +92,7 @@ opencode executes the plan **strictly phase by phase**:
 - No extra features beyond the plan
 - No scope creep
 - **TDD is mandatory:** Phase 1 must write test cases first, before any implementation code. For phases 2-4, write tests alongside or before the code they test.
+- **Input test cases are mandatory:** Every test-writing phase MUST include test cases for the input module (`src/input.js`), covering pressed/held/released state, movement directions, shot-type combos, serve detection, and keyboard/mouse event handling.
 - Commit after each completed phase, referencing its phase issue (`Closes #N`)
 - After all phases, create the final PR with `Closes #parent-issue` + all phase issues
 - All issues auto-close on merge
