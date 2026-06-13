@@ -1,6 +1,6 @@
 import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER,
-  PLAYER_IDLE, PLAYER_EYE_Y, COURT_LENGTH, COURT_WIDTH,
+  PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH,
   BTN_UP, BTN_DOWN, BTN_B, BALL_HELD,
 } from './constants.js';
 import { court } from './court.js';
@@ -201,7 +201,7 @@ function draw_game() {
     return;
   }
 
-  camera.init(human_player.x, PLAYER_EYE_Y, human_player.z);
+  camera.init();
   render.court();
   render.net();
 

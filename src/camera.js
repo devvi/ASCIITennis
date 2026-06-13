@@ -1,4 +1,4 @@
-import { SCREEN_W, SCREEN_H, FOV, DEPTH_CHARS, COURT_LENGTH } from './constants.js';
+import { SCREEN_W, SCREEN_H, COURT_LENGTH, COURT_WIDTH, HUD_HEIGHT, STATUS_HEIGHT, COURT_PADDING } from './constants.js';
 
 let printChar = () => {};
 
@@ -7,89 +7,46 @@ export function setDrawChar(fn) {
 }
 
 export const camera = {
-  x: 0, y: 0, z: 0,
+  scaleX: 1,
+  scaleZ: 1,
+  offsetX: 0,
+  offsetY: 0,
 
-  init(cx, cy, cz) {
-    this.x = cx;
-    this.y = cy;
-    this.z = cz;
+  init() {
+    const availW = SCREEN_W - COURT_PADDING * 2;
+    const availH = SCREEN_H - HUD_HEIGHT - STATUS_HEIGHT;
+    this.scaleX = availW / COURT_WIDTH;
+    this.scaleZ = availH / COURT_LENGTH;
+    this.offsetX = COURT_PADDING;
+    this.offsetY = HUD_HEIGHT;
   },
 
-  project(world_x, world_y, world_z) {
-    const dz = world_z - this.z;
-    if (dz <= 0.01) return null;
-
-    const dx = world_x - this.x;
-    const dy = this.y - world_y;
-
-    const scale = FOV / dz;
-    const sx = SCREEN_W / 2 + dx * scale;
-    const sy = SCREEN_H / 2 - dy * scale;
-
-    if (sx < -SCREEN_W*2 || sx > SCREEN_W*3) return null;
-    if (sy < -SCREEN_H*2 || sy > SCREEN_H*3) return null;
-
-    const depth = dz / (COURT_LENGTH * 1.5);
-    return { sx, sy, depth };
+  world_to_screen(x, z) {
+    const sx = this.offsetX + (x + COURT_WIDTH / 2) * this.scaleX;
+    const sy = this.offsetY + z * this.scaleZ;
+    return { sx, sy };
   },
 
-  depth_char(depth) {
-    if (depth < 0) depth = 0;
-    if (depth > 1) depth = 1;
-    const idx = Math.floor(depth * (DEPTH_CHARS.length - 1));
-    return DEPTH_CHARS[idx];
-  },
-
-  project_char(world_x, world_y, world_z) {
-    const p = this.project(world_x, world_y, world_z);
-    if (!p) return null;
-    return { sx: p.sx, sy: p.sy, ch: this.depth_char(p.depth) };
-  },
-
-  draw_line(x1, y1, z1, x2, y2, z2) {
-    const near = 0.02;
-    if ((z1 - this.z <= near) && (z2 - this.z <= near)) return;
-
-    if (z1 - this.z <= near) {
-      const t = (near - (z1 - this.z)) / ((z2 - this.z) - (z1 - this.z) + 0.001);
-      x1 = x1 + (x2 - x1) * t;
-      y1 = y1 + (y2 - y1) * t;
-      z1 = this.z + near;
+  draw_char(x, z, ch) {
+    const p = this.world_to_screen(x, z);
+    const ix = Math.round(p.sx);
+    const iy = Math.round(p.sy);
+    if (ix >= 0 && ix < SCREEN_W && iy >= 0 && iy < SCREEN_H) {
+      printChar(ch, ix, iy);
     }
-    if (z2 - this.z <= near) {
-      const t = (near - (z2 - this.z)) / ((z1 - this.z) - (z2 - this.z) + 0.001);
-      x2 = x2 + (x1 - x2) * t;
-      y2 = y2 + (y1 - y2) * t;
-      z2 = this.z + near;
-    }
+  },
 
-    const p1 = this.project(x1, y1, z1);
-    const p2 = this.project(x2, y2, z2);
-    if (!p1 || !p2) return;
-
-    let steps = Math.max(1, Math.abs(p2.sx - p1.sx), Math.abs(p2.sy - p1.sy));
-    if (steps > 50) steps = 50;
-
+  draw_line(x1, z1, x2, z2, ch) {
+    const p1 = this.world_to_screen(x1, z1);
+    const p2 = this.world_to_screen(x2, z2);
+    const steps = Math.max(1, Math.round(Math.max(Math.abs(p2.sx - p1.sx), Math.abs(p2.sy - p1.sy))));
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
-      const sx = p1.sx + (p2.sx - p1.sx) * t;
-      const sy = p1.sy + (p2.sy - p1.sy) * t;
-      const depth = p1.depth + (p2.depth - p1.depth) * t;
-      const ch = this.depth_char(depth);
-
-      const ix = Math.floor(sx + 0.5);
-      const iy = Math.floor(sy + 0.5);
-      if (ix >= 0 && ix < SCREEN_W && iy >= 0 && iy < SCREEN_H) {
-        printChar(ch, ix, iy);
+      const sx = Math.round(p1.sx + (p2.sx - p1.sx) * t);
+      const sy = Math.round(p1.sy + (p2.sy - p1.sy) * t);
+      if (sx >= 0 && sx < SCREEN_W && sy >= 0 && sy < SCREEN_H) {
+        printChar(ch, sx, sy);
       }
     }
-  },
-
-  draw_rect(x1, z1, x2, z2, y) {
-    y = y || 0;
-    this.draw_line(x1, y, z1, x2, y, z1);
-    this.draw_line(x2, y, z1, x2, y, z2);
-    this.draw_line(x2, y, z2, x1, y, z2);
-    this.draw_line(x1, y, z2, x1, y, z1);
   },
 };
