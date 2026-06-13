@@ -54,8 +54,9 @@ export const SETS_TO_WIN_MATCH = 2;
 
 export const SCREEN_W = 240;
 export const SCREEN_H = 136;
-export const FOV = 120;
-export const DEPTH_CHARS = " .:-=+*#%@";
+export const HUD_HEIGHT = 15;
+export const STATUS_HEIGHT = 5;
+export const COURT_PADDING = 4;
 
 export const AI_EASY = {
   reaction_time: 20,
