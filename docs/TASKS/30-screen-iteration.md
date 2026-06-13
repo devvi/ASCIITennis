@@ -78,16 +78,16 @@ Update `src/main.js`:
 
 ## Phase 1 Issue Tracking
 
-- [ ] Create GitHub Issue: `[#30] Phase 1: Tests`
+- [x] Created GitHub Issue: [#37 Phase 1: Tests](https://github.com/devvi/ASCIITennis/issues/37)
 
 ## Phase 2 Issue Tracking
 
-- [ ] Create GitHub Issue: `[#30] Phase 2: Camera (2D Top-Down)`
+- [x] Created GitHub Issue: [#38 Phase 2: Camera (2D Top-Down)](https://github.com/devvi/ASCIITennis/issues/38)
 
 ## Phase 3 Issue Tracking
 
-- [ ] Create GitHub Issue: `[#30] Phase 3: Renderer (Top-Down Display)`
+- [x] Created GitHub Issue: [#39 Phase 3: Renderer (Top-Down Display)](https://github.com/devvi/ASCIITennis/issues/39)
 
 ## Phase 4 Issue Tracking
 
-- [ ] Create GitHub Issue: `[#30] Phase 4: Main Integration`
+- [x] Created GitHub Issue: [#40 Phase 4: Main Integration](https://github.com/devvi/ASCIITennis/issues/40)
