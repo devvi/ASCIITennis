@@ -71,7 +71,6 @@ export const render = {
     ctx.fillStyle = "#fff";
     const ptDisplay = scoring.display(score);
     const ptLine = ptDisplay.split('\n')[0];
-    const pts = ptLine.includes('Deuce') ? ptLine : "P:15 A:30";
     if (ptLine.includes('Deuce')) {
       ctx.fillText(ptLine, 2, 1);
     } else {
