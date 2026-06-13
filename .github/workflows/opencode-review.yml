@@ -48,7 +48,7 @@ jobs:
             Commit and push the fixes to the same branch.
             Do NOT create a new PR.
 
-      - name: Code review
+      - name: Review & fix critical issues
         if: steps.test.outputs.exit_code == '0'
         uses: anomalyco/opencode/github@latest
         env:
@@ -58,12 +58,15 @@ jobs:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
           prompt: |
-            Review this pull request:
-            - Code follow conventions?
-            - Potential bugs or edge cases?
-            - Security concerns?
-            - Implementation match intent?
-            - Adequate test coverage? (TDD mandatory)
-            - Edge cases covered?
-            - Test descriptions clear?
-            - Suggest improvements if any
+            Review this pull request for critical issues:
+            - Potential bugs or logic errors?
+            - Security vulnerabilities?
+            - Implementation match documented intent?
+            - Test coverage adequate? (TDD mandatory)
+
+            Fix any critical issues found (bugs, security, logic errors).
+            After fixing, run `npm test` to verify.
+            Commit and push fixes to the same branch. Do NOT create a new PR.
+
+            If no critical issues found, just post a normal code review
+            covering code quality, edge cases, and improvement suggestions.

@@ -116,15 +116,22 @@ Automatically triggered when a PR is opened or updated.
 
 CI runs `npm test`. Output saved to `test-output.log`.
 
-### Step 2: Auto-Fix (if tests fail)
+### Step 2: Auto-Fix Failing Tests (if tests fail)
 
 If tests fail, opencode reads `test-output.log`, fixes all failures, runs `npm test` to verify, then commits and pushes to the same branch.
 
 The push triggers a new `synchronize` event, restarting the workflow from Step 1 — creating a **self-healing loop** until tests pass.
 
-### Step 3: Code Review (if tests pass)
+### Step 3: Review & Fix Critical Issues (if tests pass)
 
-Once tests pass, opencode posts a PR review covering:
+Once tests pass, opencode reviews the PR for **critical issues** (bugs, security, logic errors). If any are found, opencode:
+1. Fixes all critical issues
+2. Runs `npm test` to verify the fixes
+3. Commits and pushes to the same branch
+
+The push triggers a new `synchronize` event, restarting the workflow from Step 1 — same self-healing loop.
+
+If no critical issues exist, opencode posts a normal code review covering:
 - Code quality and conventions
 - Potential bugs and edge cases
 - Security concerns

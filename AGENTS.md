@@ -70,12 +70,13 @@ Read the TASK file and execute strictly phase by phase.
 - `opencode test <request>` — write/run tests
 - `opencode review <request>` — review code
 
-## CI: Automated PR Review
+## CI: Automated PR Review (Self-Healing)
 
-Every pull request is automatically reviewed by opencode:
-- Opens a PR review with code quality, bug, and security feedback
-- Reviewer can comment `/oc fix <suggestion>` to request changes
-- opencode will implement the fix and commit to the same PR
+Every pull request is automatically processed by opencode:
+1. **Run tests** — if tests fail, opencode auto-fixes them and pushes (self-healing loop)
+2. **Review & fix critical issues** — if tests pass, opencode checks for bugs/security/logic errors, fixes them, and pushes
+3. **Post review** — if no critical issues found, opencode posts a normal code review
+4. **Manual fix** — reviewer comments `/oc fix <suggestion>` and opencode applies the change
 
 ## Testing
 
