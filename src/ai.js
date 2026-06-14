@@ -2,6 +2,7 @@ import {
   COURT_LENGTH, COURT_WIDTH, PLAYER_SPEED,
   BALL_IN_PLAY, PLAYER_IDLE, PLAYER_MOVING, PLAYER_HITTING,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
+  HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
   AI_EASY, AI_HARD,
 } from './constants.js';
 import { player } from './player.js';
@@ -77,9 +78,11 @@ export const ai = {
     }
 
     if (ball.state === BALL_IN_PLAY) {
-      const can_reach = Math.abs(ball.x - ai_player.x) < 1.5
-        && Math.abs(ball.z - ai_player.z) < 1.5
-        && ball.y < 2.5 && ball.y > 0.1
+      const dx = ball.x - ai_player.x;
+      const dz = ball.z - ai_player.z;
+      const horiz_dist = Math.sqrt(dx*dx + dz*dz);
+      const can_reach = horiz_dist < HIT_RANGE_H
+        && ball.y <= HIT_HEIGHT_MAX && ball.y >= HIT_HEIGHT_MIN
         && ball.vz > 0;
 
       if (can_reach && ai_player.state === PLAYER_IDLE) {

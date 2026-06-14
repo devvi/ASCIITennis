@@ -2,7 +2,7 @@ import {
   BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
-  HIT_PARAMS, HIT_FLAT,
+  HIT_PARAMS, HIT_FLAT, COURT_WIDTH,
 } from './constants.js';
 import { court } from './court.js';
 
@@ -59,6 +59,31 @@ export const ball = {
     if (b.z < -2) {
       b.state = BALL_OUT;
     }
+  },
+
+  predict_landing(b) {
+    if (b.y <= BALL_RADIUS) return null;
+
+    const a = 0.5 * GRAVITY;
+    const c_term = b.y - BALL_RADIUS;
+
+    const discriminant = b.vy * b.vy - 4 * a * c_term;
+    if (discriminant < 0) return null;
+
+    const t1 = (-b.vy + Math.sqrt(discriminant)) / (2 * a);
+    const t2 = (-b.vy - Math.sqrt(discriminant)) / (2 * a);
+    const t = t1 > 0 && t2 > 0 ? Math.min(t1, t2) : Math.max(t1, t2);
+
+    if (t < 0) return null;
+
+    const landing_x = b.x + b.vx * t;
+    const landing_z = b.z + b.vz * t;
+
+    if (b.vz > 0) return null;
+
+    if (landing_z > COURT_LENGTH || landing_z < -COURT_LENGTH) return null;
+
+    return { x: landing_x, z: landing_z };
   },
 
   serve(b, from_x, from_z, target_x, target_z) {

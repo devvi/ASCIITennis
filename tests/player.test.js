@@ -85,4 +85,53 @@ describe('player', () => {
     const b = { x: p.x, y: 1.0, z: p.z };
     expect(player.can_hit(p, b)).toBe(false);
   });
+
+  it('can_hit returns true within expanded horizontal range (2.5)', () => {
+    const p = player.new(false);
+    const b = { x: p.x + 2.4, y: 1.0, z: p.z };
+    expect(player.can_hit(p, b)).toBe(true);
+  });
+
+  it('can_hit returns false beyond horizontal range (2.5)', () => {
+    const p = player.new(false);
+    const b = { x: p.x + 2.6, y: 1.0, z: p.z };
+    expect(player.can_hit(p, b)).toBe(false);
+  });
+
+  it('can_hit returns false when ball is too high', () => {
+    const p = player.new(false);
+    const b = { x: p.x, y: 2.6, z: p.z };
+    expect(player.can_hit(p, b)).toBe(false);
+  });
+
+  it('can_hit returns false when ball is too low', () => {
+    const p = player.new(false);
+    const b = { x: p.x, y: 0.05, z: p.z };
+    expect(player.can_hit(p, b)).toBe(false);
+  });
+
+  it('can_hit returns true at minimum valid height (0.1)', () => {
+    const p = player.new(false);
+    const b = { x: p.x, y: 0.1, z: p.z };
+    expect(player.can_hit(p, b)).toBe(true);
+  });
+
+  it('can_hit returns true at maximum valid height (2.5)', () => {
+    const p = player.new(false);
+    const b = { x: p.x, y: 2.5, z: p.z };
+    expect(player.can_hit(p, b)).toBe(true);
+  });
+
+  it('in_hit_range returns true when ball is within range regardless of player state', () => {
+    const p = player.new(false);
+    player.swing(p);
+    const b = { x: p.x, y: 1.0, z: p.z };
+    expect(player.in_hit_range(p, b)).toBe(true);
+  });
+
+  it('in_hit_range returns false when ball is far', () => {
+    const p = player.new(false);
+    const b = { x: 100, y: 1.0, z: 100 };
+    expect(player.in_hit_range(p, b)).toBe(false);
+  });
 });

@@ -50,8 +50,18 @@ export const render = {
   },
 
   player(p, label) {
+    if (p.can_hit_this_frame) {
+      ctx.fillStyle = "#0f0";
+      camera.draw_char(p.x, p.z, '*');
+    }
     ctx.fillStyle = p.is_ai ? "#f00" : "#0ff";
     camera.draw_char(p.x, p.z, label);
+  },
+
+  landing_marker(pos) {
+    if (!pos) return;
+    ctx.fillStyle = "#ff0";
+    camera.draw_char(pos.x, pos.z, 'X');
   },
 
   ball(b) {
