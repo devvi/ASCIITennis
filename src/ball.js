@@ -2,7 +2,7 @@ import {
   BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
-  HIT_PARAMS, HIT_FLAT, COURT_WIDTH,
+  HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
 } from './constants.js';
 import { court } from './court.js';
 
@@ -97,7 +97,7 @@ export const ball = {
     b.z = from_z;
     b.vx = (dx / dist) * serve_speed;
     b.vz = (dz / dist) * serve_speed;
-    b.vy = 1.2;
+    b.vy = 0.15;
     b.spin_x = 0;
     b.spin_z = 0;
     b.bounces = 0;
@@ -118,7 +118,8 @@ export const ball = {
     b.z = hit_z;
     b.vx = (dx / dist) * speed;
     b.vz = (dz / dist) * speed;
-    b.vy = 1.5 + params.arc * 2;
+    const vy_values = { [HIT_FLAT]: 0.14, [HIT_TOPSPIN]: 0.18, [HIT_SLICE]: 0.18, [HIT_LOB]: 0.50 };
+    b.vy = vy_values[hit_type] !== undefined ? vy_values[hit_type] : 0.14;
     b.spin_x = Math.random() * params.spin * 2 - params.spin;
     b.spin_z = params.spin * 0.5;
     b.bounces = 0;

@@ -4,7 +4,7 @@ export const NET_HEIGHT = 0.914;
 export const PLAYER_EYE_Y = 1.7;
 export const BALL_RADIUS = 0.05;
 
-export const GRAVITY = -0.04;
+export const GRAVITY = -0.006;
 export const BOUNCE_FACTOR = 0.6;
 export const SPIN_FACTOR = 0.003;
 export const AIR_RESISTANCE = 0.005;
