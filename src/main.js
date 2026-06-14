@@ -67,6 +67,7 @@ function start_match() {
 function setup_serve() {
   ball_obj = ball.new();
   serve_timer = 30;
+  landing_pos = null;
 
   if (server === 0) {
     human_player.x = (Math.random() - 0.5) * 2;
