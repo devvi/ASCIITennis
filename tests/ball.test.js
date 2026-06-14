@@ -3,6 +3,7 @@ import {
   BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
   BALL_RADIUS, COURT_LENGTH, NET_HEIGHT,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
+  HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -189,5 +190,32 @@ describe('ball', () => {
     b.vz = 0.3;
     const landing = ball.predict_landing(b);
     expect(landing).toBeNull();
+  });
+
+  describe.each([
+    [HIT_FLAT, 'flat'],
+    [HIT_TOPSPIN, 'topspin'],
+    [HIT_SLICE, 'slice'],
+  ])('trajectory for %s hit', (hitType, _name) => {
+    it('reaches human player within hit height range', () => {
+      const b = ball.new();
+      court.init();
+      const ai_z = COURT_LENGTH - 2;
+      const human_z = 3;
+      ball.hit(b, 0, 1.0, ai_z, 0, human_z, hitType);
+      expect(b.state).toBe(BALL_IN_PLAY);
+      b.spin_x = 0;
+
+      let reached = false;
+      for (let i = 0; i < 300 && b.state === BALL_IN_PLAY; i++) {
+        ball.update(b);
+        if (b.z <= human_z && !reached && b.y >= 0) {
+          reached = true;
+          expect(b.y).toBeGreaterThanOrEqual(HIT_HEIGHT_MIN);
+          expect(b.y).toBeLessThanOrEqual(HIT_HEIGHT_MAX);
+        }
+      }
+      expect(reached).toBe(true);
+    });
   });
 });

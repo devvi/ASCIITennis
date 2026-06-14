@@ -89,8 +89,8 @@ export const input = {
     let dx = 0, dz = 0;
     if (this.held(BTN_LEFT)) dx = -1;
     if (this.held(BTN_RIGHT)) dx = 1;
-    if (this.held(BTN_UP)) dz = -1;
-    if (this.held(BTN_DOWN)) dz = 1;
+    if (this.held(BTN_UP)) dz = 1;
+    if (this.held(BTN_DOWN)) dz = -1;
     return [dx, dz];
   },
 
