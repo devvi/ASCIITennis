@@ -149,4 +149,45 @@ describe('ball', () => {
     ball.update(b);
     expect(b.state).toBe(BALL_OUT);
   });
+
+  it('predict_landing returns landing coordinates for ball falling toward ground', () => {
+    const b = ball.new();
+    b.state = BALL_IN_PLAY;
+    b.x = 0;
+    b.y = 2.0;
+    b.z = 10;
+    b.vx = 0;
+    b.vy = -0.05;
+    b.vz = -0.2;
+    const landing = ball.predict_landing(b);
+    expect(landing).not.toBeNull();
+    expect(typeof landing.x).toBe('number');
+    expect(typeof landing.z).toBe('number');
+  });
+
+  it('predict_landing returns null when ball is on ground', () => {
+    const b = ball.new();
+    b.state = BALL_IN_PLAY;
+    b.x = 0;
+    b.y = 0.05;
+    b.z = 10;
+    b.vx = 0;
+    b.vy = 0;
+    b.vz = -0.2;
+    const landing = ball.predict_landing(b);
+    expect(landing).toBeNull();
+  });
+
+  it('predict_landing returns null when ball is moving away from player', () => {
+    const b = ball.new();
+    b.state = BALL_IN_PLAY;
+    b.x = 0;
+    b.y = 2.0;
+    b.z = 5;
+    b.vx = 0;
+    b.vy = -0.05;
+    b.vz = 0.3;
+    const landing = ball.predict_landing(b);
+    expect(landing).toBeNull();
+  });
 });

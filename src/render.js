@@ -155,6 +155,12 @@ export const render = {
     drawPlayerFigure(p, color, racketSide);
   },
 
+  landing_marker(pos) {
+    if (!pos) return;
+    ctx.fillStyle = "#ff0";
+    camera.draw_char(pos.x, 0, pos.z, 'X');
+  },
+
   ball(b) {
     if (b.state !== "in_play" && b.state !== "bounce") return;
 

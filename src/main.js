@@ -23,6 +23,7 @@ let point_winner;
 let point_timer;
 let rally_hits;
 let serve_timer;
+let landing_pos;
 
 function init_game() {
   court.init();
@@ -39,6 +40,7 @@ function init_game() {
   point_timer = 0;
   rally_hits = 0;
   serve_timer = 0;
+  landing_pos = null;
 }
 
 function start_match() {
@@ -65,6 +67,7 @@ function start_match() {
 function setup_serve() {
   ball_obj = ball.new();
   serve_timer = 30;
+  landing_pos = null;
 
   if (server === 0) {
     human_player.x = (Math.random() - 0.5) * 2;
@@ -141,6 +144,8 @@ function update_playing() {
   player.move(human_player, dx, dz);
   player.update(human_player);
 
+  human_player.can_hit_this_frame = player.in_hit_range(human_player, ball_obj);
+
   const shot = input.get_shot_type();
   if (shot && player.can_hit(human_player, ball_obj)) {
     if (player.swing(human_player)) {
@@ -159,6 +164,8 @@ function update_playing() {
   player.update(ai_player);
 
   ball.update(ball_obj);
+
+  landing_pos = ball.predict_landing(ball_obj);
 
   if (ball_obj.state === "out") {
     if (ball_obj.z < COURT_LENGTH / 2) {
@@ -212,6 +219,10 @@ function draw_game() {
   render.player(human_player, "P");
   if (ai_player) {
     render.player(ai_player, "A");
+  }
+
+  if (landing_pos) {
+    render.landing_marker(landing_pos);
   }
 
   render.hud(score);

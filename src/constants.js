@@ -15,10 +15,10 @@ export const HIT_SLICE = 3;
 export const HIT_LOB = 4;
 
 export const HIT_PARAMS = {
-  [HIT_FLAT]: { speed: 0.55, arc: 0.0, spin: 0.0 },
-  [HIT_TOPSPIN]: { speed: 0.45, arc: 0.6, spin: 0.8 },
-  [HIT_SLICE]: { speed: 0.40, arc: -0.1, spin: -0.6 },
-  [HIT_LOB]: { speed: 0.30, arc: 1.5, spin: 0.1 },
+  [HIT_FLAT]: { speed: 0.40, arc: 0.0, spin: 0.0 },
+  [HIT_TOPSPIN]: { speed: 0.35, arc: 0.6, spin: 0.8 },
+  [HIT_SLICE]: { speed: 0.30, arc: -0.1, spin: -0.6 },
+  [HIT_LOB]: { speed: 0.25, arc: 1.5, spin: 0.1 },
 };
 
 export const BTN_UP = 0;
@@ -39,6 +39,10 @@ export const STATE_GAME_OVER = "game_over";
 export const PLAYER_IDLE = "idle";
 export const PLAYER_MOVING = "moving";
 export const PLAYER_HITTING = "hitting";
+
+export const HIT_RANGE_H = 2.5;
+export const HIT_HEIGHT_MIN = 0.1;
+export const HIT_HEIGHT_MAX = 2.5;
 
 export const PLAYER_SPEED = 0.08;
 
