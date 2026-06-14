@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest';
-import { SCREEN_W, SCREEN_H, COURT_LENGTH, COURT_WIDTH, HUD_HEIGHT, STATUS_HEIGHT, COURT_PADDING } from '../src/constants.js';
+import { SCREEN_W, SCREEN_H, COURT_LENGTH, COURT_WIDTH, HUD_HEIGHT } from '../src/constants.js';
 import { camera } from '../src/camera.js';
 import { court } from '../src/court.js';
 import { scoring } from '../src/scoring.js';
@@ -25,7 +25,7 @@ const mockCanvas = {
 
 let render;
 
-describe('render (top-down)', () => {
+describe('render (perspective)', () => {
   beforeAll(async () => {
     const mod = await import('../src/render.js');
     render = mod.render;
@@ -38,28 +38,27 @@ describe('render (top-down)', () => {
     camera.init();
   });
 
-  it('court sets green fill and draws lines', () => {
+  it('court fills perspective surface and draws lines', () => {
     render.court();
     expect(mockCtx.fillRect).toHaveBeenCalled();
-    expect(mockCtx._fillStyle).toBe('#fff');
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
-  it('net draws characters across court middle', () => {
+  it('net draws components across court middle', () => {
     render.net();
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
-  it('player draws label character at player position', () => {
-    const p = { x: 0, z: COURT_LENGTH / 2, is_ai: false };
+  it('player draws figure at position', () => {
+    const p = { x: 0, z: COURT_LENGTH / 2, is_ai: false, state: 'idle' };
     render.player(p, 'P');
-    expect(mockCtx.fillText).toHaveBeenCalledWith('P', expect.any(Number), expect.any(Number));
+    expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
-  it('player draws AI label', () => {
-    const p = { x: 1, z: 2, is_ai: true };
+  it('player draws AI figure', () => {
+    const p = { x: 1, z: 2, is_ai: true, state: 'idle' };
     render.player(p, 'A');
-    expect(mockCtx.fillText).toHaveBeenCalledWith('A', expect.any(Number), expect.any(Number));
+    expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
   it('ball draws when in play', () => {

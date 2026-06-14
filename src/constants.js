@@ -58,6 +58,20 @@ export const HUD_HEIGHT = 15;
 export const STATUS_HEIGHT = 5;
 export const COURT_PADDING = 4;
 
+// Perspective camera
+export const FOCAL = 120;
+export const CAM_HEIGHT = 4;
+export const CAM_Z = -5;
+export const HORIZON_Y = 15;
+
+// Court colors (clay court)
+export const COURT_SURFACE = '#c64830';
+export const COURT_SURFACE_DARK = '#9a3520';
+export const COURT_OUTSIDE = '#1a1a1a';
+export const SERVICE_BOX_FILL = 'rgba(255,255,255,0.05)';
+export const SINGLES_WIDTH = 8.23;
+export const NET_POST_HEIGHT = 1.07;
+
 export const AI_EASY = {
   reaction_time: 20,
   accuracy: 0.5,

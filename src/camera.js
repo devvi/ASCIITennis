@@ -1,4 +1,4 @@
-import { SCREEN_W, SCREEN_H, COURT_LENGTH, COURT_WIDTH, HUD_HEIGHT, STATUS_HEIGHT, COURT_PADDING } from './constants.js';
+import { SCREEN_W, SCREEN_H, FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y } from './constants.js';
 
 let printChar = () => {};
 
@@ -7,28 +7,21 @@ export function setDrawChar(fn) {
 }
 
 export const camera = {
-  scaleX: 1,
-  scaleZ: 1,
-  offsetX: 0,
-  offsetY: 0,
-
   init() {
-    const availW = SCREEN_W - COURT_PADDING * 2;
-    const availH = SCREEN_H - HUD_HEIGHT - STATUS_HEIGHT;
-    this.scaleX = availW / COURT_WIDTH;
-    this.scaleZ = availH / COURT_LENGTH;
-    this.offsetX = COURT_PADDING;
-    this.offsetY = HUD_HEIGHT;
   },
 
-  world_to_screen(x, z) {
-    const sx = this.offsetX + (x + COURT_WIDTH / 2) * this.scaleX;
-    const sy = this.offsetY + z * this.scaleZ;
-    return { sx, sy };
+  project(x, y, z) {
+    const rz = z - CAM_Z;
+    if (rz <= 0.01) return null;
+    const scale = FOCAL / rz;
+    const sx = SCREEN_W / 2 + x * scale;
+    const sy = HORIZON_Y - (y - CAM_HEIGHT) * scale;
+    return { sx, sy, scale };
   },
 
-  draw_char(x, z, ch) {
-    const p = this.world_to_screen(x, z);
+  draw_char(x, y, z, ch) {
+    const p = this.project(x, y, z);
+    if (!p) return;
     const ix = Math.round(p.sx);
     const iy = Math.round(p.sy);
     if (ix >= 0 && ix < SCREEN_W && iy >= 0 && iy < SCREEN_H) {
@@ -36,9 +29,10 @@ export const camera = {
     }
   },
 
-  draw_line(x1, z1, x2, z2, ch) {
-    const p1 = this.world_to_screen(x1, z1);
-    const p2 = this.world_to_screen(x2, z2);
+  draw_line(x1, y1, z1, x2, y2, z2, ch) {
+    const p1 = this.project(x1, y1, z1);
+    const p2 = this.project(x2, y2, z2);
+    if (!p1 || !p2) return;
     const steps = Math.max(1, Math.round(Math.max(Math.abs(p2.sx - p1.sx), Math.abs(p2.sy - p1.sy))));
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
