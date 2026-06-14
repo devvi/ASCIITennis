@@ -1,4 +1,4 @@
-import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED } from './constants.js';
+import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED, HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX } from './constants.js';
 
 export const player = {
   new(is_ai) {
@@ -38,12 +38,19 @@ export const player = {
     return true;
   },
 
-  can_hit(p, ball) {
-    if (p.state !== PLAYER_IDLE) return false;
+  _in_range(p, ball) {
     const dx = p.x - ball.x;
     const dz = p.z - ball.z;
-    const dy = ball.y;
-    const dist = Math.sqrt(dx*dx + dz*dz + dy*dy);
-    return dist < 1.5;
+    const horiz_dist = Math.sqrt(dx*dx + dz*dz);
+    return horiz_dist < HIT_RANGE_H && ball.y >= HIT_HEIGHT_MIN && ball.y <= HIT_HEIGHT_MAX;
+  },
+
+  can_hit(p, ball) {
+    if (p.state !== PLAYER_IDLE) return false;
+    return this._in_range(p, ball);
+  },
+
+  in_hit_range(p, ball) {
+    return this._in_range(p, ball);
   },
 };

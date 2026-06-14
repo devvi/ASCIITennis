@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { BALL_IN_PLAY, BALL_HELD, COURT_LENGTH, PLAYER_MOVING, PLAYER_IDLE } from '../src/constants.js';
 import { ai } from '../src/ai.js';
+import { player } from '../src/player.js';
 
 describe('ai', () => {
   it('new_player creates AI player with easy config', () => {
@@ -73,6 +74,29 @@ describe('ai', () => {
       vx: 0,
       vy: 0.3,
       y: 3.0,
+    };
+    const result = ai.update(p, b);
+    expect(result).toBeNull();
+  });
+
+  it('AI can_reach uses same expanded constants as player', () => {
+    const p = player.new(true);
+    p.state = PLAYER_IDLE;
+    const ball = { x: p.x + 2.4, y: 1.0, z: p.z };
+    expect(player.can_hit(p, ball)).toBe(true);
+  });
+
+  it('update returns null when ball is beyond expanded horizontal range', () => {
+    const p = ai.new_player('easy');
+    p.reaction_counter = 999;
+    const b = {
+      state: BALL_IN_PLAY,
+      x: p.x + 3.0,
+      z: p.z + 0.3,
+      vz: 0.5,
+      vx: 0,
+      vy: 0,
+      y: 1.0,
     };
     const result = ai.update(p, b);
     expect(result).toBeNull();

@@ -91,4 +91,21 @@ describe('render (top-down)', () => {
     render.game_over('Player');
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
+
+  it('player draws indicator when can_hit_this_frame is true', () => {
+    const p = { x: 0, z: 5, is_ai: false, can_hit_this_frame: true };
+    render.player(p, 'P');
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('player draws normally when can_hit_this_frame is false', () => {
+    const p = { x: 0, z: 5, is_ai: false, can_hit_this_frame: false };
+    render.player(p, 'P');
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('landing_marker draws X character at given position', () => {
+    render.landing_marker({ x: 0, z: 10 });
+    expect(mockCtx.fillText).toHaveBeenCalledWith('X', expect.any(Number), expect.any(Number));
+  });
 });
