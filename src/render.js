@@ -164,11 +164,14 @@ export const render = {
   ball(b) {
     if (b.state !== "in_play" && b.state !== "bounce") return;
 
+    const dx = b.draw_x != null ? b.draw_x : b.x;
+    const dz = b.draw_z != null ? b.draw_z : b.z;
+
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    camera.draw_char(b.x, 0.01, b.z, '@');
+    camera.draw_char(dx, 0.01, dz, '@');
 
     ctx.fillStyle = '#ff0';
-    camera.draw_char(b.x, b.y, b.z, 'O');
+    camera.draw_char(dx, b.y, dz, 'O');
   },
 
   hud(score) {
