@@ -4,6 +4,7 @@ import {
   BALL_RADIUS, COURT_LENGTH, NET_HEIGHT, SINGLES_WIDTH, COURT_WIDTH,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
+  SERVE_SPEED_MIN, SERVE_SPEED_MAX,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -39,6 +40,31 @@ describe('ball', () => {
     const b = ball.new();
     ball.serve(b, 0, 2, 0, 2);
     expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('serve with power=0 uses minimum speed and max arc', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 0);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MIN, 2);
+    expect(b.vy).toBeCloseTo(0.08, 2);
+  });
+
+  it('serve with power=1 uses maximum speed and min arc', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 1);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MAX, 2);
+    expect(b.vy).toBeCloseTo(0.20, 2);
+  });
+
+  it('serve with power=0.5 uses medium speed and arc', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 0.5);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    const expectedSpeed = SERVE_SPEED_MIN + 0.5 * (SERVE_SPEED_MAX - SERVE_SPEED_MIN);
+    expect(speed).toBeCloseTo(expectedSpeed, 2);
+    expect(b.vy).toBeCloseTo(0.14, 2);
   });
 
   it('update moves ball when in play', () => {

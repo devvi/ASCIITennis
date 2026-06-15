@@ -1,6 +1,6 @@
 import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER,
-  PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH,
+  PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH,
   BTN_UP, BTN_DOWN, BTN_B, BALL_HELD,
   BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE,
 } from './constants.js';
@@ -89,11 +89,11 @@ function setup_serve() {
   ball_obj.state = BALL_HELD;
 }
 
-function do_serve() {
+function do_serve(serve_power) {
   if (server === 0) {
     const serve_target_x = (Math.random() - 0.5) * COURT_WIDTH * 0.8;
     const serve_target_z = COURT_LENGTH * 0.7;
-    ball.serve(ball_obj, human_player.x, human_player.z, serve_target_x, serve_target_z);
+    ball.serve(ball_obj, human_player.x, human_player.z, serve_target_x, serve_target_z, serve_power);
   } else {
     const serve_target_x = (Math.random() - 0.5) * COURT_WIDTH * 0.8;
     const serve_target_z = 1 + Math.random() * 3;
@@ -164,7 +164,9 @@ function update_serving() {
 
   if (server === 0) {
     if (input.get_serve()) {
-      do_serve();
+      const serve_power = input.get_serve_power();
+      input.reset_serve_charge();
+      do_serve(serve_power);
     }
   } else {
     if (serve_timer <= 0) {
@@ -183,8 +185,8 @@ function update_playing() {
   const shot = input.get_shot_type();
   if (shot && player.can_hit(human_player, ball_obj)) {
     if (player.swing(human_player)) {
-      const target_x = (Math.random() - 0.5) * COURT_WIDTH * 0.8;
-      const target_z = COURT_LENGTH - 1 - Math.random() * 3;
+      const target_x = (Math.random() - 0.5) * SINGLES_WIDTH * 0.7;
+      const target_z = COURT_LENGTH - 2 - Math.random() * 2;
       ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0);
       rally_hits += 1;
     }
@@ -284,7 +286,13 @@ function draw_game() {
 
   if (game_state === STATE_SERVING) {
     if (server === 0) {
-      print("Your serve - Click", 50, 120);
+      const power = input.get_serve_power();
+      if (power > 0) {
+        const filled = Math.round(power * 10);
+        const bar = '[' + '#'.repeat(filled) + '-'.repeat(10 - filled) + ']';
+        print(bar, 50, 112);
+      }
+      print("Hold click to charge, release to serve", 18, 120);
     } else {
       print("AI serving...", 60, 120);
     }

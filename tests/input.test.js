@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
   HIT_TOPSPIN, HIT_SLICE, HIT_LOB, HIT_FLAT,
+  SERVE_CHARGE_MAX_FRAMES,
 } from '../src/constants.js';
 import { input } from '../src/input.js';
 
@@ -133,18 +134,49 @@ describe('input', () => {
     expect(input.get_shot_type()).toBe(HIT_LOB);
   });
 
-  it('get_serve returns true on BTN_B press', () => {
+  it('get_serve returns false on initial press (starts charging), true on release', () => {
     pressKey(' ');
+    expect(input.get_serve()).toBe(false);
+    releaseKey(' ');
     expect(input.get_serve()).toBe(true);
   });
 
-  it('get_serve returns true on Enter', () => {
+  it('get_serve returns true on Enter release after press', () => {
     pressKey('Enter');
+    expect(input.get_serve()).toBe(false);
+    releaseKey('Enter');
     expect(input.get_serve()).toBe(true);
   });
 
   it('get_serve returns false without press', () => {
     expect(input.get_serve()).toBe(false);
+  });
+
+  it('serve_power returns 0 when not charging', () => {
+    expect(input.get_serve_power()).toBe(0);
+  });
+
+  it('serve_power increases over time when holding serve button', () => {
+    pressKey(' ');
+    input.get_serve();
+    const halfCharge = input.get_serve_power();
+    expect(halfCharge).toBeGreaterThan(0);
+    // Simulate passing frames while held
+    for (let i = 0; i < SERVE_CHARGE_MAX_FRAMES; i++) {
+      input.update();
+      input.get_serve();
+    }
+    const fullCharge = input.get_serve_power();
+    expect(fullCharge).toBeCloseTo(1.0, 1);
+    expect(fullCharge).toBeGreaterThan(halfCharge);
+  });
+
+  it('reset_serve_charge clears charge state', () => {
+    pressKey(' ');
+    input.get_serve();
+    expect(input.get_serve_power()).toBeGreaterThan(0);
+    input.reset_serve_charge();
+    expect(input.get_serve_power()).toBe(0);
   });
 
   it('mouse mousedown sets BTN_A and BTN_B', () => {
