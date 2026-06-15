@@ -186,6 +186,26 @@ export const render = {
     }
   },
 
+  referee(state) {
+    if (!state || state.timer <= 0) return;
+
+    const refX = COURT_WIDTH / 2 + 1.0;
+    const refZ = COURT_LENGTH / 2;
+
+    ctx.fillStyle = '#fff';
+    camera.draw_char(refX, 1.2, refZ, '@');
+    camera.draw_char(refX, 0.9, refZ, '|');
+    camera.draw_char(refX - 0.4, 0.9, refZ, '/');
+    camera.draw_char(refX + 0.4, 0.9, refZ, '\\');
+    camera.draw_char(refX - 0.3, 0.4, refZ, '/');
+    camera.draw_char(refX + 0.3, 0.4, refZ, '\\');
+
+    if (state.message) {
+      ctx.fillStyle = '#ff0';
+      print(state.message, 140, 20);
+    }
+  },
+
   menu(selected_diff) {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____  _   _   ___   _   _   _____   ___   _   _   ____", 8, 15);

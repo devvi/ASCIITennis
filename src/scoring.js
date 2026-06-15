@@ -88,6 +88,14 @@ export const scoring = {
     return "set";
   },
 
+  resolve_violation(s, last_hitter, violation_type) {
+    if (last_hitter === null || last_hitter === undefined) {
+      return null;
+    }
+    const winner = 1 - last_hitter;
+    return this.award_point(s, winner);
+  },
+
   reset(s) {
     s.points = [0, 0];
     s.games = [0, 0];

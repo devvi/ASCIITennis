@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
-  BALL_RADIUS, COURT_LENGTH, NET_HEIGHT,
+  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
+  BALL_RADIUS, COURT_LENGTH, NET_HEIGHT, SINGLES_WIDTH, COURT_WIDTH,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
 } from '../src/constants.js';
@@ -108,16 +108,18 @@ describe('ball', () => {
     expect(b.bounces).toBe(1);
   });
 
-  it('ball becomes out after 3 bounces', () => {
+  it('ball can bounce multiple times on alternating sides without double bounce', () => {
     const b = ball.new();
     court.init();
     b.state = BALL_IN_PLAY;
+    b.z = 3;
     for (let i = 0; i < 5; i++) {
       b.y = BALL_RADIUS - 0.01;
       b.vy = -0.1;
       ball.update(b);
+      expect(b.state).not.toBe(BALL_DOUBLE_BOUNCE);
+      b.z = b.z < COURT_LENGTH / 2 ? COURT_LENGTH - 3 : 3;
     }
-    expect(b.state).toBe(BALL_OUT);
   });
 
   it('detects net hit', () => {
@@ -217,5 +219,70 @@ describe('ball', () => {
       }
       expect(reached).toBe(true);
     });
+  });
+
+  it('new() creates ball with last_hit_by null', () => {
+    const b = ball.new();
+    expect(b.last_hit_by).toBeNull();
+  });
+
+  it('new() creates ball with last_bounce_side null', () => {
+    const b = ball.new();
+    expect(b.last_bounce_side).toBeNull();
+  });
+
+  it('hit() sets last_hit_by to hitter index', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0);
+    expect(b.last_hit_by).toBe(0);
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 1);
+    expect(b.last_hit_by).toBe(1);
+  });
+
+  it('double bounce on same side sets BALL_DOUBLE_BOUNCE', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.z = 3;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_IN_PLAY);
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_DOUBLE_BOUNCE);
+  });
+
+  it('double bounce does not trigger on different sides', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.z = 3;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_IN_PLAY);
+    b.z = COURT_LENGTH - 3;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).not.toBe(BALL_DOUBLE_BOUNCE);
+    expect(b.last_bounce_side).toBe(1);
+  });
+
+  it('ball between singles and doubles sideline is OUT after bounce', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.x = SINGLES_WIDTH / 2 + 0.5;
+    b.z = COURT_LENGTH / 2;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    b.vz = 0;
+    b.bounces = 1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_OUT);
   });
 });

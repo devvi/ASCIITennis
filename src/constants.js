@@ -51,6 +51,13 @@ export const BALL_IN_PLAY = "in_play";
 export const BALL_OUT = "out";
 export const BALL_NET = "net";
 export const BALL_BOUNCE = "bounce";
+export const BALL_DOUBLE_BOUNCE = "double_bounce";
+
+export const VIOLATION_NONE = null;
+export const VIOLATION_OUT = "out";
+export const VIOLATION_NET = "net";
+export const VIOLATION_DOUBLE_BOUNCE = "double_bounce";
+export const VIOLATION_SERVE_FAULT = "serve_fault";
 
 export const POINTS = [0, 15, 30, 40];
 export const GAMES_TO_WIN_SET = 6;
