@@ -10,7 +10,7 @@ Outputs:
 - `docs/PRD/<issue-number>-<feature-name>.md` — product requirements, feature list, acceptance criteria
 - `docs/TASKS/<issue-number>-<feature-name>.md` — related modules, impacts, summary
 
-**IMPORTANT:** If creating a PR to merge research docs, the PR description MUST NOT include any closing keywords (Closes/Fixes/Resolves) referencing the parent issue. Parent issue stays open for subsequent phases.
+**CRITICAL:** The PR description MUST NEVER contain `Closes`, `Fixes`, or `Resolves` keywords referencing the parent issue. Parent issue must stay open for subsequent phases. Double-check the PR body before committing — if any closing keywords exist, remove them.
 
 ### /plan
 Using the research doc, create a phased plan.
@@ -36,7 +36,7 @@ Record the returned issue number as `PLAN_ISSUE` in `docs/TASKS/<issue-number>-<
 
 **You MUST run the `gh issue create` command above — do not just write it as documentation.**
 
-**IMPORTANT:** Do NOT include closing keywords for the parent issue in the plan PR/commit. Parent stays open.
+**CRITICAL:** Do NOT include closing keywords for the parent issue in the plan PR/commit. Parent stays open. Verify the PR body before pushing.
 
 ### /implement
 Read the TASK file and execute strictly phase by phase.

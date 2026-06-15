@@ -61,10 +61,7 @@ jobs:
           prompt: |
             Review this PR for critical issues only:
 
-            1. Check PR body: does it have Closes/Fixes/Resolves keywords
-               that would wrongly close the parent issue? Research/plan
-               PRs must NOT close parent issue. Fix via `gh pr edit`.
-            2. Any obvious bugs or security issues? If yes, fix and push.
+            Any obvious bugs or security issues? If yes, fix and push.
 
             If nothing critical, reply "No critical issues found."
             Do NOT post a detailed code review. Be concise.
