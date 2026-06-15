@@ -98,6 +98,8 @@ Write test cases for all new/modified behavior. Tests must pass before implement
 
 ## Progress Tracking
 
+**PLAN_ISSUE: #81**
+
 - [ ] Phase 1: Tests (TDD)
 - [ ] Phase 2: Serve Charge Mechanic
 - [ ] Phase 3: Tighter Hit Targeting
