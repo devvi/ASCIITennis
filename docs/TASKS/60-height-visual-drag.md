@@ -79,3 +79,29 @@ Alternatively, apply it after air resistance but before position integration —
 Apply the same change to `src/ball.lua` using identical constants and formula, adapted to Lua syntax. Existing Lua tests (if any) should also pass.
 
 **File:** `src/ball.lua`
+
+---
+
+## Phases (Plan Issue)
+
+**PLAN_ISSUE:** #66
+
+### Phase 1: Tests (TDD)
+- [ ] `ball.update()` applies horizontal slowdown when ball is at high y
+- [ ] `ball.update()` applies no slowdown when ball is at ground level
+- [ ] `ball.update()` applies intermediate slowdown at mid height
+- [ ] Height drag does not affect vertical velocity (vy)
+- [ ] Height drag does not affect ball when state is not BALL_IN_PLAY
+- [ ] Existing trajectory tests still pass
+- [ ] Landing prediction still returns a reasonable result
+
+### Phase 2: Constants
+- [ ] Add `HEIGHT_DRAG_STRENGTH = 0.4` to `src/constants.js`
+- [ ] Add `HEIGHT_DRAG_MAX_Y = 3.0` to `src/constants.js`
+
+### Phase 3: Core Logic
+- [ ] Apply height visual drag in `ball.update()` after air resistance, before gravity
+- [ ] Verify existing tests still pass
+
+### Phase 4: Lua Mirror
+- [ ] Apply same change to `src/ball.lua`
