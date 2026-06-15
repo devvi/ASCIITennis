@@ -1,11 +1,15 @@
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
   HIT_TOPSPIN, HIT_SLICE, HIT_LOB, HIT_FLAT,
+  SERVE_CHARGE_MAX_FRAMES,
 } from './constants.js';
 
 const NUM_BUTTONS = 8;
 let prev = new Array(NUM_BUTTONS).fill(false);
 let curr = new Array(NUM_BUTTONS).fill(false);
+
+let _serve_charge_start = null;
+let _serve_charge_frames = 0;
 
 const KEY_MAP = {
   "w": BTN_UP, "W": BTN_UP, "ArrowUp": BTN_UP,
@@ -57,6 +61,13 @@ function onTouchEnd(e) {
 
 export const input = {
   init(canvas) {
+    for (let i = 0; i < NUM_BUTTONS; i++) {
+      prev[i] = false;
+      curr[i] = false;
+    }
+    _serve_charge_start = null;
+    _serve_charge_frames = 0;
+
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     canvas.addEventListener("mousedown", onMouseDown);
@@ -105,6 +116,32 @@ export const input = {
   },
 
   get_serve() {
-    return this.pressed(BTN_B) || this.pressed(BTN_A);
+    if (_serve_charge_start !== null) {
+      if (this.held(BTN_B) || this.held(BTN_A)) {
+        _serve_charge_frames = Math.min(_serve_charge_frames + 1, SERVE_CHARGE_MAX_FRAMES);
+        return false;
+      }
+      const served = true;
+      _serve_charge_start = null;
+      _serve_charge_frames = 0;
+      return served;
+    }
+    if (this.pressed(BTN_B) || this.pressed(BTN_A)) {
+      _serve_charge_start = true;
+      _serve_charge_frames = 1;
+      return false;
+    }
+    return false;
+  },
+
+  get_serve_power() {
+    if (_serve_charge_start === null) return 0;
+    const t = Math.min(_serve_charge_frames, SERVE_CHARGE_MAX_FRAMES) / SERVE_CHARGE_MAX_FRAMES;
+    return t;
+  },
+
+  reset_serve_charge() {
+    _serve_charge_start = null;
+    _serve_charge_frames = 0;
   },
 };

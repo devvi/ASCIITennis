@@ -3,6 +3,7 @@ import {
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
   HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
+  SERVE_SPEED_MIN, SERVE_SPEED_MAX,
 } from './constants.js';
 import { court } from './court.js';
 
@@ -91,18 +92,18 @@ export const ball = {
     return { x: landing_x, z: landing_z };
   },
 
-  serve(b, from_x, from_z, target_x, target_z) {
+  serve(b, from_x, from_z, target_x, target_z, power = 1) {
     const dx = target_x - from_x;
     const dz = target_z - from_z;
     let dist = Math.sqrt(dx*dx + dz*dz);
     if (dist < 0.01) dist = 0.01;
-    const serve_speed = 0.45;
+    const serve_speed = SERVE_SPEED_MIN + power * (SERVE_SPEED_MAX - SERVE_SPEED_MIN);
     b.x = from_x;
     b.y = 1.5;
     b.z = from_z;
     b.vx = (dx / dist) * serve_speed;
     b.vz = (dz / dist) * serve_speed;
-    b.vy = 0.15;
+    b.vy = 0.08 + power * 0.12;
     b.spin_x = 0;
     b.spin_z = 0;
     b.bounces = 0;

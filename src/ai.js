@@ -1,5 +1,5 @@
 import {
-  COURT_LENGTH, COURT_WIDTH, PLAYER_SPEED,
+  COURT_LENGTH, COURT_WIDTH, PLAYER_SPEED, SINGLES_WIDTH,
   BALL_IN_PLAY, PLAYER_IDLE, PLAYER_MOVING, PLAYER_HITTING,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
@@ -100,8 +100,8 @@ export const ai = {
           hit_type = HIT_LOB;
         }
 
-        const target_x = (Math.random() - 0.5) * COURT_WIDTH * (1.2 - config.accuracy * 0.6);
-        const target_z = 1 + Math.random() * 4 * (1 - config.accuracy * 0.5);
+        const target_x = (Math.random() - 0.5) * SINGLES_WIDTH * (0.8 - config.accuracy * 0.3);
+        const target_z = 1 + Math.random() * 3 * (1 - config.accuracy * 0.4);
         return { hit_type, target_x, target_z };
       }
     }
