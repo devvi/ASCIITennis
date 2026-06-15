@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
-  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
-  BALL_RADIUS, COURT_LENGTH, NET_HEIGHT,
+  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
+  BALL_RADIUS, COURT_LENGTH, NET_HEIGHT, SINGLES_WIDTH, COURT_WIDTH,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
-  AIR_RESISTANCE, GRAVITY,
-  HEIGHT_DRAG_STRENGTH, HEIGHT_DRAG_MAX_Y,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -110,16 +108,18 @@ describe('ball', () => {
     expect(b.bounces).toBe(1);
   });
 
-  it('ball becomes out after 3 bounces', () => {
+  it('ball can bounce multiple times on alternating sides without double bounce', () => {
     const b = ball.new();
     court.init();
     b.state = BALL_IN_PLAY;
+    b.z = 3;
     for (let i = 0; i < 5; i++) {
       b.y = BALL_RADIUS - 0.01;
       b.vy = -0.1;
       ball.update(b);
+      expect(b.state).not.toBe(BALL_DOUBLE_BOUNCE);
+      b.z = b.z < COURT_LENGTH / 2 ? COURT_LENGTH - 3 : 3;
     }
-    expect(b.state).toBe(BALL_OUT);
   });
 
   it('detects net hit', () => {
@@ -153,153 +153,7 @@ describe('ball', () => {
     expect(b.state).toBe(BALL_OUT);
   });
 
-  describe('height visual drag', () => {
-    it('applies visual offset when ball is at high y', () => {
-      const b = ball.new();
-      court.init();
-      b.state = BALL_IN_PLAY;
-      b.x = 0;
-      b.y = 2.0;
-      b.z = 10;
-      b.draw_x = 0;
-      b.draw_z = 10;
-      b.vx = 0.5;
-      b.vz = -0.3;
-      b.vy = 0;
-      b.spin_x = 0;
-      b.spin_z = 0;
-      ball.update(b);
-      expect(b.draw_x).toBeLessThan(b.x);
-      expect(b.draw_z).toBeGreaterThan(b.z);
-    });
-
-    it('applies minimal visual offset when ball is at ground level', () => {
-      const b = ball.new();
-      court.init();
-      b.state = BALL_IN_PLAY;
-      b.x = 0;
-      b.y = BALL_RADIUS;
-      b.z = 10;
-      b.draw_x = 0;
-      b.draw_z = 10;
-      b.vx = 0.5;
-      b.vz = -0.3;
-      b.vy = -GRAVITY;
-      b.spin_x = 0;
-      b.spin_z = 0;
-      ball.update(b);
-      expect(b.draw_x).toBeCloseTo(b.x, 2);
-      expect(b.draw_z).toBeCloseTo(b.z, 2);
-    });
-
-    it('applies intermediate visual offset at mid height', () => {
-      const b = ball.new();
-      court.init();
-      b.state = BALL_IN_PLAY;
-      b.x = 0;
-      b.y = 1.0;
-      b.z = 10;
-      b.draw_x = 0;
-      b.draw_z = 10;
-      b.vx = 0.5;
-      b.vz = -0.3;
-      b.vy = 0;
-      b.spin_x = 0;
-      b.spin_z = 0;
-      const high_b = ball.new();
-      high_b.state = BALL_IN_PLAY;
-      high_b.x = 0;
-      high_b.y = 2.0;
-      high_b.z = 10;
-      high_b.draw_x = 0;
-      high_b.draw_z = 10;
-      high_b.vx = 0.5;
-      high_b.vz = -0.3;
-      high_b.vy = 0;
-      high_b.spin_x = 0;
-      high_b.spin_z = 0;
-      ball.update(b);
-      ball.update(high_b);
-      const mid_dx = Math.abs(b.x - b.draw_x);
-      const high_dx = Math.abs(high_b.x - high_b.draw_x);
-      expect(mid_dx).toBeGreaterThan(0);
-      expect(high_dx).toBeGreaterThan(mid_dx);
-    });
-
-    it('height drag does not affect physics velocity', () => {
-      const b = ball.new();
-      court.init();
-      b.state = BALL_IN_PLAY;
-      b.x = 0;
-      b.y = 2.0;
-      b.z = 10;
-      b.draw_x = 0;
-      b.draw_z = 10;
-      b.vx = 0.5;
-      b.vz = -0.3;
-      b.vy = -0.05;
-      b.spin_x = 0;
-      b.spin_z = 0;
-      const vx_before = b.vx;
-      const vz_before = b.vz;
-      const vy_before = b.vy;
-      ball.update(b);
-      expect(b.vy).toBe(vy_before + GRAVITY);
-      expect(b.vx).toBe(vx_before - vx_before * AIR_RESISTANCE);
-      expect(b.vz).toBe(vz_before - vz_before * AIR_RESISTANCE);
-    });
-
-    it('height drag does not affect ball when state is not BALL_IN_PLAY', () => {
-      const b = ball.new();
-      court.init();
-      b.state = BALL_HELD;
-      b.x = 0;
-      b.y = 2.0;
-      b.z = 10;
-      b.draw_x = 0;
-      b.draw_z = 10;
-      b.vx = 0.5;
-      b.vz = -0.3;
-      b.vy = 0;
-      b.spin_x = 0;
-      b.spin_z = 0;
-      const vx_before = b.vx;
-      const vz_before = b.vz;
-      const dx_before = b.draw_x;
-      const dz_before = b.draw_z;
-      ball.update(b);
-      expect(b.vx).toBe(vx_before);
-      expect(b.vz).toBe(vz_before);
-      expect(b.draw_x).toBe(dx_before);
-      expect(b.draw_z).toBe(dz_before);
-    });
-
-    it('landing prediction still returns a reasonable result for ball under height drag', () => {
-      const b = ball.new();
-      court.init();
-      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT);
-      b.spin_x = 0;
-      b.spin_z = 0;
-      for (let i = 0; i < 10; i++) {
-        ball.update(b);
-      }
-      if (b.state === BALL_IN_PLAY) {
-        const landing = ball.predict_landing(b);
-        if (landing !== null) {
-          expect(typeof landing.x).toBe('number');
-          expect(typeof landing.z).toBe('number');
-          expect(landing.z).toBeLessThanOrEqual(COURT_LENGTH);
-        }
-      }
-    });
-
-    it('draw_x and draw_z are initialized on new ball', () => {
-      const b = ball.new();
-      expect(b.draw_x).toBe(0);
-      expect(b.draw_z).toBe(0);
-    });
-  });
-
+  
   it('predict_landing returns landing coordinates for ball falling toward ground', () => {
     const b = ball.new();
     b.state = BALL_IN_PLAY;
@@ -366,5 +220,69 @@ describe('ball', () => {
       }
       expect(reached).toBe(true);
     });
+  });
+  it('new() creates ball with last_hit_by null', () => {
+    const b = ball.new();
+    expect(b.last_hit_by).toBeNull();
+  });
+
+  it('new() creates ball with last_bounce_side null', () => {
+    const b = ball.new();
+    expect(b.last_bounce_side).toBeNull();
+  });
+
+  it('hit() sets last_hit_by to hitter index', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0);
+    expect(b.last_hit_by).toBe(0);
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 1);
+    expect(b.last_hit_by).toBe(1);
+  });
+
+  it('double bounce on same side sets BALL_DOUBLE_BOUNCE', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.z = 3;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_IN_PLAY);
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_DOUBLE_BOUNCE);
+  });
+
+  it('double bounce does not trigger on different sides', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.z = 3;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_IN_PLAY);
+    b.z = COURT_LENGTH - 3;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).not.toBe(BALL_DOUBLE_BOUNCE);
+    expect(b.last_bounce_side).toBe(1);
+  });
+
+  it('ball between singles and doubles sideline is OUT after bounce', () => {
+    const b = ball.new();
+    court.init();
+    b.state = BALL_IN_PLAY;
+    b.x = SINGLES_WIDTH / 2 + 0.5;
+    b.z = COURT_LENGTH / 2;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    b.vz = 0;
+    b.bounces = 1;
+    ball.update(b);
+    expect(b.state).toBe(BALL_OUT);
   });
 });

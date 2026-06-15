@@ -2,6 +2,7 @@ import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER,
   PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH,
   BTN_UP, BTN_DOWN, BTN_B, BALL_HELD,
+  BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE,
 } from './constants.js';
 import { court } from './court.js';
 import { camera } from './camera.js';
@@ -24,6 +25,8 @@ let point_timer;
 let rally_hits;
 let serve_timer;
 let landing_pos;
+let referee_state;
+let serve_fault_checked;
 
 function init_game() {
   court.init();
@@ -41,6 +44,8 @@ function init_game() {
   rally_hits = 0;
   serve_timer = 0;
   landing_pos = null;
+  referee_state = { message: "", violation_type: null, timer: 0 };
+  serve_fault_checked = false;
 }
 
 function start_match() {
@@ -96,6 +101,7 @@ function do_serve() {
   }
   game_state = STATE_PLAYING;
   rally_hits = 0;
+  serve_fault_checked = false;
 }
 
 function resolve_point(winner) {
@@ -103,6 +109,34 @@ function resolve_point(winner) {
   point_winner = winner;
   point_timer = 60;
   game_state = STATE_POINT_SCORED;
+
+  if (result === "game") {
+    server = 1 - server;
+  }
+
+  if (result === "match") {
+    game_state = STATE_GAME_OVER;
+  }
+}
+
+const VIOLATION_MESSAGES = {
+  out: "OUT!",
+  net: "NET!",
+  double_bounce: "DOUBLE BOUNCE!",
+  serve_fault: "FAULT!",
+};
+
+function resolve_violation_point(violation_type, hitter) {
+  const winner = 1 - hitter;
+  point_winner = winner;
+  point_timer = 60;
+  game_state = STATE_POINT_SCORED;
+
+  referee_state.message = VIOLATION_MESSAGES[violation_type] || "";
+  referee_state.violation_type = violation_type;
+  referee_state.timer = 60;
+
+  const result = scoring.resolve_violation(score, hitter, violation_type);
 
   if (result === "game") {
     server = 1 - server;
@@ -151,14 +185,14 @@ function update_playing() {
     if (player.swing(human_player)) {
       const target_x = (Math.random() - 0.5) * COURT_WIDTH * 0.8;
       const target_z = COURT_LENGTH - 1 - Math.random() * 3;
-      ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot);
+      ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0);
       rally_hits += 1;
     }
   }
 
   const ai_action = ai.update(ai_player, ball_obj);
   if (ai_action) {
-    ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type);
+    ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type, 1);
     rally_hits += 1;
   }
   player.update(ai_player);
@@ -167,28 +201,49 @@ function update_playing() {
 
   landing_pos = ball.predict_landing(ball_obj);
 
-  if (ball_obj.state === "out") {
-    if (ball_obj.z < COURT_LENGTH / 2) {
-      resolve_point(1);
-    } else {
-      resolve_point(0);
+  if (rally_hits === 0 && !serve_fault_checked && ball_obj.bounces >= 1) {
+    serve_fault_checked = true;
+    const receiver_side = 1 - server;
+    if (!court.is_in_service_box(ball_obj.x, ball_obj.z, receiver_side)) {
+      resolve_violation_point("serve_fault", server);
+      return;
     }
-  } else if (ball_obj.state === "net") {
-    if (ball_obj.z < COURT_LENGTH / 2) {
-      resolve_point(1);
-    } else {
-      resolve_point(0);
+  }
+
+  if (ball_obj.state === BALL_DOUBLE_BOUNCE) {
+    if (ball_obj.last_hit_by !== null) {
+      resolve_violation_point("double_bounce", ball_obj.last_hit_by);
+    }
+  } else if (ball_obj.state === BALL_OUT) {
+    const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
+    if (hitter !== null) {
+      resolve_violation_point(rally_hits === 0 ? "serve_fault" : "out", hitter);
+    }
+  } else if (ball_obj.state === BALL_NET) {
+    const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
+    if (hitter !== null) {
+      resolve_violation_point("net", hitter);
     }
   } else if (ball_obj.z > COURT_LENGTH + 1) {
-    resolve_point(0);
+    const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
+    if (hitter !== null) {
+      resolve_violation_point(rally_hits === 0 ? "serve_fault" : "out", hitter);
+    }
   } else if (ball_obj.z < -1) {
-    resolve_point(1);
+    const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
+    if (hitter !== null) {
+      resolve_violation_point(rally_hits === 0 ? "serve_fault" : "out", hitter);
+    }
   }
 }
 
 function update_point_scored() {
   point_timer -= 1;
+  if (referee_state.timer > 0) {
+    referee_state.timer -= 1;
+  }
   if (point_timer <= 0) {
+    referee_state.timer = 0;
     game_state = STATE_SERVING;
     setup_serve();
   }
@@ -234,6 +289,8 @@ function draw_game() {
       print("AI serving...", 60, 120);
     }
   }
+
+  render.referee(referee_state);
 
   if (game_state === STATE_POINT_SCORED) {
     const name = point_winner === 0 ? "Player" : "AI";

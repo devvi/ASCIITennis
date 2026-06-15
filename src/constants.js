@@ -8,8 +8,6 @@ export const GRAVITY = -0.006;
 export const BOUNCE_FACTOR = 0.6;
 export const SPIN_FACTOR = 0.003;
 export const AIR_RESISTANCE = 0.005;
-export const HEIGHT_DRAG_STRENGTH = 0.4;
-export const HEIGHT_DRAG_MAX_Y = 3.0;
 
 export const HIT_FLAT = 1;
 export const HIT_TOPSPIN = 2;
@@ -53,6 +51,13 @@ export const BALL_IN_PLAY = "in_play";
 export const BALL_OUT = "out";
 export const BALL_NET = "net";
 export const BALL_BOUNCE = "bounce";
+export const BALL_DOUBLE_BOUNCE = "double_bounce";
+
+export const VIOLATION_NONE = null;
+export const VIOLATION_OUT = "out";
+export const VIOLATION_NET = "net";
+export const VIOLATION_DOUBLE_BOUNCE = "double_bounce";
+export const VIOLATION_SERVE_FAULT = "serve_fault";
 
 export const POINTS = [0, 15, 30, 40];
 export const GAMES_TO_WIN_SET = 6;

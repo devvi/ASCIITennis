@@ -164,14 +164,11 @@ export const render = {
   ball(b) {
     if (b.state !== "in_play" && b.state !== "bounce") return;
 
-    const dx = b.draw_x != null ? b.draw_x : b.x;
-    const dz = b.draw_z != null ? b.draw_z : b.z;
-
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    camera.draw_char(dx, 0.01, dz, '@');
+    camera.draw_char(b.x, 0.01, b.z, '@');
 
     ctx.fillStyle = '#ff0';
-    camera.draw_char(dx, b.y, dz, 'O');
+    camera.draw_char(b.x, b.y, b.z, 'O');
   },
 
   hud(score) {
@@ -188,6 +185,27 @@ export const render = {
       ctx.fillText("Sets " + score.sets[0] + "-" + score.sets[1], 2, 17);
     }
   },
+
+  referee(state) {
+    if (!state || state.timer <= 0) return;
+
+    const refX = COURT_WIDTH / 2 + 1.0;
+    const refZ = COURT_LENGTH / 2;
+
+    ctx.fillStyle = '#fff';
+    camera.draw_char(refX, 1.2, refZ, '@');
+    camera.draw_char(refX, 0.9, refZ, '|');
+    camera.draw_char(refX - 0.4, 0.9, refZ, '/');
+    camera.draw_char(refX + 0.4, 0.9, refZ, '\\');
+    camera.draw_char(refX - 0.3, 0.4, refZ, '/');
+    camera.draw_char(refX + 0.3, 0.4, refZ, '\\');
+
+    if (state.message) {
+      ctx.fillStyle = '#ff0';
+      print(state.message, 140, 20);
+    }
+  },
+
 
   menu(selected_diff) {
     ctx.fillStyle = "#fff";

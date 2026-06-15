@@ -107,4 +107,24 @@ describe('render (perspective)', () => {
     render.landing_marker({ x: 0, z: 10 });
     expect(mockCtx.fillText).toHaveBeenCalledWith('X', expect.any(Number), expect.any(Number));
   });
+  it('referee draws referee character when active', () => {
+    render.referee({ message: '', timer: 60, violation_type: null });
+    expect(mockCtx.fillText).toHaveBeenCalledWith('@', expect.any(Number), expect.any(Number));
+  });
+
+  it('referee does nothing when timer expired', () => {
+    vi.clearAllMocks();
+    render.referee({ message: 'OUT!', timer: 0, violation_type: 'out' });
+    expect(mockCtx.fillText).not.toHaveBeenCalled();
+  });
+
+  it('referee draws violation message text', () => {
+    render.referee({ message: 'OUT!', timer: 60, violation_type: 'out' });
+    expect(mockCtx.fillText).toHaveBeenCalledWith('OUT!', expect.any(Number), expect.any(Number));
+  });
+
+  it('referee draws NET! message for net violation', () => {
+    render.referee({ message: 'NET!', timer: 60, violation_type: 'net' });
+    expect(mockCtx.fillText).toHaveBeenCalledWith('NET!', expect.any(Number), expect.any(Number));
+  });
 });

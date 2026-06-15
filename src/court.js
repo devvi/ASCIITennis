@@ -34,13 +34,23 @@ export const court = {
   },
 
   is_in_bounds(x, z) {
-    return x >= -COURT_WIDTH/2 && x <= COURT_WIDTH/2
+    return x >= -SINGLES_WIDTH/2 && x <= SINGLES_WIDTH/2
       && z >= 0 && z <= COURT_LENGTH;
   },
 
   is_in_player_side(z) {
     return z < COURT_LENGTH / 2;
   },
+
+  is_in_service_box(x, z, side) {
+    if (side === 0) {
+      if (z < 0 || z > COURT_LENGTH / 4) return false;
+    } else {
+      if (z < 3 * COURT_LENGTH / 4 || z > COURT_LENGTH) return false;
+    }
+    return x >= -SINGLES_WIDTH / 2 && x <= SINGLES_WIDTH / 2;
+  },
+
 
   hits_net(x, z, prev_z, ball_height) {
     if (ball_height > NET_HEIGHT) return false;

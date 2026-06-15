@@ -138,4 +138,29 @@ describe('scoring', () => {
     expect(s.deuce).toBe(false);
     expect(s.advantage).toBeNull();
   });
+  it('resolve_violation awards point to opponent for OUT violation', () => {
+    const s = scoring.new();
+    scoring.resolve_violation(s, 0, 'out');
+    expect(s.points[1]).toBe(1);
+    expect(s.points[0]).toBe(0);
+  });
+
+  it('resolve_violation awards point to opponent for NET violation', () => {
+    const s = scoring.new();
+    scoring.resolve_violation(s, 1, 'net');
+    expect(s.points[0]).toBe(1);
+    expect(s.points[1]).toBe(0);
+  });
+
+  it('resolve_violation awards point to opponent for DOUBLE_BOUNCE violation', () => {
+    const s = scoring.new();
+    scoring.resolve_violation(s, 0, 'double_bounce');
+    expect(s.points[1]).toBe(1);
+  });
+
+  it('resolve_violation awards point to opponent for SERVE_FAULT violation', () => {
+    const s = scoring.new();
+    scoring.resolve_violation(s, 0, 'serve_fault');
+    expect(s.points[1]).toBe(1);
+  });
 });

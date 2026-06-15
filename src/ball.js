@@ -1,8 +1,7 @@
 import {
-  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE,
+  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
-  HEIGHT_DRAG_STRENGTH, HEIGHT_DRAG_MAX_Y,
   HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
 } from './constants.js';
 import { court } from './court.js';
@@ -15,7 +14,8 @@ export const ball = {
       spin_x: 0, spin_z: 0,
       state: BALL_HELD,
       bounces: 0,
-      draw_x: 0, draw_z: 0,
+      last_hit_by: null,
+      last_bounce_side: null,
     };
   },
 
@@ -32,11 +32,6 @@ export const ball = {
     b.y = b.y + b.vy;
     b.z = b.z + b.vz;
 
-    const height_ratio = Math.min(b.y / HEIGHT_DRAG_MAX_Y, 1.0);
-    const follow_factor = 1 - HEIGHT_DRAG_STRENGTH * height_ratio;
-    b.draw_x += (b.x - b.draw_x) * follow_factor;
-    b.draw_z += (b.z - b.draw_z) * follow_factor;
-
     if (b.y < BALL_RADIUS) {
       b.y = BALL_RADIUS;
       b.vy = -b.vy * BOUNCE_FACTOR;
@@ -44,8 +39,11 @@ export const ball = {
       b.vz = b.vz * 0.8;
       b.bounces += 1;
 
-      if (b.bounces > 2) {
-        b.state = BALL_OUT;
+      const side = b.z < COURT_LENGTH / 2 ? 0 : 1;
+      if (b.last_bounce_side !== null && b.last_bounce_side === side) {
+        b.state = BALL_DOUBLE_BOUNCE;
+      } else {
+        b.last_bounce_side = side;
       }
     }
 
@@ -102,8 +100,6 @@ export const ball = {
     b.x = from_x;
     b.y = 1.5;
     b.z = from_z;
-    b.draw_x = from_x;
-    b.draw_z = from_z;
     b.vx = (dx / dist) * serve_speed;
     b.vz = (dz / dist) * serve_speed;
     b.vy = 0.15;
@@ -111,9 +107,11 @@ export const ball = {
     b.spin_z = 0;
     b.bounces = 0;
     b.state = BALL_IN_PLAY;
+    b.last_hit_by = null;
+    b.last_bounce_side = null;
   },
 
-  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type) {
+  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter) {
     const params = HIT_PARAMS[hit_type] || HIT_PARAMS[HIT_FLAT];
 
     const dx = target_x - hit_x;
@@ -125,8 +123,6 @@ export const ball = {
     b.x = hit_x;
     b.y = hit_y;
     b.z = hit_z;
-    b.draw_x = hit_x;
-    b.draw_z = hit_z;
     b.vx = (dx / dist) * speed;
     b.vz = (dz / dist) * speed;
     const vy_values = { [HIT_FLAT]: 0.14, [HIT_TOPSPIN]: 0.18, [HIT_SLICE]: 0.18, [HIT_LOB]: 0.50 };
@@ -135,5 +131,9 @@ export const ball = {
     b.spin_z = params.spin * 0.5;
     b.bounces = 0;
     b.state = BALL_IN_PLAY;
+    b.last_bounce_side = null;
+    if (hitter !== undefined) {
+      b.last_hit_by = hitter;
+    }
   },
 };
