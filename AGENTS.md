@@ -17,7 +17,7 @@ Using the research doc, create a phased plan.
 Outputs:
 - `docs/DESIGN/<issue-number>-<feature-name>.md` — architecture, data structures, module design
 - Append phases to `docs/TASKS/<issue-number>-<feature-name>.md`
-- Create a GitHub Issue for each phase (title: `[<issue-number>] Phase N: <name>`), labels: `phase`, parent issue in body
+- Create **one consolidated plan issue** containing all phases as task lists (title: `[<issue-number>] Plan: <feature-name>`), labels: `phase`, parent issue in body
 
 Format:
 - Phase 1: Tests (write test cases first — TDD)
@@ -25,16 +25,16 @@ Format:
 - Phase 3: Core logic
 - Phase 4: UI/output
 
-**Create GitHub Issues for each phase:**
-After writing the DESIGN and TASKS docs, use `gh` to create one issue per phase:
+**Create one consolidated plan issue:**
+After writing the DESIGN and TASKS docs, use `gh` to create a single issue:
 ```
-gh issue create --title "[<parent-issue>] Phase <N>: <name>" \
+gh issue create --title "[<parent-issue>] Plan: <feature-name>" \
   --label "phase" \
-  --body "Parent: #<parent-issue>\nSee docs/DESIGN/<parent-issue>.md for design details.\n\n### Tasks\n- [ ] Task 1\n- [ ] Task 2"
+  --body "Parent: #<parent-issue>\nSee docs/DESIGN/<parent-issue>.md for design details.\n\n### Phase 1: Tests\n- [ ] Task 1\n\n### Phase 2: Data structures\n- [ ] Task 1\n\n### Phase 3: Core logic\n- [ ] Task 1\n\n### Phase 4: UI/output\n- [ ] Task 1"
 ```
-Record the returned issue numbers in `docs/TASKS/<issue-number>-<feature-name>.md` under each phase.
+Record the returned issue number as `PLAN_ISSUE` in `docs/TASKS/<issue-number>-<feature-name>.md`.
 
-**You MUST run the `gh issue create` commands above — do not just write them as documentation.**
+**You MUST run the `gh issue create` command above — do not just write it as documentation.**
 
 **IMPORTANT:** Do NOT include closing keywords for the parent issue in the plan PR/commit. Parent stays open.
 
@@ -53,9 +53,9 @@ Read the TASK file and execute strictly phase by phase.
 - Keyboard `keydown`/`keyup` events update virtual button states correctly
 - Mouse `mousedown`/`mouseup` events set BTN_A and BTN_B correctly
 - `update()` correctly snapshots previous frame state for pressed/released detection
-- As each task within a phase is done, check it off in the phase issue body using `gh issue edit <phase-issue-n> --body '<updated body>'`
-- After each completed phase, commit and push, with `Closes #<phase-issue-n>` in the commit message to close that phase issue on merge
-- After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` plus `Closes #<phase-1>, Closes #<phase-2>, ...` to auto-close the parent and all phase issues on merge
+- As each task within a phase is done, check it off in the plan issue body using `gh issue edit <plan-issue-n> --body '<updated body>'`
+- After each completed phase, commit and push — commit message should mention progress but NOT close the plan issue
+- After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` and `Closes #<plan-issue>` to auto-close both on merge
 
 ## Workflow
 
