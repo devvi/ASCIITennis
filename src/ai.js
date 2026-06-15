@@ -32,15 +32,15 @@ export const ai = {
     const base_z = COURT_LENGTH - 2;
 
     if (ball.state === BALL_IN_PLAY) {
-      if (ball.vz < 0 && ball.z > COURT_LENGTH * 0.4) {
+      if (ball.vz > 0 && ball.z > COURT_LENGTH * 0.4) {
         if (ai_player.reaction_counter < config.reaction_time) {
           ai_player.reaction_counter += 1;
           ai_player.target_x = court_center_x;
           ai_player.target_z = base_z;
         } else {
-          const relative_vz = -ball.vz;
+          const relative_vz = ball.vz;
           const rvz = relative_vz < 0.01 ? 0.01 : relative_vz;
-          const time_to_reach_z = (ball.z - 2) / rvz;
+          const time_to_reach_z = (base_z - ball.z) / rvz;
           const predicted_x = ball.x + ball.vx * time_to_reach_z * 0.8;
           const jitter = (1 - config.accuracy) * 4;
           ai_player.target_x = predicted_x + (Math.random() - 0.5) * jitter;
