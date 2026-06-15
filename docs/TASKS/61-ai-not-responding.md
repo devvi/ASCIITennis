@@ -13,6 +13,8 @@
 - Requires adjusting prediction math (`-ball.vz` negation removal, `ball.z - 2` → `base_z - ball.z`)
 - Existing tests for AI behavior may need updated expectations
 
+## PLAN_ISSUE: 68
+
 ## Summary
 
 A one-condition inversion bug in `src/ai.js:35` causes the AI to never track balls coming toward it. The tracking branch only activates when the ball moves away from the AI, but the hit check requires the ball to be approaching. Fixing the direction check and prediction math restores AI functionality.
