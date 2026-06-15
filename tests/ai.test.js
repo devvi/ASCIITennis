@@ -34,10 +34,52 @@ describe('ai', () => {
   it('update moves AI toward ball when in play', () => {
     const p = ai.new_player('easy');
     p.reaction_counter = 999;
-    const b = { state: BALL_IN_PLAY, x: 3, z: COURT_LENGTH - 5, vz: -0.3, vx: 0, vy: 0, y: 1.0 };
+    const b = { state: BALL_IN_PLAY, x: 3, z: COURT_LENGTH - 5, vz: 0.3, vx: 0, vy: 0, y: 1.0 };
     const oldX = p.x;
     ai.update(p, b);
     expect(p.x).not.toBe(oldX);
+  });
+
+  it('update returns hit action when ball is reachable in AI half', () => {
+    const p = ai.new_player('hard');
+    p.reaction_counter = 999;
+    const ai_target_z = Math.max(COURT_LENGTH * 0.6, COURT_LENGTH - 2 - (1 - 0.7) * 2);
+    p.x = 0;
+    p.z = ai_target_z;
+    p.state = PLAYER_IDLE;
+    const b = {
+      state: BALL_IN_PLAY,
+      x: 0,
+      z: COURT_LENGTH - 5,
+      vz: 0.2,
+      vx: 0,
+      vy: 0,
+      y: 1.0,
+    };
+    const result = ai.update(p, b);
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('hit_type');
+    expect(result).toHaveProperty('target_x');
+    expect(result).toHaveProperty('target_z');
+  });
+
+  it('update tracks ball at different positions in AI half', () => {
+    const p = ai.new_player('hard');
+    p.reaction_counter = 999;
+    const oldX = p.x;
+    const oldZ = p.z;
+    const b = {
+      state: BALL_IN_PLAY,
+      x: -2,
+      z: COURT_LENGTH - 6,
+      vz: 0.25,
+      vx: 0.1,
+      vy: 0,
+      y: 1.0,
+    };
+    ai.update(p, b);
+    expect(p.x).not.toBe(oldX);
+    expect(p.z).not.toBe(oldZ);
   });
 
   it('update returns null when ball is not in play', () => {
