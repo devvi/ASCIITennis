@@ -84,3 +84,5 @@ Write test cases before implementation.
 - Update POINT_SCORED display to include referee judgment
 
 **File:** `src/render.js`, `src/main.js`
+
+**PLAN_ISSUE:** #70
