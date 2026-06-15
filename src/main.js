@@ -163,8 +163,8 @@ function update_serving() {
   serve_timer -= 1;
 
   if (server === 0) {
+    const serve_power = input.get_serve_power();
     if (input.get_serve()) {
-      const serve_power = input.get_serve_power();
       input.reset_serve_charge();
       do_serve(serve_power);
     }
