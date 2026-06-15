@@ -8,6 +8,8 @@ export const GRAVITY = -0.006;
 export const BOUNCE_FACTOR = 0.6;
 export const SPIN_FACTOR = 0.003;
 export const AIR_RESISTANCE = 0.005;
+export const HEIGHT_DRAG_STRENGTH = 0.4;
+export const HEIGHT_DRAG_MAX_Y = 3.0;
 
 export const HIT_FLAT = 1;
 export const HIT_TOPSPIN = 2;
