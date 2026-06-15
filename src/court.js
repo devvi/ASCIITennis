@@ -51,6 +51,7 @@ export const court = {
     return x >= -SINGLES_WIDTH / 2 && x <= SINGLES_WIDTH / 2;
   },
 
+
   hits_net(x, z, prev_z, ball_height) {
     if (ball_height > NET_HEIGHT) return false;
     return (prev_z < COURT_LENGTH/2 && z >= COURT_LENGTH/2)

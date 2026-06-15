@@ -7,6 +7,7 @@ function ball.new()
     spin_x = 0, spin_z = 0,
     state = BALL_HELD,
     bounces = 0,
+    draw_x = 0, draw_z = 0,
   }
 end
 
@@ -22,6 +23,11 @@ function ball.update(b, dt)
   b.x = b.x + b.vx * dt
   b.y = b.y + b.vy * dt
   b.z = b.z + b.vz * dt
+
+  local height_ratio = math.min(b.y / HEIGHT_DRAG_MAX_Y, 1.0)
+  local follow_factor = 1 - HEIGHT_DRAG_STRENGTH * height_ratio
+  b.draw_x = b.draw_x + (b.x - b.draw_x) * follow_factor
+  b.draw_z = b.draw_z + (b.z - b.draw_z) * follow_factor
 
   if b.y < BALL_RADIUS then
     b.y = BALL_RADIUS
@@ -64,6 +70,8 @@ function ball.serve(b, from_x, from_z, target_x, target_z)
   b.x = from_x
   b.y = 1.5
   b.z = from_z
+  b.draw_x = from_x
+  b.draw_z = from_z
   b.vx = (dx / dist) * serve_speed
   b.vz = (dz / dist) * serve_speed
   b.vy = 1.2
@@ -86,6 +94,8 @@ function ball.hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type)
   b.x = hit_x
   b.y = hit_y
   b.z = hit_z
+  b.draw_x = hit_x
+  b.draw_z = hit_z
   b.vx = (dx / dist) * speed
   b.vz = (dz / dist) * speed
   b.vy = 1.5 + params.arc * 2

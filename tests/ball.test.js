@@ -153,6 +153,7 @@ describe('ball', () => {
     expect(b.state).toBe(BALL_OUT);
   });
 
+  
   it('predict_landing returns landing coordinates for ball falling toward ground', () => {
     const b = ball.new();
     b.state = BALL_IN_PLAY;
@@ -220,7 +221,6 @@ describe('ball', () => {
       expect(reached).toBe(true);
     });
   });
-
   it('new() creates ball with last_hit_by null', () => {
     const b = ball.new();
     expect(b.last_hit_by).toBeNull();

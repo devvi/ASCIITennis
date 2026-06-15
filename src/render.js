@@ -206,6 +206,7 @@ export const render = {
     }
   },
 
+
   menu(selected_diff) {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____  _   _   ___   _   _   _____   ___   _   _   ____", 8, 15);

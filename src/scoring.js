@@ -96,6 +96,7 @@ export const scoring = {
     return this.award_point(s, winner);
   },
 
+
   reset(s) {
     s.points = [0, 0];
     s.games = [0, 0];

@@ -60,7 +60,6 @@ describe('court', () => {
     court.init();
     expect(court.hits_net(0, 1, 0, 0.5)).toBe(false);
   });
-
   it('is_in_bounds with singles width rejects ball in doubles alley', () => {
     court.init();
     const alley_x = SINGLES_WIDTH / 2 + 0.5;

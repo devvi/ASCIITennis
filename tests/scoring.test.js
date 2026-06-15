@@ -138,7 +138,6 @@ describe('scoring', () => {
     expect(s.deuce).toBe(false);
     expect(s.advantage).toBeNull();
   });
-
   it('resolve_violation awards point to opponent for OUT violation', () => {
     const s = scoring.new();
     scoring.resolve_violation(s, 0, 'out');
