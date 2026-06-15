@@ -36,7 +36,7 @@ Record the returned issue number as `PLAN_ISSUE` in `docs/TASKS/<issue-number>-<
 
 **You MUST run the `gh issue create` command above — do not just write it as documentation.**
 
-**CRITICAL:** Do NOT include closing keywords for the parent issue in the plan PR/commit. Parent stays open. Verify the PR body before pushing.
+**CRITICAL:** The plan issue body MUST also not contain `Closes`/`Fixes`/`Resolves` for the parent issue — use `Parent:` only. Same applies to PR/commit. Parent stays open. Verify both issue body and PR body before pushing.
 
 ### /implement
 Read the TASK file and execute strictly phase by phase.
