@@ -1,5 +1,7 @@
 # Issue 75: Camera Perspective Iteration — Tasks
 
+PLAN_ISSUE: #79
+
 ## Related Modules
 
 - `src/camera.js` — add pitch rotation to `project()`, add `init()` to compute rotation matrix if needed
