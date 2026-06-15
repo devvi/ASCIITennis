@@ -1,4 +1,4 @@
-import { SCREEN_W, SCREEN_H, FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y } from './constants.js';
+import { SCREEN_W, SCREEN_H, FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y, CAM_PITCH } from './constants.js';
 
 let printChar = () => {};
 
@@ -7,15 +7,23 @@ export function setDrawChar(fn) {
 }
 
 export const camera = {
-  init() {
+  init(pitch = CAM_PITCH) {
+    this.pitch = pitch;
   },
 
   project(x, y, z) {
-    const rz = z - CAM_Z;
-    if (rz <= 0.01) return null;
-    const scale = FOCAL / rz;
-    const sx = SCREEN_W / 2 + x * scale;
-    const sy = HORIZON_Y - (y - CAM_HEIGHT) * scale;
+    const dx = x;
+    const dy = y - CAM_HEIGHT;
+    const dz = z - CAM_Z;
+    const pitch = this.pitch;
+    const cosP = Math.cos(pitch);
+    const sinP = Math.sin(pitch);
+    const dyR = dy * cosP - dz * sinP;
+    const dzR = dy * sinP + dz * cosP;
+    if (dzR <= 0.01) return null;
+    const scale = FOCAL / dzR;
+    const sx = SCREEN_W / 2 + dx * scale;
+    const sy = HORIZON_Y - dyR * scale;
     return { sx, sy, scale };
   },
 

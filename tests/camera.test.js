@@ -1,11 +1,65 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SCREEN_W, SCREEN_H, COURT_LENGTH, COURT_WIDTH, HUD_HEIGHT,
-  FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y } from '../src/constants.js';
+  FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y, CAM_PITCH } from '../src/constants.js';
 import { camera, setDrawChar } from '../src/camera.js';
 
 describe('camera (perspective)', () => {
   beforeEach(() => {
     camera.init();
+  });
+
+  describe('pitch', () => {
+    it('init stores the pitch angle', () => {
+      camera.init(-0.3);
+      expect(camera.pitch).toBe(-0.3);
+    });
+
+    it('init defaults to CAM_PITCH when no argument given', () => {
+      camera.init();
+      expect(camera.pitch).toBe(CAM_PITCH);
+    });
+
+    it('zero pitch matches original projection formula', () => {
+      camera.init(0);
+      const p = camera.project(0, 0, 10);
+      const expectedSy = HORIZON_Y - (0 - CAM_HEIGHT) * FOCAL / (10 - CAM_Z);
+      const expectedSx = SCREEN_W / 2;
+      expect(p.sx).toBeCloseTo(expectedSx, 5);
+      expect(p.sy).toBeCloseTo(expectedSy, 5);
+      expect(p.scale).toBeCloseTo(FOCAL / (10 - CAM_Z), 5);
+    });
+
+    it('negative pitch shifts far-court points upward on screen', () => {
+      camera.init(0);
+      const pFlat = camera.project(0, 0, 10);
+      camera.init(-0.15);
+      const pDown = camera.project(0, 0, 10);
+      expect(pDown.sy).toBeLessThan(pFlat.sy);
+    });
+
+    it('positive pitch shifts far-court points downward on screen', () => {
+      camera.init(0);
+      const pFlat = camera.project(0, 0, 10);
+      camera.init(0.15);
+      const pUp = camera.project(0, 0, 10);
+      expect(pUp.sy).toBeGreaterThan(pFlat.sy);
+    });
+
+    it('negative pitch shifts horizon line upward (smaller sy)', () => {
+      camera.init(0);
+      const pHoriz = camera.project(0, CAM_HEIGHT, 100);
+      camera.init(-0.15);
+      const pTilt = camera.project(0, CAM_HEIGHT, 100);
+      expect(pTilt.sy).toBeLessThan(pHoriz.sy);
+    });
+
+    it('positive pitch shifts horizon line downward (larger sy)', () => {
+      camera.init(0);
+      const pHoriz = camera.project(0, CAM_HEIGHT, 100);
+      camera.init(0.15);
+      const pTilt = camera.project(0, CAM_HEIGHT, 100);
+      expect(pTilt.sy).toBeGreaterThan(pHoriz.sy);
+    });
   });
 
   it('init does not throw', () => {
