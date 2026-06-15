@@ -71,6 +71,15 @@ Read the TASK file and execute strictly phase by phase.
 - `opencode test <request>` — write/run tests
 - `opencode review <request>` — review code
 
+## Git Workflow
+
+### Pushing
+Always pull before push:
+```bash
+git pull --rebase && git push
+```
+This avoids rejected pushes due to remote changes.
+
 ## CI: Automated PR Review (Self-Healing)
 
 Every pull request is automatically processed by opencode:
