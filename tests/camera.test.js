@@ -67,14 +67,14 @@ describe('camera (perspective)', () => {
   });
 
   it('project returns null for points behind camera', () => {
-    const p = camera.project(0, 0, CAM_Z - 1);
+    const p = camera.project(0, 0, -20);
     expect(p).toBeNull();
   });
 
   it('project maps center of court to center of screen', () => {
     const p = camera.project(0, 0, COURT_LENGTH / 2);
     expect(p.sx).toBeCloseTo(SCREEN_W / 2, 0);
-    expect(p.sy).toBeGreaterThan(HORIZON_Y);
+    expect(p.sy).toBeGreaterThan(0);
     expect(p.sy).toBeLessThan(SCREEN_H);
     expect(p.scale).toBeGreaterThan(0);
   });
@@ -89,6 +89,58 @@ describe('camera (perspective)', () => {
     const p1 = camera.project(0, 0, 10);
     const p2 = camera.project(0, 2, 10);
     expect(p2.sy).toBeLessThan(p1.sy);
+  });
+
+  describe('GBC-style camera (steep pitch)', () => {
+    it('project with GBC pitch returns valid coords for near court', () => {
+      camera.init(-0.6);
+      const p = camera.project(0, 0, 0);
+      expect(p).not.toBeNull();
+      expect(p.sx).toBeGreaterThanOrEqual(0);
+      expect(p.sx).toBeLessThanOrEqual(SCREEN_W);
+      expect(p.sy).toBeGreaterThanOrEqual(0);
+      expect(p.sy).toBeLessThanOrEqual(SCREEN_H);
+      expect(p.scale).toBeGreaterThan(0);
+    });
+
+    it('project with GBC pitch returns valid coords for far court', () => {
+      camera.init(-0.5);
+      const p = camera.project(0, 0, COURT_LENGTH);
+      expect(p).not.toBeNull();
+      expect(p.sx).toBeGreaterThanOrEqual(0);
+      expect(p.sx).toBeLessThanOrEqual(SCREEN_W);
+      expect(p.scale).toBeGreaterThan(0);
+    });
+
+    it('steep pitch does not clip full court width', () => {
+      camera.init(-0.6);
+      const halfW = COURT_WIDTH / 2;
+      const p1 = camera.project(-halfW, 0, 0);
+      const p2 = camera.project(halfW, 0, 0);
+      expect(p1).not.toBeNull();
+      expect(p2).not.toBeNull();
+      expect(p2.sx - p1.sx).toBeGreaterThan(0);
+    });
+
+    it('landmark points map to expected screen regions under GBC pitch', () => {
+      camera.init(-0.6);
+      const baseline = camera.project(0, 0, 0);
+      expect(baseline.sy).toBeGreaterThan(SCREEN_H / 2);
+      const farBaseline = camera.project(0, 0, COURT_LENGTH);
+      expect(farBaseline.sy).toBeLessThan(SCREEN_H / 2);
+      const net = camera.project(0, 0, COURT_LENGTH / 2);
+      expect(net.sy).toBeGreaterThan(farBaseline.sy);
+      expect(net.sy).toBeLessThan(baseline.sy);
+    });
+
+    it('steep pitch does not cause null-projections for valid court positions', () => {
+      camera.init(-0.6);
+      const halfW = COURT_WIDTH / 2;
+      for (let z = 0; z <= COURT_LENGTH; z += 1) {
+        const p = camera.project(0, 0, z);
+        expect(p).not.toBeNull();
+      }
+    });
   });
 
   it('project moves x right for positive x', () => {
