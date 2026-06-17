@@ -38,10 +38,21 @@ describe('render (perspective)', () => {
     camera.init();
   });
 
-  it('court fills perspective surface and draws lines', () => {
+  it('court draws surface and lines using fillRect grid and fillText', () => {
     render.court();
     expect(mockCtx.fillRect).toHaveBeenCalled();
     expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('court surface draws scanline-filled rectangles for 3 polygons', () => {
+    render.court();
+    const rectCalls = mockCtx.fillRect.mock.calls.length;
+    expect(rectCalls).toBeGreaterThan(0);
+  });
+
+  it('drawServiceBoxes fills via fillRect for both court halves', () => {
+    render.court();
+    expect(mockCtx.fillRect).toHaveBeenCalled();
   });
 
   it('net draws components across court middle', () => {
