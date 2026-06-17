@@ -11,6 +11,11 @@ const mockCtx = {
   fillRect: vi.fn(),
   fillText: vi.fn(),
   setTransform: vi.fn(),
+  beginPath: vi.fn(),
+  moveTo: vi.fn(),
+  lineTo: vi.fn(),
+  closePath: vi.fn(),
+  fill: vi.fn(),
   imageSmoothingEnabled: false,
   font: '',
   textBaseline: '',
@@ -40,8 +45,26 @@ describe('render (perspective)', () => {
 
   it('court fills perspective surface and draws lines', () => {
     render.court();
-    expect(mockCtx.fillRect).toHaveBeenCalled();
+    expect(mockCtx.beginPath).toHaveBeenCalled();
+    expect(mockCtx.moveTo).toHaveBeenCalled();
+    expect(mockCtx.lineTo).toHaveBeenCalled();
+    expect(mockCtx.closePath).toHaveBeenCalled();
+    expect(mockCtx.fill).toHaveBeenCalled();
     expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('court surface draws filled polygon with 4 corners', () => {
+    render.court();
+    expect(mockCtx.moveTo).toHaveBeenCalledTimes(3); // 1 court + 2 service boxes
+    expect(mockCtx.lineTo).toHaveBeenCalledTimes(9); // 3 per polygon × 3 polygons
+    expect(mockCtx.closePath).toHaveBeenCalledTimes(3);
+    expect(mockCtx.fill).toHaveBeenCalledTimes(3);
+  });
+
+  it('drawServiceBoxes fills polygons for both court halves', () => {
+    render.court();
+    const fillCalls = mockCtx.fill.mock.calls.length;
+    expect(fillCalls).toBe(3);
   });
 
   it('net draws components across court middle', () => {

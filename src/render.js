@@ -1,6 +1,6 @@
-import { SCREEN_W, SCREEN_H, COURT_WIDTH, COURT_LENGTH, HUD_HEIGHT, NET_HEIGHT, NET_POST_HEIGHT,
-  FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y,
-  COURT_SURFACE, COURT_SURFACE_DARK, COURT_OUTSIDE, SERVICE_BOX_FILL } from './constants.js';
+import { SCREEN_W, SCREEN_H, COURT_WIDTH, COURT_LENGTH,
+  NET_HEIGHT, NET_POST_HEIGHT,
+  COURT_SURFACE, SERVICE_BOX_FILL } from './constants.js';
 import { camera, setDrawChar } from './camera.js';
 import { scoring } from './scoring.js';
 import { court } from './court.js';
@@ -33,46 +33,43 @@ export function print(str, x, y) {
   ctx.fillText(str, x, y);
 }
 
+function fillQuad(ctx, corners) {
+  if (corners.length < 4) return;
+  ctx.beginPath();
+  ctx.moveTo(corners[0].sx, corners[0].sy);
+  for (let i = 1; i < corners.length; i++) {
+    ctx.lineTo(corners[i].sx, corners[i].sy);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
 function drawCourtSurface() {
   ctx.fillStyle = COURT_SURFACE;
-  const Z_STEPS = 80;
-  for (let i = 0; i <= Z_STEPS; i++) {
-    const t = i / Z_STEPS;
-    const z = t * COURT_LENGTH;
-    const halfW = COURT_WIDTH / 2;
-    const left = camera.project(-halfW, 0, z);
-    const right = camera.project(halfW, 0, z);
-    if (!left || !right) continue;
-    const sy = Math.round(left.sy);
-    if (sy < HUD_HEIGHT || sy >= SCREEN_H) continue;
-    const sx1 = Math.max(0, Math.round(left.sx));
-    const sx2 = Math.min(SCREEN_W - 1, Math.round(right.sx));
-    if (sx2 > sx1) {
-      ctx.fillRect(sx1, sy, sx2 - sx1, 1);
-    }
-  }
+  const halfW = COURT_WIDTH / 2;
+  const corners = [
+    camera.project(-halfW, 0, 0),
+    camera.project( halfW, 0, 0),
+    camera.project( halfW, 0, COURT_LENGTH),
+    camera.project(-halfW, 0, COURT_LENGTH),
+  ].filter(Boolean);
+  if (corners.length < 4) return;
+  fillQuad(ctx, corners);
 }
 
 function drawServiceBoxes() {
   ctx.fillStyle = SERVICE_BOX_FILL;
-  const Z_STEPS = 40;
-  const mid = COURT_LENGTH / 2;
   const halfW = COURT_WIDTH / 2;
+  const mid = COURT_LENGTH / 2;
   for (const [zStart, zEnd] of [[0, mid], [mid, COURT_LENGTH]]) {
-    for (let i = 0; i <= Z_STEPS; i++) {
-      const t = i / Z_STEPS;
-      const z = zStart + t * (zEnd - zStart);
-      const left = camera.project(-halfW, 0, z);
-      const right = camera.project(halfW, 0, z);
-      if (!left || !right) continue;
-      const sy = Math.round(left.sy);
-      if (sy < HUD_HEIGHT || sy >= SCREEN_H) continue;
-      const sx1 = Math.max(0, Math.round(left.sx));
-      const sx2 = Math.min(SCREEN_W - 1, Math.round(right.sx));
-      if (sx2 > sx1) {
-        ctx.fillRect(sx1, sy, sx2 - sx1, 1);
-      }
-    }
+    const corners = [
+      camera.project(-halfW, 0, zStart),
+      camera.project( halfW, 0, zStart),
+      camera.project( halfW, 0, zEnd),
+      camera.project(-halfW, 0, zEnd),
+    ].filter(Boolean);
+    if (corners.length < 4) continue;
+    fillQuad(ctx, corners);
   }
 }
 
