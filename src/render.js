@@ -1,6 +1,7 @@
 import { SCREEN_W, SCREEN_H, COURT_WIDTH, COURT_LENGTH, HUD_HEIGHT, NET_HEIGHT, NET_POST_HEIGHT,
   FOCAL, CAM_HEIGHT, CAM_Z, HORIZON_Y,
-  COURT_SURFACE, COURT_SURFACE_DARK, COURT_OUTSIDE, SERVICE_BOX_FILL } from './constants.js';
+  COURT_SURFACE, COURT_SURFACE_DARK, COURT_OUTSIDE, SERVICE_BOX_FILL,
+  BALL_REPLAY } from './constants.js';
 import { camera, setDrawChar } from './camera.js';
 import { scoring } from './scoring.js';
 import { court } from './court.js';
@@ -160,7 +161,7 @@ export const render = {
   },
 
   ball(b) {
-    if (b.state !== "in_play" && b.state !== "bounce") return;
+    if (b.state !== "in_play" && b.state !== "bounce" && b.state !== BALL_REPLAY) return;
 
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     camera.draw_char(b.x, 0.01, b.z, '@');

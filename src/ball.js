@@ -1,5 +1,5 @@
 import {
-  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
+  BALL_HELD, BALL_IN_PLAY, BALL_REPLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
   HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
@@ -21,7 +21,14 @@ export const ball = {
   },
 
   update(b) {
-    if (b.state !== BALL_IN_PLAY) return;
+    const is_replay = b.state === BALL_REPLAY;
+    if (b.state !== BALL_IN_PLAY && !is_replay) return;
+
+    if (is_replay) {
+      if (b.z < -5 || b.z > COURT_LENGTH + 5) {
+        return;
+      }
+    }
 
     const prev_z = b.z;
 
@@ -40,13 +47,17 @@ export const ball = {
       b.vz = b.vz * 0.8;
       b.bounces += 1;
 
-      const side = b.z < COURT_LENGTH / 2 ? 0 : 1;
-      if (b.last_bounce_side !== null && b.last_bounce_side === side) {
-        b.state = BALL_DOUBLE_BOUNCE;
-      } else {
-        b.last_bounce_side = side;
+      if (!is_replay) {
+        const side = b.z < COURT_LENGTH / 2 ? 0 : 1;
+        if (b.last_bounce_side !== null && b.last_bounce_side === side) {
+          b.state = BALL_DOUBLE_BOUNCE;
+        } else {
+          b.last_bounce_side = side;
+        }
       }
     }
+
+    if (is_replay) return;
 
     if (court.hits_net(b.x, b.z, prev_z, b.y)) {
       b.state = BALL_NET;

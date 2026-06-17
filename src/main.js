@@ -1,8 +1,9 @@
 import {
-  STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER,
+  STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER, STATE_VIOLATION_REPLAY,
   PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH,
   BTN_UP, BTN_DOWN, BTN_B, BALL_HELD,
-  BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE,
+  BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE, BALL_REPLAY,
+  REPLAY_FRAME_COUNT,
 } from './constants.js';
 import { court } from './court.js';
 import { camera } from './camera.js';
@@ -27,6 +28,8 @@ let serve_timer;
 let landing_pos;
 let referee_state;
 let serve_fault_checked;
+let replay_timer;
+let replay_landing_pos;
 
 function init_game() {
   court.init();
@@ -46,6 +49,8 @@ function init_game() {
   landing_pos = null;
   referee_state = { message: "", violation_type: null, timer: 0 };
   serve_fault_checked = false;
+  replay_timer = 0;
+  replay_landing_pos = null;
 }
 
 function start_match() {
@@ -129,12 +134,15 @@ const VIOLATION_MESSAGES = {
 function resolve_violation_point(violation_type, hitter) {
   const winner = 1 - hitter;
   point_winner = winner;
-  point_timer = 60;
-  game_state = STATE_POINT_SCORED;
+
+  ball_obj.state = BALL_REPLAY;
+  replay_landing_pos = { x: ball_obj.x, z: ball_obj.z };
+  replay_timer = REPLAY_FRAME_COUNT;
+  game_state = STATE_VIOLATION_REPLAY;
 
   referee_state.message = VIOLATION_MESSAGES[violation_type] || "";
   referee_state.violation_type = violation_type;
-  referee_state.timer = 60;
+  referee_state.timer = REPLAY_FRAME_COUNT;
 
   const result = scoring.resolve_violation(score, hitter, violation_type);
 
@@ -144,6 +152,21 @@ function resolve_violation_point(violation_type, hitter) {
 
   if (result === "match") {
     game_state = STATE_GAME_OVER;
+  }
+}
+
+function update_violation_replay() {
+  replay_timer -= 1;
+  if (referee_state.timer > 0) {
+    referee_state.timer -= 1;
+  }
+
+  ball.update(ball_obj);
+
+  if (replay_timer <= 0) {
+    referee_state.timer = 0;
+    point_timer = 60;
+    game_state = STATE_POINT_SCORED;
   }
 }
 
@@ -282,6 +305,10 @@ function draw_game() {
     render.landing_marker(landing_pos);
   }
 
+  if (game_state === STATE_VIOLATION_REPLAY && replay_landing_pos) {
+    render.landing_marker(replay_landing_pos);
+  }
+
   render.hud(score);
 
   if (game_state === STATE_SERVING) {
@@ -318,6 +345,8 @@ function gameLoop() {
     update_serving();
   } else if (game_state === STATE_PLAYING) {
     update_playing();
+  } else if (game_state === STATE_VIOLATION_REPLAY) {
+    update_violation_replay();
   } else if (game_state === STATE_POINT_SCORED) {
     update_point_scored();
   } else if (game_state === STATE_GAME_OVER) {
