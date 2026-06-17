@@ -35,6 +35,9 @@ export const STATE_SERVING = "serving";
 export const STATE_PLAYING = "playing";
 export const STATE_POINT_SCORED = "point_scored";
 export const STATE_GAME_OVER = "game_over";
+export const STATE_VIOLATION_REPLAY = "violation_replay";
+
+export const REPLAY_FRAME_COUNT = 90;
 
 export const PLAYER_IDLE = "idle";
 export const PLAYER_MOVING = "moving";
@@ -52,6 +55,7 @@ export const BALL_OUT = "out";
 export const BALL_NET = "net";
 export const BALL_BOUNCE = "bounce";
 export const BALL_DOUBLE_BOUNCE = "double_bounce";
+export const BALL_REPLAY = "replay";
 
 export const VIOLATION_NONE = null;
 export const VIOLATION_OUT = "out";

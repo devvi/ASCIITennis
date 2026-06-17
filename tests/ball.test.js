@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
-  BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
+  BALL_HELD, BALL_IN_PLAY, BALL_REPLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
   BALL_RADIUS, COURT_LENGTH, NET_HEIGHT, SINGLES_WIDTH, COURT_WIDTH,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
   SERVE_SPEED_MIN, SERVE_SPEED_MAX,
+  GRAVITY,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -296,6 +297,115 @@ describe('ball', () => {
     ball.update(b);
     expect(b.state).not.toBe(BALL_DOUBLE_BOUNCE);
     expect(b.last_bounce_side).toBe(1);
+  });
+
+  describe('BALL_REPLAY state', () => {
+    it('allows physics to continue updating', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.x = 0;
+      b.y = 2.0;
+      b.z = 10;
+      b.vx = 0;
+      b.vy = -0.05;
+      b.vz = -0.2;
+      const oldZ = b.z;
+      ball.update(b);
+      expect(b.z).not.toBe(oldZ);
+    });
+
+    it('applies gravity to vy', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.y = 2.0;
+      b.vy = 0;
+      b.z = 10;
+      ball.update(b);
+      expect(b.vy).toBeLessThan(0);
+    });
+
+    it('bounces on ground contact', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.y = BALL_RADIUS;
+      b.vy = -0.1;
+      b.z = 10;
+      ball.update(b);
+      expect(b.y).toBeGreaterThanOrEqual(BALL_RADIUS);
+      expect(b.vy).toBeGreaterThan(0);
+    });
+
+    it('can bounce multiple times', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.y = 0.5;
+      b.vy = -0.02;
+      b.z = 10;
+      let bounces = 0;
+      for (let i = 0; i < 200; i++) {
+        const prevBounces = b.bounces;
+        ball.update(b);
+        if (b.bounces > prevBounces) bounces++;
+      }
+      expect(bounces).toBeGreaterThanOrEqual(2);
+    });
+
+    it('stops updating position when far beyond court (z > COURT_LENGTH + 5)', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.x = 0;
+      b.y = 2.0;
+      b.z = COURT_LENGTH + 10;
+      b.vx = 0;
+      b.vy = -0.05;
+      b.vz = -0.2;
+      const oldZ = b.z;
+      ball.update(b);
+      expect(b.z).toBe(oldZ);
+    });
+
+    it('stops updating position when far behind court (z < -5)', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.x = 0;
+      b.y = 2.0;
+      b.z = -10;
+      b.vx = 0;
+      b.vy = -0.05;
+      b.vz = 0.2;
+      const oldZ = b.z;
+      ball.update(b);
+      expect(b.z).toBe(oldZ);
+    });
+
+    it('skips net collision detection', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.x = 0;
+      b.y = NET_HEIGHT - 0.1;
+      b.z = COURT_LENGTH / 2 - 5;
+      b.vz = 10;
+      b.vy = 0;
+      ball.update(b);
+      expect(b.state).toBe(BALL_REPLAY);
+    });
+
+    it('skips out-of-bounds detection', () => {
+      const b = ball.new();
+      court.init();
+      b.state = BALL_REPLAY;
+      b.z = COURT_LENGTH + 3;
+      b.y = 2.0;
+      ball.update(b);
+      expect(b.state).toBe(BALL_REPLAY);
+    });
   });
 
   it('ball between singles and doubles sideline is OUT after bounce', () => {
