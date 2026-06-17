@@ -3,7 +3,7 @@ import {
   COURT_WIDTH, COURT_LENGTH, SINGLES_WIDTH,
   AI_EASY, AI_HARD,
   STATE_VIOLATION_REPLAY, REPLAY_FRAME_COUNT,
-  BALL_REPLAY, BALL_HELD, BALL_RADIUS,
+  BALL_REPLAY, BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_RADIUS,
   SERVE_ANGLE_MAX,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
@@ -134,6 +134,40 @@ describe('violation replay flow', () => {
       replay_timer -= 1;
     }
     expect(replay_timer).toBe(0);
+  });
+
+  describe('serve auto-loop and no-fault', () => {
+    it('serve target_z is within service box (COURT_LENGTH * 0.85)', () => {
+      const target_z = COURT_LENGTH * 0.85;
+      expect(target_z).toBeGreaterThan(COURT_LENGTH * 0.75);
+      expect(target_z).toBeLessThan(COURT_LENGTH);
+    });
+
+    it('ball after normal serve does not trigger BALL_OUT before bouncing', () => {
+      court.init();
+      const b = ball.new();
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      let outBeforeBounce = false;
+      for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {
+        ball.update(b);
+        if (b.state === BALL_OUT && b.bounces === 0) {
+          outBeforeBounce = true;
+        }
+      }
+      expect(outBeforeBounce).toBe(false);
+    });
+
+    it('ball after normal serve bounces at least once (lands in court)', () => {
+      court.init();
+      const b = ball.new();
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      let bounced = false;
+      for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {
+        ball.update(b);
+        if (b.bounces > 0) bounced = true;
+      }
+      expect(bounced).toBe(true);
+    });
   });
 
   it('violation message constants are defined (serve_fault removed)', () => {

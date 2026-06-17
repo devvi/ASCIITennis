@@ -77,25 +77,25 @@ describe('input', () => {
     expect(dz).toBe(-1);
   });
 
-  it('get_movement returns dx=0 for LEFT (A/D used for aiming now)', () => {
+  it('get_movement returns dx=-1 for LEFT', () => {
     pressKey('a');
     const [dx, dz] = input.get_movement();
-    expect(dx).toBe(0);
+    expect(dx).toBe(-1);
     expect(dz).toBe(0);
   });
 
-  it('get_movement returns dx=0 for RIGHT (A/D used for aiming now)', () => {
+  it('get_movement returns dx=1 for RIGHT', () => {
     pressKey('d');
     const [dx, dz] = input.get_movement();
-    expect(dx).toBe(0);
+    expect(dx).toBe(1);
     expect(dz).toBe(0);
   });
 
-  it('get_movement combines W/S dz but ignores A/D dx', () => {
+  it('get_movement combines W/S dz with A/D dx', () => {
     pressKey('w');
     pressKey('d');
     const [dx, dz] = input.get_movement();
-    expect(dx).toBe(0);
+    expect(dx).toBe(1);
     expect(dz).toBe(1);
   });
 
