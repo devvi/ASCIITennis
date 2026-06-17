@@ -102,7 +102,7 @@ function setup_serve() {
 function do_serve(timing_quality, angle) {
   if (server === 0) {
     const target_x = human_player.x + angle * SERVE_ANGLE_MAX;
-    const target_z = COURT_LENGTH * 0.7;
+    const target_z = COURT_LENGTH * 0.85;
     ball.serve(ball_obj, human_player.x, human_player.z, target_x, target_z, timing_quality);
   } else {
     const target_x = ai_player.x + angle * SERVE_ANGLE_MAX;
@@ -213,7 +213,6 @@ function update_serving() {
         serve_toss_started = false;
         serve_toss_frames = 0;
       } else if (ball_obj.y <= 0.8) {
-        serve_toss_started = false;
         serve_toss_frames = 0;
         ball_obj.y = 1.0;
       }

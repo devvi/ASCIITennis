@@ -48,11 +48,15 @@ export const ball = {
       b.bounces += 1;
 
       if (!is_replay) {
-        const side = b.z < COURT_LENGTH / 2 ? 0 : 1;
-        if (b.last_bounce_side !== null && b.last_bounce_side === side) {
-          b.state = BALL_DOUBLE_BOUNCE;
+        if (!court.is_in_bounds(b.x, b.z)) {
+          b.state = BALL_OUT;
         } else {
-          b.last_bounce_side = side;
+          const side = b.z < COURT_LENGTH / 2 ? 0 : 1;
+          if (b.last_bounce_side !== null && b.last_bounce_side === side) {
+            b.state = BALL_DOUBLE_BOUNCE;
+          } else {
+            b.last_bounce_side = side;
+          }
         }
       }
     }
@@ -64,16 +68,10 @@ export const ball = {
       return;
     }
 
-    if (!court.is_in_bounds(b.x, b.z)) {
-      if (b.bounces > 0) {
-        b.state = BALL_OUT;
-      }
-    }
-
-    if (b.z > COURT_LENGTH + 2) {
+    if (b.bounces > 0 && b.z > COURT_LENGTH + 5) {
       b.state = BALL_OUT;
     }
-    if (b.z < -2) {
+    if (b.bounces > 0 && b.z < -5) {
       b.state = BALL_OUT;
     }
   },
@@ -115,7 +113,7 @@ export const ball = {
     b.z = from_z;
     b.vx = (dx / dist) * serve_speed;
     b.vz = (dz / dist) * serve_speed;
-    b.vy = is_s ? 0.20 : 0.10;
+    b.vy = is_s ? 0.18 : 0.14;
     b.spin_x = 0;
     b.spin_z = 0;
     b.bounces = 0;

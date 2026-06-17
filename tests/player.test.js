@@ -41,11 +41,11 @@ describe('player', () => {
     expect(p.z).toBe(oldZ + PLAYER_SPEED);
   });
 
-  it('human player cannot move laterally (dx forced to 0)', () => {
+  it('human player can move laterally', () => {
     const p = player.new(false);
     const oldX = p.x;
     player.move(p, 1, 0);
-    expect(p.x).toBe(oldX);
+    expect(p.x).toBe(oldX + PLAYER_SPEED);
     player.move(p, -1, 0);
     expect(p.x).toBe(oldX);
   });

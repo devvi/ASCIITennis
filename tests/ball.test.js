@@ -111,6 +111,39 @@ describe('ball', () => {
     expect(b.state).toBe(BALL_IN_PLAY);
   });
 
+  describe('serve trajectory (vy recalibrated)', () => {
+    it('normal serve arcs deep enough to reach service box', () => {
+      court.init();
+      const b = ball.new();
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      b.state = BALL_IN_PLAY;
+      let maxZ = b.z;
+      let landed = false;
+      for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {
+        ball.update(b);
+        if (b.z > maxZ) maxZ = b.z;
+        if (b.bounces > 0) landed = true;
+      }
+      expect(landed).toBe(true);
+      expect(maxZ).toBeGreaterThan(COURT_LENGTH * 0.6);
+    });
+
+    it('normal serve does not trigger BALL_OUT before first bounce', () => {
+      court.init();
+      const b = ball.new();
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      b.state = BALL_IN_PLAY;
+      let outBeforeBounce = false;
+      for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {
+        ball.update(b);
+        if (b.state === BALL_OUT && b.bounces === 0) {
+          outBeforeBounce = true;
+        }
+      }
+      expect(outBeforeBounce).toBe(false);
+    });
+  });
+
   it('detects bounce when ball hits ground', () => {
     const b = ball.new();
     court.init();
@@ -158,20 +191,22 @@ describe('ball', () => {
     expect(b.state).toBe(BALL_NET);
   });
 
-  it('ball goes out when past baseline', () => {
+  it('ball goes out when past baseline after bounce', () => {
     const b = ball.new();
     court.init();
     b.state = BALL_IN_PLAY;
-    b.z = COURT_LENGTH + 3;
+    b.bounces = 1;
+    b.z = COURT_LENGTH + 6;
     ball.update(b);
     expect(b.state).toBe(BALL_OUT);
   });
 
-  it('ball goes out when behind player', () => {
+  it('ball goes out when behind player after bounce', () => {
     const b = ball.new();
     court.init();
     b.state = BALL_IN_PLAY;
-    b.z = -3;
+    b.bounces = 1;
+    b.z = -6;
     ball.update(b);
     expect(b.state).toBe(BALL_OUT);
   });
