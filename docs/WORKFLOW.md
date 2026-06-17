@@ -47,7 +47,7 @@ opencode analyzes the request and writes two documents:
 - system Y
 ```
 
-> **Important:** The research PR description, title, and commit messages must NOT include closing keywords (Closes/Fixes/Resolves) for the parent issue. Parent stays open for plan + implement. Use the exact template: `--body "Research analysis for parent issue #<n>.\nSee docs/PRD/<n>.md and docs/TASKS/<n>.md for details."` and `--title "Research: <feature-name> (parent #<n>)"`. After creation, verify with `gh pr view <pr> --json title,body` that no closing keywords exist.
+> **Important:** The research PR description, title, and commit messages must NOT include closing keywords (Closes/Fixes/Resolves) for the parent issue. Parent stays open for plan + implement. Write a detailed body (root cause, findings, proposed approach). After creation, verify with `gh pr view <pr> --json title,body` that no closing keywords exist for the parent issue.
 
 ### Phase 2: Plan
 
