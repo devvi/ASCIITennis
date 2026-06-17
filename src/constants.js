@@ -71,10 +71,10 @@ export const COURT_PADDING = 4;
 
 // Perspective camera
 export const FOCAL = 120;
-export const CAM_HEIGHT = 4;
-export const CAM_Z = -5;
-export const HORIZON_Y = 15;
-export const CAM_PITCH = -0.15;
+export const CAM_HEIGHT = 10;
+export const CAM_Z = -6;
+export const HORIZON_Y = 40;
+export const CAM_PITCH = -0.5;
 
 // Court colors (clay court)
 export const COURT_SURFACE = '#c64830';

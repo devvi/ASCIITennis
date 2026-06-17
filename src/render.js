@@ -121,9 +121,10 @@ function drawPlayerFigure(p, color, racketSide) {
   camera.draw_char(p.x, 0.01, p.z, 'O');
 
   ctx.fillStyle = color;
-  camera.draw_char(p.x, 0.25, p.z, '/');
-  camera.draw_char(p.x, 0.55, p.z, '|');
-  camera.draw_char(p.x, 0.9, p.z, '+');
+  camera.draw_char(p.x, 0.25, p.z, 'O');
+  camera.draw_char(p.x, 0.55, p.z, '_');
+  camera.draw_char(p.x, 0.9, p.z, '.');
+  camera.draw_char(p.x, 1.25, p.z, ':');
 
   if (p.state === 'hitting') {
     ctx.fillStyle = '#ddd';
@@ -133,9 +134,6 @@ function drawPlayerFigure(p, color, racketSide) {
       camera.draw_char(p.x + 0.4, 0.7, p.z, '\\');
     }
   }
-
-  ctx.fillStyle = color;
-  camera.draw_char(p.x, 1.25, p.z, 'O');
 }
 
 export const render = {
