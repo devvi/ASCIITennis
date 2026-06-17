@@ -35,13 +35,28 @@ export function print(str, x, y) {
 
 function fillQuad(ctx, corners) {
   if (corners.length < 4) return;
-  ctx.beginPath();
-  ctx.moveTo(Math.round(corners[0].sx), Math.round(corners[0].sy));
-  for (let i = 1; i < corners.length; i++) {
-    ctx.lineTo(Math.round(corners[i].sx), Math.round(corners[i].sy));
+  const pts = corners.map(c => ({ x: Math.round(c.sx), y: Math.round(c.sy) }));
+  const minY = Math.min(...pts.map(p => p.y));
+  const maxY = Math.max(...pts.map(p => p.y));
+  for (let y = minY; y <= maxY; y++) {
+    const xs = [];
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4;
+      const p1 = pts[i], p2 = pts[j];
+      if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+        const t = (y - p1.y) / (p2.y - p1.y);
+        xs.push(p1.x + t * (p2.x - p1.x));
+      }
+    }
+    if (xs.length >= 2) {
+      xs.sort((a, b) => a - b);
+      const x1 = Math.ceil(xs[0]);
+      const x2 = Math.floor(xs[xs.length - 1]);
+      for (let x = x1; x <= x2; x++) {
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
   }
-  ctx.closePath();
-  ctx.fill();
 }
 
 function drawCourtSurface() {

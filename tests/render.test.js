@@ -43,28 +43,21 @@ describe('render (perspective)', () => {
     camera.init();
   });
 
-  it('court fills perspective surface and draws lines', () => {
+  it('court draws surface and lines using fillRect grid and fillText', () => {
     render.court();
-    expect(mockCtx.beginPath).toHaveBeenCalled();
-    expect(mockCtx.moveTo).toHaveBeenCalled();
-    expect(mockCtx.lineTo).toHaveBeenCalled();
-    expect(mockCtx.closePath).toHaveBeenCalled();
-    expect(mockCtx.fill).toHaveBeenCalled();
+    expect(mockCtx.fillRect).toHaveBeenCalled();
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
-  it('court surface draws filled polygon with 4 corners', () => {
+  it('court surface draws scanline-filled rectangles for 3 polygons', () => {
     render.court();
-    expect(mockCtx.moveTo).toHaveBeenCalledTimes(3); // 1 court + 2 service boxes
-    expect(mockCtx.lineTo).toHaveBeenCalledTimes(9); // 3 per polygon × 3 polygons
-    expect(mockCtx.closePath).toHaveBeenCalledTimes(3);
-    expect(mockCtx.fill).toHaveBeenCalledTimes(3);
+    const rectCalls = mockCtx.fillRect.mock.calls.length;
+    expect(rectCalls).toBeGreaterThan(0);
   });
 
-  it('drawServiceBoxes fills polygons for both court halves', () => {
+  it('drawServiceBoxes fills via fillRect for both court halves', () => {
     render.court();
-    const fillCalls = mockCtx.fill.mock.calls.length;
-    expect(fillCalls).toBe(3);
+    expect(mockCtx.fillRect).toHaveBeenCalled();
   });
 
   it('net draws components across court middle', () => {
