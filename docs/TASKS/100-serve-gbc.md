@@ -3,6 +3,9 @@
 ## Parent Issue
 #100
 
+## Plan Issue
+#102
+
 ## Related Modules
 - `src/input.js` — serve toss, angle input
 - `src/player.js` — remove lateral movement
