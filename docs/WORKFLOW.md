@@ -47,7 +47,7 @@ opencode analyzes the request and writes two documents:
 - system Y
 ```
 
-> **Important:** The research PR description must NOT include closing keywords (Closes/Fixes/Resolves) for the parent issue. Parent stays open for plan + implement.
+> **Important:** The research PR description, title, and commit messages must NOT include closing keywords (Closes/Fixes/Resolves) for the parent issue. Parent stays open for plan + implement. Use the exact template: `--body "Research analysis for parent issue #<n>.\nSee docs/PRD/<n>.md and docs/TASKS/<n>.md for details."` and `--title "Research: <feature-name> (parent #<n>)"`. After creation, verify with `gh pr view <pr> --json title,body` that no closing keywords exist.
 
 ### Phase 2: Plan
 
@@ -80,7 +80,7 @@ Then appends phases to **`docs/TASKS/<issue-number>.md>`**:
 ### Phase 4: UI/output
 ```
 
-Then creates one GitHub Issue per phase using `gh issue create` with label `phase`. The returned issue numbers are recorded in the TASKS doc.
+Then creates one consolidated plan issue using `gh issue create` with label `phase`. The body MUST use `Parent: #<parent-issue>` — NOT `Closes`/`Fixes`/`Resolves`. The returned issue numbers are recorded in the TASKS doc. After creation, run `gh issue view <plan-issue-n> --json title,body` to verify no closing keywords exist.
 
 ### Phase 3: Implement
 
@@ -93,10 +93,11 @@ opencode executes the plan **strictly phase by phase**:
 - No scope creep
 - **TDD is mandatory:** Phase 1 must write test cases first, before any implementation code. For phases 2-4, write tests alongside or before the code they test.
 - **Input test cases are mandatory:** Every test-writing phase MUST include test cases for the input module (`src/input.js`), covering pressed/held/released state, movement directions, shot-type combos, serve detection, and keyboard/mouse event handling.
-- As each task within a phase finishes, check it off in the phase issue body via `gh issue edit <n> --body '...'`
-- Commit after each completed phase with `Closes #N` in the message — phase issue closes when the final PR merges
-- After all phases, create the final PR with `Closes #parent-issue` + all phase issues
-- All issues auto-close on merge
+- As each task within a phase finishes, check it off in the plan issue body via `gh issue edit <plan-issue-n> --body '...'`
+- After each completed phase, commit and push — commit message should mention progress but NOT close the plan issue (save Closes for the final PR)
+- After all phases, create the final PR with body containing `Closes #parent-issue` and `Closes #plan-issue`
+- **Verify:** `gh pr view <pr> --json title,body` — confirm both Closes references are present
+- All issues (parent + plan) auto-close on merge
 
 ### Directory Structure
 
@@ -158,7 +159,7 @@ opencode implements the fix and commits it to the same PR branch.
 |---------|-------|-------------|
 | `/opencode research this` | Issue comment | Analyze and document (no close keywords for parent) |
 | `/opencode plan this` | Issue comment | Create phased plan + `gh issue create` per phase |
-| `/opencode implement this` | Issue comment | Execute phase by phase, each commit closes a phase issue; final PR closes parent |
+| `/opencode implement this` | Issue comment | Execute phase by phase (commits mention progress, NOT close); final PR closes parent + plan issue |
 | `/opencode explain this issue` | Issue comment | Explain the issue |
 | `/oc <suggestion>` | PR review comment | Apply fix to PR |
 | _(automatic)_ | PR opened/updated | Run tests → **auto-fix if fail** → code review on pass |

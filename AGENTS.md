@@ -10,7 +10,15 @@ Outputs:
 - `docs/PRD/<issue-number>-<feature-name>.md` — product requirements, feature list, acceptance criteria
 - `docs/TASKS/<issue-number>-<feature-name>.md` — related modules, impacts, summary
 
-**CRITICAL:** The PR description MUST NEVER contain `Closes`, `Fixes`, or `Resolves` keywords referencing the parent issue. Parent issue must stay open for subsequent phases. Double-check the PR body before committing — if any closing keywords exist, remove them.
+**CRITICAL:** The research PR description, title, and commit messages MUST NEVER contain `Closes`, `Fixes`, or `Resolves` keywords referencing the parent issue. Parent issue must stay open for subsequent phases.
+
+When creating the research PR via `gh pr create`, use:
+```
+gh pr create --title "Research: <feature-name> (parent #<parent-issue>)" \
+  --body "Research analysis for parent issue #<parent-issue>.\nSee docs/PRD/<parent-issue>.md and docs/TASKS/<parent-issue>.md for details."
+```
+
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and check that neither field contains `Closes`, `Fixes`, or `Resolves`. If found, edit the PR body with `gh pr edit <pr-number> --body '...'` to remove them.
 
 ### /plan
 Using the research doc, create a phased plan.
@@ -36,7 +44,9 @@ Record the returned issue number as `PLAN_ISSUE` in `docs/TASKS/<issue-number>-<
 
 **You MUST run the `gh issue create` command above — do not just write it as documentation.**
 
-**CRITICAL:** The plan issue body MUST also not contain `Closes`/`Fixes`/`Resolves` for the parent issue — use `Parent:` only. Same applies to PR/commit. Parent stays open. Verify both issue body and PR body before pushing.
+**CRITICAL:** The plan issue body, title, and any associated PR/commit messages MUST NOT contain `Closes`/`Fixes`/`Resolves` for the parent issue — use `Parent:` only. Parent must stay open for the subsequent implement phase.
+
+**Verification step:** After creating the plan issue, run `gh issue view <plan-issue-n> --json title,body` and check that neither field contains `Closes`, `Fixes`, or `Resolves`. If found, edit immediately with `gh issue edit <plan-issue-n> --body '...'` to remove them.
 
 ### /implement
 Read the TASK file and execute strictly phase by phase.
@@ -55,7 +65,15 @@ Read the TASK file and execute strictly phase by phase.
 - `update()` correctly snapshots previous frame state for pressed/released detection
 - As each task within a phase is done, check it off in the plan issue body using `gh issue edit <plan-issue-n> --body '<updated body>'`
 - After each completed phase, commit and push — commit message should mention progress but NOT close the plan issue
-- After all phases done, create the final PR — PR description MUST include `Closes #<parent-issue>` and `Closes #<plan-issue>` to auto-close both on merge
+- After all phases done, create the final PR. PR description MUST include `Closes #<parent-issue>` and `Closes #<plan-issue>` to auto-close all generated issues on merge.
+
+When creating the final PR via `gh pr create`, use:
+```
+gh pr create --title "<feature-name>" \
+  --body "Closes #<parent-issue>\nCloses #<plan-issue>\n\n<summary of changes>"
+```
+
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm BOTH `Closes #<parent-issue>` and `Closes #<plan-issue>` are present in the body. If missing, edit with `gh pr edit <pr-number> --body '...'` to add them.
 
 ## Workflow
 
