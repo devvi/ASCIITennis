@@ -36,9 +36,9 @@ export function print(str, x, y) {
 function fillQuad(ctx, corners) {
   if (corners.length < 4) return;
   ctx.beginPath();
-  ctx.moveTo(corners[0].sx, corners[0].sy);
+  ctx.moveTo(Math.round(corners[0].sx), Math.round(corners[0].sy));
   for (let i = 1; i < corners.length; i++) {
-    ctx.lineTo(corners[i].sx, corners[i].sy);
+    ctx.lineTo(Math.round(corners[i].sx), Math.round(corners[i].sy));
   }
   ctx.closePath();
   ctx.fill();
