@@ -1,15 +1,11 @@
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
   HIT_TOPSPIN, HIT_SLICE, HIT_LOB, HIT_FLAT,
-  SERVE_CHARGE_MAX_FRAMES,
 } from './constants.js';
 
 const NUM_BUTTONS = 8;
 let prev = new Array(NUM_BUTTONS).fill(false);
 let curr = new Array(NUM_BUTTONS).fill(false);
-
-let _serve_charge_start = null;
-let _serve_charge_frames = 0;
 
 const KEY_MAP = {
   "w": BTN_UP, "W": BTN_UP, "ArrowUp": BTN_UP,
@@ -65,8 +61,6 @@ export const input = {
       prev[i] = false;
       curr[i] = false;
     }
-    _serve_charge_start = null;
-    _serve_charge_frames = 0;
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -98,11 +92,15 @@ export const input = {
 
   get_movement() {
     let dx = 0, dz = 0;
-    if (this.held(BTN_LEFT)) dx = -1;
-    if (this.held(BTN_RIGHT)) dx = 1;
     if (this.held(BTN_UP)) dz = 1;
     if (this.held(BTN_DOWN)) dz = -1;
     return [dx, dz];
+  },
+
+  get_aim_angle() {
+    if (this.held(BTN_LEFT)) return -1;
+    if (this.held(BTN_RIGHT)) return 1;
+    return 0;
   },
 
   get_shot_type() {
@@ -113,35 +111,5 @@ export const input = {
     if (this.held(BTN_LEFT) || this.held(BTN_RIGHT)) return HIT_LOB;
 
     return HIT_FLAT;
-  },
-
-  get_serve() {
-    if (_serve_charge_start !== null) {
-      if (this.held(BTN_B) || this.held(BTN_A)) {
-        _serve_charge_frames = Math.min(_serve_charge_frames + 1, SERVE_CHARGE_MAX_FRAMES);
-        return false;
-      }
-      const served = true;
-      _serve_charge_start = null;
-      _serve_charge_frames = 0;
-      return served;
-    }
-    if (this.pressed(BTN_B) || this.pressed(BTN_A)) {
-      _serve_charge_start = true;
-      _serve_charge_frames = 1;
-      return false;
-    }
-    return false;
-  },
-
-  get_serve_power() {
-    if (_serve_charge_start === null) return 0;
-    const t = Math.min(_serve_charge_frames, SERVE_CHARGE_MAX_FRAMES) / SERVE_CHARGE_MAX_FRAMES;
-    return t;
-  },
-
-  reset_serve_charge() {
-    _serve_charge_start = null;
-    _serve_charge_frames = 0;
   },
 };

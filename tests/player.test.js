@@ -34,8 +34,24 @@ describe('player', () => {
     expect(p.z).toBeLessThanOrEqual(COURT_LENGTH / 2 - 0.5);
   });
 
-  it('move applies speed to movement', () => {
+  it('move applies speed to movement (dz only for human)', () => {
     const p = player.new(false);
+    const oldZ = p.z;
+    player.move(p, 0, 1);
+    expect(p.z).toBe(oldZ + PLAYER_SPEED);
+  });
+
+  it('human player cannot move laterally (dx forced to 0)', () => {
+    const p = player.new(false);
+    const oldX = p.x;
+    player.move(p, 1, 0);
+    expect(p.x).toBe(oldX);
+    player.move(p, -1, 0);
+    expect(p.x).toBe(oldX);
+  });
+
+  it('AI player can move laterally', () => {
+    const p = player.new(true);
     const oldX = p.x;
     player.move(p, 1, 0);
     expect(p.x).toBe(oldX + PLAYER_SPEED);

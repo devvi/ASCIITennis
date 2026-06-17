@@ -4,7 +4,7 @@ import {
   BALL_RADIUS, COURT_LENGTH, NET_HEIGHT, SINGLES_WIDTH, COURT_WIDTH,
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
-  SERVE_SPEED_MIN, SERVE_SPEED_MAX,
+  SERVE_SPEED_MIN, SERVE_SPEED_MAX, SERVE_S_SPEED_MULT, SERVE_NORMAL_SPEED,
   GRAVITY,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
@@ -29,7 +29,7 @@ describe('ball', () => {
 
   it('serve puts ball in play', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 3, 15);
+    ball.serve(b, 0, 2, 3, 15, 'normal');
     expect(b.state).toBe(BALL_IN_PLAY);
     expect(b.x).toBe(0);
     expect(b.z).toBe(2);
@@ -39,39 +39,35 @@ describe('ball', () => {
 
   it('serve with zero distance target does not crash', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 0, 2);
+    ball.serve(b, 0, 2, 0, 2, 'normal');
     expect(b.state).toBe(BALL_IN_PLAY);
   });
 
-  it('serve with power=0 uses minimum speed and max arc', () => {
+  it('serve with normal timing uses SERVE_NORMAL_SPEED', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 3, 15, 0);
+    ball.serve(b, 0, 2, 3, 15, 'normal');
     const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
-    expect(speed).toBeCloseTo(SERVE_SPEED_MIN, 2);
-    expect(b.vy).toBeCloseTo(0.08, 2);
+    expect(speed).toBeCloseTo(SERVE_NORMAL_SPEED, 2);
   });
 
-  it('serve with power=1 uses maximum speed and min arc', () => {
+  it('serve with s_serve timing uses max speed times multiplier', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 3, 15, 1);
+    ball.serve(b, 0, 2, 3, 15, 's_serve');
     const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
-    expect(speed).toBeCloseTo(SERVE_SPEED_MAX, 2);
-    expect(b.vy).toBeCloseTo(0.20, 2);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MAX * SERVE_S_SPEED_MULT, 2);
   });
 
-  it('serve with power=0.5 uses medium speed and arc', () => {
+  it('serve defaults to normal when no timing_quality given', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 3, 15, 0.5);
+    ball.serve(b, 0, 2, 3, 15);
     const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
-    const expectedSpeed = SERVE_SPEED_MIN + 0.5 * (SERVE_SPEED_MAX - SERVE_SPEED_MIN);
-    expect(speed).toBeCloseTo(expectedSpeed, 2);
-    expect(b.vy).toBeCloseTo(0.14, 2);
+    expect(speed).toBeCloseTo(SERVE_NORMAL_SPEED, 2);
   });
 
   it('update moves ball when in play', () => {
     const b = ball.new();
     court.init();
-    ball.serve(b, 0, 2, 0, 15);
+    ball.serve(b, 0, 2, 0, 15, 'normal');
     const oldZ = b.z;
     ball.update(b);
     expect(b.z).not.toBe(oldZ);
@@ -118,7 +114,7 @@ describe('ball', () => {
   it('detects bounce when ball hits ground', () => {
     const b = ball.new();
     court.init();
-    ball.serve(b, 0, 2, 0, 3);
+    ball.serve(b, 0, 2, 0, 3, 'normal');
     b.y = BALL_RADIUS;
     b.vy = -0.1;
     ball.update(b);

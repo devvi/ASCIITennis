@@ -23,6 +23,7 @@ export const player = {
   },
 
   move(p, dx, dz) {
+    if (!p.is_ai) dx = 0;
     const new_x = p.x + dx * p.speed;
     const new_z = p.z + dz * p.speed;
     const margin = 1.0;

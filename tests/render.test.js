@@ -78,10 +78,10 @@ describe('render (perspective)', () => {
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
-  it('ball does not draw when held', () => {
+  it('ball draws when held (visible during serve toss)', () => {
     const b = { x: 0, y: 1.0, z: COURT_LENGTH / 2, state: 'held' };
     render.ball(b);
-    expect(mockCtx.fillText).not.toHaveBeenCalled();
+    expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
   it('hud displays score information', () => {

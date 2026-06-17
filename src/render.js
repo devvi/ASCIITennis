@@ -171,7 +171,7 @@ export const render = {
   },
 
   ball(b) {
-    if (b.state !== "in_play" && b.state !== "bounce" && b.state !== BALL_REPLAY) return;
+    if (b.state !== "in_play" && b.state !== "bounce" && b.state !== BALL_REPLAY && b.state !== "held") return;
 
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     camera.draw_char(b.x, 0.01, b.z, '@');
