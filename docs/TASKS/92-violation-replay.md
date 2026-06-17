@@ -1,5 +1,7 @@
 # Issue 92: 犯规判定优化 (Violation Judgment Optimization)
 
+**PLAN_ISSUE: #96**
+
 ## Related Modules
 
 - `src/constants.js` — add `BALL_REPLAY` ball state constant, `STATE_VIOLATION_REPLAY` game state constant, `REPLAY_FRAME_COUNT` duration constant
