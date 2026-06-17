@@ -14,7 +14,6 @@ export const ai = {
     p.reaction_counter = 0;
     p.target_x = p.x;
     p.target_z = p.z;
-    p.has_served = false;
     return p;
   },
 

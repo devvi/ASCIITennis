@@ -61,7 +61,6 @@ export const VIOLATION_NONE = null;
 export const VIOLATION_OUT = "out";
 export const VIOLATION_NET = "net";
 export const VIOLATION_DOUBLE_BOUNCE = "double_bounce";
-export const VIOLATION_SERVE_FAULT = "serve_fault";
 
 export const POINTS = [0, 15, 30, 40];
 export const GAMES_TO_WIN_SET = 6;
@@ -88,9 +87,12 @@ export const SERVICE_BOX_FILL = 'rgba(255,255,255,0.05)';
 export const SINGLES_WIDTH = 8.23;
 export const NET_POST_HEIGHT = 1.07;
 
-// Serve charge
-export const SERVE_CHARGE_MAX_FRAMES = 30;
-export const SERVE_SPEED_MIN = 0.25;
+// Serve (GBC-style toss)
+export const SERVE_TOSS_HEIGHT = 2.5;
+export const SERVE_TOSS_DURATION = 30;
+export const SERVE_S_SPEED_MULT = 1.5;
+export const SERVE_NORMAL_SPEED = 0.35;
+export const SERVE_ANGLE_MAX = SINGLES_WIDTH * 0.4;
 export const SERVE_SPEED_MAX = 0.55;
 
 export const AI_EASY = {

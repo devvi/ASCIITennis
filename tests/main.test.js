@@ -4,6 +4,7 @@ import {
   AI_EASY, AI_HARD,
   STATE_VIOLATION_REPLAY, REPLAY_FRAME_COUNT,
   BALL_REPLAY, BALL_HELD, BALL_RADIUS,
+  SERVE_ANGLE_MAX,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -13,11 +14,17 @@ const HUMAN_TARGET_Z_MIN = COURT_LENGTH - 4;
 const HUMAN_TARGET_Z_MAX = COURT_LENGTH - 2;
 
 describe('human hit targeting bounds', () => {
-  it('target_x is bounded within SINGLES_WIDTH * 0.7', () => {
-    for (let i = 0; i < 100; i++) {
-      const target_x = (Math.random() - 0.5) * SINGLES_WIDTH * 0.7;
-      expect(Math.abs(target_x)).toBeLessThanOrEqual(HUMAN_TARGET_X_MAX + 0.001);
+  it('target_x is bounded within SINGLES_WIDTH * 0.35 when using angle control', () => {
+    const maxTargetX = SINGLES_WIDTH * 0.35;
+    for (const angle of [-1, 0, 1]) {
+      const target_x = angle * SINGLES_WIDTH * 0.35;
+      expect(Math.abs(target_x)).toBeLessThanOrEqual(maxTargetX + 0.001);
     }
+  });
+
+  it('target_x is 0 when no angle held (angle=0)', () => {
+    const target_x = 0 * SINGLES_WIDTH * 0.35;
+    expect(target_x).toBe(0);
   });
 
   it('target_z is within safe zone before baseline', () => {
@@ -57,6 +64,20 @@ describe('AI hit targeting bounds', () => {
     const easyMaxZ = 1 + 3 * (1 - AI_EASY.accuracy * 0.4);
     const hardMaxZ = 1 + 3 * (1 - AI_HARD.accuracy * 0.4);
     expect(hardMaxZ).toBeLessThan(easyMaxZ);
+  });
+});
+
+describe('serve angle bounds', () => {
+  it('SERVE_ANGLE_MAX is within singles width', () => {
+    expect(SERVE_ANGLE_MAX).toBeLessThanOrEqual(SINGLES_WIDTH * 0.5);
+  });
+
+  it('serve target_x stays within court for all angles when player at center', () => {
+    const player_x = 0;
+    for (const angle of [-1, 0, 1]) {
+      const target_x = player_x + angle * SERVE_ANGLE_MAX;
+      expect(Math.abs(target_x)).toBeLessThanOrEqual(SINGLES_WIDTH / 2 + 0.001);
+    }
   });
 });
 
@@ -115,14 +136,15 @@ describe('violation replay flow', () => {
     expect(replay_timer).toBe(0);
   });
 
-  it('violation message constants are defined', () => {
+  it('violation message constants are defined (serve_fault removed)', () => {
     const VIOLATION_MESSAGES = {
       out: "OUT!",
       net: "NET!",
       double_bounce: "DOUBLE BOUNCE!",
-      serve_fault: "FAULT!",
     };
     expect(VIOLATION_MESSAGES.out).toBe("OUT!");
-    expect(VIOLATION_MESSAGES.serve_fault).toBe("FAULT!");
+    expect(VIOLATION_MESSAGES.net).toBe("NET!");
+    expect(VIOLATION_MESSAGES.double_bounce).toBe("DOUBLE BOUNCE!");
+    expect(VIOLATION_MESSAGES.serve_fault).toBeUndefined();
   });
 });
