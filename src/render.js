@@ -216,6 +216,18 @@ export const render = {
   },
 
 
+  audience(audience) {
+    for (let i = 0; i < audience.spectators.length; i++) {
+      const spec = audience.spectators[i];
+      const pose = audience.get_pose(i);
+      const color = audience.cheer_level > 0 ? '#ff0' : '#fff';
+      ctx.fillStyle = color;
+      camera.draw_char(spec.x - 0.3, 0, spec.z, pose[0]);
+      camera.draw_char(spec.x, 0, spec.z, pose[1]);
+      camera.draw_char(spec.x + 0.3, 0, spec.z, pose[2]);
+    }
+  },
+
   menu(selected_diff) {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____  _   _   ___   _   _   _____   ___   _   _   ____", 8, 15);

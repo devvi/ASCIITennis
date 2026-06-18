@@ -95,6 +95,10 @@ export const SERVE_NORMAL_SPEED = 0.35;
 export const SERVE_ANGLE_MAX = SINGLES_WIDTH * 0.4;
 export const SERVE_SPEED_MAX = 0.55;
 
+export const CHEER_DURATION = 60;
+export const RALLY_CHEER_THRESHOLD = 5;
+export const AUDIENCE_COUNT = 25;
+
 export const AI_EASY = {
   reaction_time: 20,
   accuracy: 0.5,
