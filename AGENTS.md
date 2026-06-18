@@ -26,7 +26,12 @@ gh pr create --title "Research: <feature-name> (parent #<parent-issue>)" \
   --body-file /tmp/pr_body.md
 ```
 
-**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm neither field contains `Closes`, `Fixes`, or `Resolves` for the parent issue. If found, the automated PR review workflow will catch and flag it for manual fix.
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm neither field contains `Closes`, `Fixes`, or `Resolves` for the parent issue. If found, use `gh api` to fix (since `gh pr edit` may fail due to missing `read:org` scope):
+```bash
+gh pr edit <pr-number> --title "Research: <feature-name> (parent #<parent-issue>)"
+gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr-number>" \
+  --field body="Parent: #<parent-issue>\n\n<sanitized body>"
+```
 
 ### /plan
 Using the research doc, create a phased plan.
@@ -81,7 +86,11 @@ gh pr create --title "<feature-name>" \
   --body "Closes #<parent-issue>\nCloses #<plan-issue>\n\n<summary of changes>"
 ```
 
-**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm BOTH `Closes #<parent-issue>` and `Closes #<plan-issue>` are present in the body. If missing, edit with `gh pr edit <pr-number> --body '...'` to add them.
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm BOTH `Closes #<parent-issue>` and `Closes #<plan-issue>` are present in the body. If missing, edit with `gh pr edit <pr-number> --body '...'` to add them. If `gh pr edit` fails due to `read:org` scope, use `gh api` instead:
+```bash
+gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr-number>" \
+  --field body="Closes #<parent-issue>\nCloses #<plan-issue>\n\n<summary of changes>"
+```
 
 ## Workflow
 
