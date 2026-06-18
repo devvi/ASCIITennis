@@ -452,4 +452,43 @@ describe('ball', () => {
     ball.update(b);
     expect(b.state).toBe(BALL_OUT);
   });
+
+  describe('serve power param', () => {
+    it('serve with power=1 uses SERVE_SPEED_MAX', () => {
+      const b = ball.new();
+      ball.serve(b, 0, 2, 3, 15, 'normal', 1);
+      const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+      expect(speed).toBeCloseTo(SERVE_SPEED_MAX, 2);
+    });
+
+    it('serve with power=0 uses SERVE_SPEED_MIN', () => {
+      const b = ball.new();
+      ball.serve(b, 0, 2, 3, 15, 'normal', 0);
+      const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+      expect(speed).toBeCloseTo(SERVE_SPEED_MIN, 2);
+    });
+
+    it('serve with power=0.5 gives midpoint speed', () => {
+      const b = ball.new();
+      ball.serve(b, 0, 2, 3, 15, 'normal', 0.5);
+      const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+      const midpoint = SERVE_SPEED_MIN + (SERVE_SPEED_MAX - SERVE_SPEED_MIN) * 0.5;
+      expect(speed).toBeCloseTo(midpoint, 2);
+    });
+
+    it('serve without power param falls back to timing_quality behavior', () => {
+      const b = ball.new();
+      ball.serve(b, 0, 2, 3, 15);
+      const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+      expect(speed).toBeCloseTo(SERVE_NORMAL_SPEED, 2);
+    });
+
+    it('serve with power=1 has lower vy (flatter trajectory) than power=0', () => {
+      const b1 = ball.new();
+      ball.serve(b1, 0, 2, 3, 15, 'normal', 0);
+      const b2 = ball.new();
+      ball.serve(b2, 0, 2, 3, 15, 'normal', 1);
+      expect(b2.vy).toBeLessThan(b1.vy);
+    });
+  });
 });

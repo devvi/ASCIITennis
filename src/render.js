@@ -237,6 +237,23 @@ export const render = {
   },
 
 
+  serve_meter(charge) {
+    const bar_x = 100;
+    const bar_y = 28;
+    const bar_w = 40;
+    const bar_h = 5;
+
+    ctx.fillStyle = '#222';
+    ctx.fillRect(bar_x, bar_y, bar_w, bar_h);
+
+    const fill = Math.max(0, Math.min(bar_w, charge * bar_w));
+    if (fill > 0) {
+      const color = charge < 0.4 ? '#0f0' : charge < 0.7 ? '#ff0' : '#f00';
+      ctx.fillStyle = color;
+      ctx.fillRect(bar_x, bar_y, fill, bar_h);
+    }
+  },
+
   menu(selected_diff) {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____  _   _   ___   _   _   _____   ___   _   _   ____", 8, 15);
