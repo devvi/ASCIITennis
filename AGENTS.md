@@ -14,13 +14,19 @@ Outputs:
 
 Write the PR body with a detailed research summary (root cause, findings, proposed approach — same rich content as before). The only constraint: avoid `Closes`, `Fixes`, or `Resolves` for the parent issue.
 
-When creating the research PR via `gh pr create`, use:
-```
+When creating the research PR via `gh pr create`, write body to a temp file and sanitize it before submission:
+```bash
+# Write body to temp file
+cat > /tmp/pr_body.md << 'BODY'
+<detailed research summary — root cause, findings, proposed approach>
+BODY
+# Strip Closes/Fixes/Resolves lines referencing the parent issue
+sed -i '/\(Closes\|Fixes\|Resolves\) #<parent-issue>/d' /tmp/pr_body.md
 gh pr create --title "Research: <feature-name> (parent #<parent-issue>)" \
-  --body "<detailed research summary — root cause, findings, proposed approach>"
+  --body-file /tmp/pr_body.md
 ```
 
-**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and check that neither field contains `Closes`, `Fixes`, or `Resolves` for the parent issue. If found, edit the PR body with `gh pr edit <pr-number> --body '...'` to remove them.
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm neither field contains `Closes`, `Fixes`, or `Resolves` for the parent issue. If found, the automated PR review workflow will catch and flag it for manual fix.
 
 ### /plan
 Using the research doc, create a phased plan.
