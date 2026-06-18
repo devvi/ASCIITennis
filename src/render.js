@@ -159,8 +159,17 @@ export const render = {
   },
 
   player(p, label) {
-    const color = p.is_ai ? '#f44' : '#0ff';
-    const racketSide = p.is_ai ? 1 : -1;
+    let color, racketSide;
+    if (p.is_ai) {
+      color = '#f44';
+      racketSide = 1;
+    } else if (p.side === 1) {
+      color = '#0f0';
+      racketSide = 1;
+    } else {
+      color = '#0ff';
+      racketSide = -1;
+    }
     drawPlayerFigure(p, color, racketSide);
   },
 
@@ -180,14 +189,16 @@ export const render = {
     camera.draw_char(b.x, b.y, b.z, 'O');
   },
 
-  hud(score) {
+  hud(score, game_mode = 0) {
     ctx.fillStyle = "#fff";
     const ptDisplay = scoring.display(score);
     const ptLine = ptDisplay.split('\n')[0];
+    const p1Label = game_mode === 1 ? "P1" : "P";
+    const p2Label = game_mode === 1 ? "P2" : "A";
     if (ptLine.includes('Deuce')) {
       ctx.fillText(ptLine, 2, 1);
     } else {
-      ctx.fillText("P:" + scoring.point_name(score.points[0]) + " A:" + scoring.point_name(score.points[1]), 2, 1);
+      ctx.fillText(p1Label + ":" + scoring.point_name(score.points[0]) + " " + p2Label + ":" + scoring.point_name(score.points[1]), 2, 1);
     }
     ctx.fillText("Games " + score.games[0] + "-" + score.games[1], 2, 9);
     if (score.sets[0] > 0 || score.sets[1] > 0) {
@@ -234,16 +245,22 @@ export const render = {
   },
 
 
-  menu(selected_diff) {
+  menu(selected_mode = 0, selected_diff = 1, menu_phase = 'mode') {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____  _   _   ___   _   _   _____   ___   _   _   ____", 8, 15);
     ctx.fillText(" / ___|| | | | / _ \\ | \\ | | | ____| / _ \\ | \\ | | / ___|", 8, 23);
     ctx.fillText(" \\___ \\| |_| || | | ||  \\| | |  _|  | | | ||  \\| | \\___ \\", 8, 31);
     ctx.fillText("  ___) |  _  || |_| || |\\  | | |___ | |_| || |\\  |  ___) |", 8, 39);
     ctx.fillText(" |____/|_| |_| \\___/ |_| \\_| |_____| \\___/ |_| \\_| |____/", 8, 47);
-    ctx.fillText("Select AI Difficulty:", 50, 70);
-    ctx.fillText((selected_diff === 1 ? " > " : "   ") + "EASY", 55, 80);
-    ctx.fillText((selected_diff === 2 ? " > " : "   ") + "HARD", 55, 90);
+    if (menu_phase === 'difficulty') {
+      ctx.fillText("Select AI Difficulty:", 50, 70);
+      ctx.fillText((selected_diff === 1 ? " > " : "   ") + "EASY", 55, 80);
+      ctx.fillText((selected_diff === 2 ? " > " : "   ") + "HARD", 55, 90);
+    } else {
+      ctx.fillText("Select Game Mode:", 55, 70);
+      ctx.fillText((selected_mode === 0 ? " > " : "   ") + "1-Player", 55, 80);
+      ctx.fillText((selected_mode === 1 ? " > " : "   ") + "2-Player", 55, 90);
+    }
     ctx.fillText("Click to play", 55, 110);
   },
 

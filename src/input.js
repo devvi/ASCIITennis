@@ -4,62 +4,92 @@ import {
 } from './constants.js';
 
 const NUM_BUTTONS = 8;
-let prev = new Array(NUM_BUTTONS).fill(false);
-let curr = new Array(NUM_BUTTONS).fill(false);
+let prev1 = new Array(NUM_BUTTONS).fill(false);
+let curr1 = new Array(NUM_BUTTONS).fill(false);
+let prev2 = new Array(NUM_BUTTONS).fill(false);
+let curr2 = new Array(NUM_BUTTONS).fill(false);
 
-const KEY_MAP = {
-  "w": BTN_UP, "W": BTN_UP, "ArrowUp": BTN_UP,
-  "s": BTN_DOWN, "S": BTN_DOWN, "ArrowDown": BTN_DOWN,
-  "a": BTN_LEFT, "A": BTN_LEFT, "ArrowLeft": BTN_LEFT,
-  "d": BTN_RIGHT, "D": BTN_RIGHT, "ArrowRight": BTN_RIGHT,
-  " ": BTN_B, "Enter": BTN_B,
+const KEY_MAP_P1 = {
+  "w": BTN_UP, "W": BTN_UP,
+  "s": BTN_DOWN, "S": BTN_DOWN,
+  "a": BTN_LEFT, "A": BTN_LEFT,
+  "d": BTN_RIGHT, "D": BTN_RIGHT,
+  " ": BTN_B,
+};
+
+const KEY_MAP_P2 = {
+  "ArrowUp": BTN_UP,
+  "ArrowDown": BTN_DOWN,
+  "ArrowLeft": BTN_LEFT,
+  "ArrowRight": BTN_RIGHT,
+  "Enter": BTN_B,
 };
 
 function onKeyDown(e) {
-  const btn = KEY_MAP[e.key];
-  if (btn !== undefined) {
+  const btn1 = KEY_MAP_P1[e.key];
+  if (btn1 !== undefined) {
     e.preventDefault();
-    curr[btn] = true;
+    curr1[btn1] = true;
+  }
+  const btn2 = KEY_MAP_P2[e.key];
+  if (btn2 !== undefined) {
+    e.preventDefault();
+    curr2[btn2] = true;
   }
 }
 
 function onKeyUp(e) {
-  const btn = KEY_MAP[e.key];
-  if (btn !== undefined) {
+  const btn1 = KEY_MAP_P1[e.key];
+  if (btn1 !== undefined) {
     e.preventDefault();
-    curr[btn] = false;
+    curr1[btn1] = false;
+  }
+  const btn2 = KEY_MAP_P2[e.key];
+  if (btn2 !== undefined) {
+    e.preventDefault();
+    curr2[btn2] = false;
   }
 }
 
 function onMouseDown(e) {
   e.preventDefault();
-  curr[BTN_A] = true;
-  curr[BTN_B] = true;
+  curr1[BTN_A] = true;
+  curr1[BTN_B] = true;
+  curr2[BTN_A] = true;
+  curr2[BTN_B] = true;
 }
 
 function onMouseUp(e) {
   e.preventDefault();
-  curr[BTN_A] = false;
-  curr[BTN_B] = false;
+  curr1[BTN_A] = false;
+  curr1[BTN_B] = false;
+  curr2[BTN_A] = false;
+  curr2[BTN_B] = false;
 }
 
 function onTouchStart(e) {
   e.preventDefault();
-  curr[BTN_A] = true;
-  curr[BTN_B] = true;
+  curr1[BTN_A] = true;
+  curr1[BTN_B] = true;
+  curr2[BTN_A] = true;
+  curr2[BTN_B] = true;
 }
 
 function onTouchEnd(e) {
   e.preventDefault();
-  curr[BTN_A] = false;
-  curr[BTN_B] = false;
+  curr1[BTN_A] = false;
+  curr1[BTN_B] = false;
+  curr2[BTN_A] = false;
+  curr2[BTN_B] = false;
 }
 
 export const input = {
   init(canvas) {
     for (let i = 0; i < NUM_BUTTONS; i++) {
-      prev[i] = false;
-      curr[i] = false;
+      prev1[i] = false;
+      curr1[i] = false;
+      prev2[i] = false;
+      curr2[i] = false;
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -74,20 +104,21 @@ export const input = {
 
   update() {
     for (let i = 0; i < NUM_BUTTONS; i++) {
-      prev[i] = curr[i];
+      prev1[i] = curr1[i];
+      prev2[i] = curr2[i];
     }
   },
 
   pressed(btn_id) {
-    return curr[btn_id] && !prev[btn_id];
+    return curr1[btn_id] && !prev1[btn_id];
   },
 
   held(btn_id) {
-    return curr[btn_id];
+    return curr1[btn_id];
   },
 
   released(btn_id) {
-    return !curr[btn_id] && prev[btn_id];
+    return !curr1[btn_id] && prev1[btn_id];
   },
 
   get_movement() {
@@ -111,6 +142,43 @@ export const input = {
     if (this.held(BTN_UP)) return HIT_TOPSPIN;
     if (this.held(BTN_DOWN)) return HIT_SLICE;
     if (this.held(BTN_LEFT) || this.held(BTN_RIGHT)) return HIT_LOB;
+
+    return HIT_FLAT;
+  },
+
+  pressed_p2(btn_id) {
+    return curr2[btn_id] && !prev2[btn_id];
+  },
+
+  held_p2(btn_id) {
+    return curr2[btn_id];
+  },
+
+  released_p2(btn_id) {
+    return !curr2[btn_id] && prev2[btn_id];
+  },
+
+  get_movement_p2() {
+    let dx = 0, dz = 0;
+    if (this.held_p2(BTN_LEFT)) dx = -1;
+    if (this.held_p2(BTN_RIGHT)) dx = 1;
+    if (this.held_p2(BTN_UP)) dz = 1;
+    if (this.held_p2(BTN_DOWN)) dz = -1;
+    return [dx, dz];
+  },
+
+  get_aim_angle_p2() {
+    if (this.held_p2(BTN_LEFT)) return -1;
+    if (this.held_p2(BTN_RIGHT)) return 1;
+    return 0;
+  },
+
+  get_shot_type_p2() {
+    if (!this.pressed_p2(BTN_B)) return null;
+
+    if (this.held_p2(BTN_UP)) return HIT_TOPSPIN;
+    if (this.held_p2(BTN_DOWN)) return HIT_SLICE;
+    if (this.held_p2(BTN_LEFT) || this.held_p2(BTN_RIGHT)) return HIT_LOB;
 
     return HIT_FLAT;
   },

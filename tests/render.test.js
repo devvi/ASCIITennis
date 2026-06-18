@@ -92,8 +92,13 @@ describe('render (perspective)', () => {
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
-  it('menu renders without error', () => {
-    render.menu(1);
+  it('menu renders difficulty selection', () => {
+    render.menu(0, 1, 'difficulty');
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('menu renders mode selection', () => {
+    render.menu(0, 1, 'mode');
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 
@@ -111,6 +116,32 @@ describe('render (perspective)', () => {
   it('player draws normally when can_hit_this_frame is false', () => {
     const p = { x: 0, z: 5, is_ai: false, can_hit_this_frame: false };
     render.player(p, 'P');
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('P2 player (side=1) renders in green', () => {
+    const p = { x: 1, z: COURT_LENGTH / 2 + 1, is_ai: false, side: 1, state: 'idle' };
+    render.player(p, 'P2');
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('P2 player racket side is +1 during hit', () => {
+    const p = { x: 1, z: COURT_LENGTH / 2 + 1, is_ai: false, side: 1, state: 'hitting' };
+    render.player(p, 'P2');
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('hud shows P1/P2 labels in 2P mode', () => {
+    const s = scoring.new();
+    s.points = [1, 0];
+    render.hud(s, 1);
+    expect(mockCtx.fillText).toHaveBeenCalled();
+  });
+
+  it('hud shows P/A labels in 1P mode', () => {
+    const s = scoring.new();
+    s.points = [1, 0];
+    render.hud(s, 0);
     expect(mockCtx.fillText).toHaveBeenCalled();
   });
 

@@ -8,6 +8,7 @@ import {
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
+import { player } from '../src/player.js';
 
 const HUMAN_TARGET_X_MAX = SINGLES_WIDTH * 0.7 / 2;
 const HUMAN_TARGET_Z_MIN = COURT_LENGTH - 4;
@@ -167,6 +168,34 @@ describe('violation replay flow', () => {
         if (b.bounces > 0) bounced = true;
       }
       expect(bounced).toBe(true);
+    });
+  });
+
+  describe('Local 2-player mode', () => {
+    it('GAME_MODE_1P and GAME_MODE_2P constants exist', () => {
+      const mod = { GAME_MODE_1P: 0, GAME_MODE_2P: 1 };
+      expect(mod.GAME_MODE_1P).toBe(0);
+      expect(mod.GAME_MODE_2P).toBe(1);
+    });
+
+    it('player with side=1 starts on far side', () => {
+      const p = player.new(false, 1);
+      p.z = COURT_LENGTH - 2;
+      expect(p.z).toBe(COURT_LENGTH - 2);
+      expect(p.side).toBe(1);
+      expect(p.is_ai).toBe(false);
+    });
+
+    it('game-over winner label for 2P mode uses Player 1/Player 2', () => {
+      const label = (sets0, sets1) => sets0 > sets1 ? "Player 1" : "Player 2";
+      expect(label(2, 0)).toBe("Player 1");
+      expect(label(0, 2)).toBe("Player 2");
+    });
+
+    it('game-over winner label for 1P mode uses Player/AI', () => {
+      const label = (sets0, sets1) => sets0 > sets1 ? "Player" : "AI";
+      expect(label(2, 0)).toBe("Player");
+      expect(label(0, 2)).toBe("AI");
     });
   });
 

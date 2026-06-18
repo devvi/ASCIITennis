@@ -150,4 +150,53 @@ describe('player', () => {
     const b = { x: 100, y: 1.0, z: 100 };
     expect(player.in_hit_range(p, b)).toBe(false);
   });
+
+  it('new() creates player with side=0 by default', () => {
+    const p = player.new(false);
+    expect(p.side).toBe(0);
+  });
+
+  it('new(true) creates AI player with side=0 by default', () => {
+    const p = player.new(true);
+    expect(p.side).toBe(0);
+  });
+
+  it('new(false, 1) creates player with side=1', () => {
+    const p = player.new(false, 1);
+    expect(p.side).toBe(1);
+  });
+
+  it('move clamps side=1 player z within far half', () => {
+    const p = player.new(false, 1);
+    p.z = COURT_LENGTH - 2;
+    player.move(p, 0, -100);
+    expect(p.z).toBeGreaterThanOrEqual(COURT_LENGTH / 2 + 0.5);
+    player.move(p, 0, 100);
+    expect(p.z).toBeLessThanOrEqual(COURT_LENGTH - 0.5);
+  });
+
+  it('move clamps side=0 player z within near half', () => {
+    const p = player.new(false, 0);
+    player.move(p, 0, -100);
+    expect(p.z).toBeGreaterThanOrEqual(0.5);
+    player.move(p, 0, 100);
+    expect(p.z).toBeLessThanOrEqual(COURT_LENGTH / 2 - 0.5);
+  });
+
+  it('side does not affect x clamping', () => {
+    const p = player.new(false, 1);
+    player.move(p, -100, 0);
+    expect(p.x).toBeGreaterThanOrEqual(-COURT_WIDTH / 2 + 1);
+    player.move(p, 100, 0);
+    expect(p.x).toBeLessThanOrEqual(COURT_WIDTH / 2 - 1);
+  });
+
+  it('side=1 player at far baseline move forward limited to mid', () => {
+    const p = player.new(false, 1);
+    p.z = COURT_LENGTH - 2;
+    player.move(p, 0, 1);
+    expect(p.z).toBeLessThanOrEqual(COURT_LENGTH - 0.5);
+    player.move(p, 0, -1);
+    expect(p.z).toBeGreaterThanOrEqual(COURT_LENGTH / 2 + 0.5);
+  });
 });

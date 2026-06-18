@@ -62,6 +62,9 @@ export const VIOLATION_OUT = "out";
 export const VIOLATION_NET = "net";
 export const VIOLATION_DOUBLE_BOUNCE = "double_bounce";
 
+export const GAME_MODE_1P = 0;
+export const GAME_MODE_2P = 1;
+
 export const POINTS = [0, 15, 30, 40];
 export const GAMES_TO_WIN_SET = 6;
 export const SETS_TO_WIN_MATCH = 2;

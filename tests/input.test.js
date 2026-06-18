@@ -178,4 +178,173 @@ describe('input', () => {
     input.update();
     expect(input.released(BTN_UP)).toBe(false);
   });
+
+  describe('P2 input', () => {
+    it('ArrowUp sets BTN_UP for P2', () => {
+    pressKey('ArrowUp');
+    expect(input.held_p2(BTN_UP)).toBe(true);
+  });
+
+  it('ArrowDown sets BTN_DOWN for P2', () => {
+    pressKey('ArrowDown');
+    expect(input.held_p2(BTN_DOWN)).toBe(true);
+  });
+
+  it('ArrowLeft sets BTN_LEFT for P2', () => {
+    pressKey('ArrowLeft');
+    expect(input.held_p2(BTN_LEFT)).toBe(true);
+  });
+
+  it('ArrowRight sets BTN_RIGHT for P2', () => {
+    pressKey('ArrowRight');
+    expect(input.held_p2(BTN_RIGHT)).toBe(true);
+  });
+
+  it('Enter sets BTN_B for P2', () => {
+    pressKey('Enter');
+    expect(input.held_p2(BTN_B)).toBe(true);
+  });
+
+  it('WASD keys do not affect P2 state', () => {
+    pressKey('w');
+    pressKey('a');
+    expect(input.held_p2(BTN_UP)).toBe(false);
+    expect(input.held_p2(BTN_LEFT)).toBe(false);
+  });
+
+  it('Arrow keys do not affect P1 state', () => {
+    pressKey('ArrowUp');
+    pressKey('ArrowLeft');
+    expect(input.held(BTN_UP)).toBe(false);
+    expect(input.held(BTN_LEFT)).toBe(false);
+  });
+
+  it('pressed_p2 returns true when P2 button first goes down', () => {
+    pressKey('ArrowUp');
+    expect(input.pressed_p2(BTN_UP)).toBe(true);
+  });
+
+  it('pressed_p2 returns false after update snapshots', () => {
+    pressKey('ArrowUp');
+    input.update();
+    expect(input.pressed_p2(BTN_UP)).toBe(false);
+  });
+
+  it('held_p2 returns true while P2 button is down', () => {
+    pressKey('ArrowUp');
+    expect(input.held_p2(BTN_UP)).toBe(true);
+    input.update();
+    expect(input.held_p2(BTN_UP)).toBe(true);
+  });
+
+  it('released_p2 returns true after P2 button goes up', () => {
+    pressKey('ArrowUp');
+    input.update();
+    releaseKey('ArrowUp');
+    expect(input.released_p2(BTN_UP)).toBe(true);
+  });
+
+  it('get_movement_p2 returns dz=1 for ArrowUp', () => {
+    pressKey('ArrowUp');
+    const [dx, dz] = input.get_movement_p2();
+    expect(dx).toBe(0);
+    expect(dz).toBe(1);
+  });
+
+  it('get_movement_p2 returns dz=-1 for ArrowDown', () => {
+    pressKey('ArrowDown');
+    const [dx, dz] = input.get_movement_p2();
+    expect(dx).toBe(0);
+    expect(dz).toBe(-1);
+  });
+
+  it('get_movement_p2 returns dx=-1 for ArrowLeft', () => {
+    pressKey('ArrowLeft');
+    const [dx, dz] = input.get_movement_p2();
+    expect(dx).toBe(-1);
+    expect(dz).toBe(0);
+  });
+
+  it('get_movement_p2 returns dx=1 for ArrowRight', () => {
+    pressKey('ArrowRight');
+    const [dx, dz] = input.get_movement_p2();
+    expect(dx).toBe(1);
+    expect(dz).toBe(0);
+  });
+
+  it('get_movement_p2 combines ArrowUp and ArrowRight', () => {
+    pressKey('ArrowUp');
+    pressKey('ArrowRight');
+    const [dx, dz] = input.get_movement_p2();
+    expect(dx).toBe(1);
+    expect(dz).toBe(1);
+  });
+
+  it('get_aim_angle_p2 returns -1 when ArrowLeft held', () => {
+    pressKey('ArrowLeft');
+    expect(input.get_aim_angle_p2()).toBe(-1);
+  });
+
+  it('get_aim_angle_p2 returns 1 when ArrowRight held', () => {
+    pressKey('ArrowRight');
+    expect(input.get_aim_angle_p2()).toBe(1);
+  });
+
+  it('get_aim_angle_p2 returns 0 when no horiz keys held', () => {
+    pressKey('ArrowUp');
+    expect(input.get_aim_angle_p2()).toBe(0);
+  });
+
+  it('get_shot_type_p2 returns HIT_FLAT when Enter pressed alone', () => {
+    pressKey('Enter');
+    expect(input.get_shot_type_p2()).toBe(HIT_FLAT);
+  });
+
+  it('get_shot_type_p2 returns null without BTN_B press', () => {
+    pressKey('ArrowUp');
+    expect(input.get_shot_type_p2()).toBeNull();
+  });
+
+  it('get_shot_type_p2 returns HIT_TOPSPIN when ArrowUp+Enter', () => {
+    pressKey('Enter');
+    pressKey('ArrowUp');
+    expect(input.get_shot_type_p2()).toBe(HIT_TOPSPIN);
+  });
+
+  it('get_shot_type_p2 returns HIT_SLICE when ArrowDown+Enter', () => {
+    pressKey('Enter');
+    pressKey('ArrowDown');
+    expect(input.get_shot_type_p2()).toBe(HIT_SLICE);
+  });
+
+  it('get_shot_type_p2 returns HIT_LOB when ArrowLeft+Enter', () => {
+    pressKey('Enter');
+    pressKey('ArrowLeft');
+    expect(input.get_shot_type_p2()).toBe(HIT_LOB);
+  });
+
+  it('get_shot_type_p2 returns HIT_LOB when ArrowRight+Enter', () => {
+    pressKey('Enter');
+    pressKey('ArrowRight');
+    expect(input.get_shot_type_p2()).toBe(HIT_LOB);
+  });
+
+  it('mouse mousedown sets BTN_A and BTN_B for P2 too', () => {
+    handlers.mousedown({ preventDefault: () => {} });
+    expect(input.held_p2(BTN_A)).toBe(true);
+    expect(input.held_p2(BTN_B)).toBe(true);
+  });
+
+  it('P2 state update snapshots correctly for pressed/released', () => {
+    pressKey('ArrowUp');
+    expect(input.pressed_p2(BTN_UP)).toBe(true);
+    input.update();
+    expect(input.pressed_p2(BTN_UP)).toBe(false);
+    expect(input.held_p2(BTN_UP)).toBe(true);
+    releaseKey('ArrowUp');
+    expect(input.released_p2(BTN_UP)).toBe(true);
+    input.update();
+    expect(input.released_p2(BTN_UP)).toBe(false);
+  });
+  });
 });
