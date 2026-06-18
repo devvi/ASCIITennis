@@ -4,6 +4,8 @@
 
 All work follows a strict three-phase process:
 
+**⚠️ PHASE GATE RULE: Each phase MUST be triggered independently. After completing one phase, STOP. Do NOT auto-advance to the next phase. The next phase may only start after the previous phase's output (PR or issue) has been reviewed and merged by a human.**
+
 ### /research
 Analyze the issue/request.
 Outputs:
@@ -26,11 +28,11 @@ gh pr create --title "Research: <feature-name> (parent #<parent-issue>)" \
   --body-file /tmp/pr_body.md
 ```
 
-**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm neither field contains `Closes`, `Fixes`, or `Resolves` for the parent issue. If found, use `gh api` to fix (since `gh pr edit` may fail due to missing `read:org` scope):
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and check that neither field contains `Closes`, `Fixes`, or `Resolves` for the parent issue. If found, use `gh api` to fix (since `gh pr edit` may fail due to missing `read:org` scope):
 ```bash
-gh pr edit <pr-number> --title "Research: <feature-name> (parent #<parent-issue>)"
 gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr-number>" \
-  --field body="Parent: #<parent-issue>\n\n<sanitized body>"
+  --field title="Research: <feature-name> (parent #<parent-issue>)" \
+  --field body="Parent: #<parent-issue>\n\n<detailed research summary>"
 ```
 
 ### /plan
@@ -86,7 +88,7 @@ gh pr create --title "<feature-name>" \
   --body "Closes #<parent-issue>\nCloses #<plan-issue>\n\n<summary of changes>"
 ```
 
-**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm BOTH `Closes #<parent-issue>` and `Closes #<plan-issue>` are present in the body. If missing, edit with `gh pr edit <pr-number> --body '...'` to add them. If `gh pr edit` fails due to `read:org` scope, use `gh api` instead:
+**Verification step:** After creating the PR, run `gh pr view <pr-number> --json title,body` and confirm BOTH `Closes #<parent-issue>` and `Closes #<plan-issue>` are present in the body. If missing, use `gh api` to fix (since `gh pr edit` may fail due to missing `read:org` scope):
 ```bash
 gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr-number>" \
   --field body="Closes #<parent-issue>\nCloses #<plan-issue>\n\n<summary of changes>"
@@ -94,9 +96,11 @@ gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr-number>" \
 
 ## Workflow
 
-1. `opencode research this` — research & save to docs/PRD/ and docs/TASKS/
-2. `opencode plan this` — create design & phased plan
-3. `opencode implement this` — execute per plan
+- `opencode research this` — research & save to docs/PRD/ and docs/TASKS/
+- `opencode plan this` — create design & phased plan
+- `opencode implement this` — execute per plan
+
+Each command is an independent trigger. After any command, the CI MUST stop and wait for human review/merge before the next command can be issued.
 
 ## Commands
 
