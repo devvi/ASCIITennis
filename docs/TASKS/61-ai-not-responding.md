@@ -17,20 +17,19 @@
 
 ## Summary
 
-A one-condition inversion bug in `src/ai.js:35` causes the AI to never track balls coming toward it. The tracking branch only activates when the ball moves away from the AI, but the hit check requires the ball to be approaching. Fixing the direction check and prediction math restores AI functionality.
+A state-condition lock bug in `src/ai.js:87` causes the AI to never swing. The hit check requires `state === PLAYER_IDLE`, but the movement logic (lines 66-74) sets `state = PLAYER_MOVING` whenever the AI is >0.3 units from its jitter-injected target. Since the AI almost never reaches within 0.3 units of its target while the ball passes through its reachable zone, it stays `PLAYER_MOVING` and never passes the hit check. The fix is to remove the state requirement — `can_reach` (distance + height + direction) is sufficient.
+
+Note: the tracking condition (`ball.vz > 0`) was already correct. The original issue docs incorrectly claimed a `vz` inversion.
 
 ## Phases
 
 ### Phase 1: Tests
-- [ ] Update existing AI tests to reflect correct ball-tracking direction
-- [ ] Add test: AI tracks ball approaching (vz > 0) in AI half
-- [ ] Add test: AI tracks ball with different difficulty levels
-- [ ] Add test: AI returns hit command with valid action object
+- [ ] Remove `p.state = PLAYER_IDLE` masking in existing "returns hit action" test
+- [ ] Add test: AI swings while in PLAYER_MOVING state (realistic scenario)
+- [ ] Add test: AI swings from different positions with ball in range
 
-### Phase 2: Fix tracking condition
-- [ ] Change `ball.vz < 0` to `ball.vz > 0` on line 35 of `src/ai.js`
-- [ ] Remove `-ball.vz` negation (use `ball.vz` directly)
-- [ ] Fix `time_to_reach_z` to predict time for ball to reach AI position (`base_z - ball.z`)
+### Phase 2: Fix hit check
+- [ ] Remove `ai_player.state === PLAYER_IDLE` from the condition on line 87 of `src/ai.js`
 
 ### Phase 3: Verify
 - [ ] Run `npm test` — all tests pass

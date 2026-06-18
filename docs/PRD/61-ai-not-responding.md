@@ -6,26 +6,20 @@ The AI opponent never successfully hits/returns the ball. After the human player
 
 ## Root Cause
 
-In `src/ai.js:35`, the AI's ball-tracking condition is:
+In `src/ai.js:87`, the hit check requires `ai_player.state === PLAYER_IDLE`:
 
-```js
-if (ball.vz < 0 && ball.z > COURT_LENGTH * 0.4) {
-```
+- Lines 66-74 set `state = PLAYER_MOVING` whenever the AI is >0.3 units from its target (nearly always, since targets include random jitter)
+- Lines 76-77 only set `state = PLAYER_IDLE` when within 0.3 units of the target
+- Result: the AI is almost always `PLAYER_MOVING` when the ball passes through its reachable zone, so the hit check at line 87 always fails
 
-This only activates AI tracking when the ball is moving **away** from the AI (`vz < 0` — toward the human). However, the AI's hit detection on line 84-86 requires `ball.vz > 0` (ball moving **toward** the AI). These conditions are mutually exclusive:
-
-- When the ball approaches the AI (`vz > 0`), the tracking branch is skipped and the AI uses a rough recovery position
-- The hit condition requires `vz > 0`, but precise tracking never occurs during that phase
-- Result: AI never positions itself accurately enough to trigger a swing
+The `can_reach` check (distance + height + velocity direction) is sufficient on its own to decide whether to swing.
 
 ## Feature List
 
-1. Fix the AI tracking condition to correctly respond to balls approaching the AI
-2. Update the trajectory prediction math to match the corrected direction
+1. Remove the `state === PLAYER_IDLE` requirement from the AI hit check
 
 ## Acceptance Criteria
 
-- [ ] AI moves to intercept the ball when it enters the AI's half of the court
 - [ ] AI swings and returns the ball successfully
 - [ ] AI still respects difficulty settings (reaction time, accuracy, aggression)
 - [ ] AI still returns null while hit_timer is active

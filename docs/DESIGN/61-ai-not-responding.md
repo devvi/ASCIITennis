@@ -2,17 +2,21 @@
 
 ## Root Cause
 
-In `src/ai.js:35`, the ball-tracking condition uses `ball.vz < 0`, which only triggers when the ball moves **away** from the AI (toward the human player). The hit detection at line 86 requires `ball.vz > 0` (ball coming toward AI). These conditions are mutually exclusive, so the AI never actively tracks an approaching ball and never positions itself for a hit.
+In `src/ai.js:87`, the hit check requires `ai_player.state === PLAYER_IDLE`:
+
+- Lines 66-74 set `state = PLAYER_MOVING` whenever the AI is >0.3 units from its target (nearly always, since targets include random jitter)
+- Lines 76-77 only set `state = PLAYER_IDLE` when within 0.3 units
+- Result: the AI is almost always `PLAYER_MOVING` when the ball passes through its reachable zone, so the hit check at line 87 always fails
+
+Note: the tracking condition (`ball.vz > 0`) on line 34 was already correct.
 
 ## Fix
 
-Three changes in `src/ai.js`, all in the ball-tracking branch (lines 35-49):
+One change in `src/ai.js:87`:
 
 | Line | Current | Fixed |
 |------|---------|-------|
-| 35 | `ball.vz < 0` | `ball.vz > 0` |
-| 41 | `const relative_vz = -ball.vz;` | `const relative_vz = ball.vz;` |
-| 43 | `(ball.z - 2) / rvz` | `(base_z - ball.z) / rvz` |
+| 87 | `can_reach && ai_player.state === PLAYER_IDLE` | `can_reach` |
 
 ## Data Structures
 
@@ -27,14 +31,14 @@ update(ai_player, ball):
   if hit_timer > 0 → decrement, return null
 
   if ball.state === BALL_IN_PLAY:
-    if ball.vz > 0 AND ball.z > COURT_LENGTH * 0.4:   ← FIXED CONDITION
+    if ball.vz > 0 AND ball.z > COURT_LENGTH * 0.4:
       → tracked approach (aim for intercept)
     else:
       → fallback recovery position
 
   compute movement toward target_x/target_z
 
-  if ball.state === BALL_IN_PLAY AND can_reach AND state === PLAYER_IDLE:
+  if ball.state === BALL_IN_PLAY AND can_reach:   ← REMOVED state check
     → swing & return hit action
 ```
 

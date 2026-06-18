@@ -84,7 +84,7 @@ export const ai = {
         && ball.y <= HIT_HEIGHT_MAX && ball.y >= HIT_HEIGHT_MIN
         && ball.vz > 0;
 
-      if (can_reach && ai_player.state === PLAYER_IDLE) {
+      if (can_reach) {
         player.swing(ai_player);
 
         const r = Math.random();

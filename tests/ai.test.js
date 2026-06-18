@@ -46,7 +46,6 @@ describe('ai', () => {
     const ai_target_z = Math.max(COURT_LENGTH * 0.6, COURT_LENGTH - 2 - (1 - 0.7) * 2);
     p.x = 0;
     p.z = ai_target_z;
-    p.state = PLAYER_IDLE;
     const b = {
       state: BALL_IN_PLAY,
       x: 0,
@@ -61,6 +60,25 @@ describe('ai', () => {
     expect(result).toHaveProperty('hit_type');
     expect(result).toHaveProperty('target_x');
     expect(result).toHaveProperty('target_z');
+  });
+
+  it('update swings even when AI is in PLAYER_MOVING state', () => {
+    const p = ai.new_player('hard');
+    p.reaction_counter = 999;
+    p.x = 0;
+    p.z = COURT_LENGTH - 4;
+    const b = {
+      state: BALL_IN_PLAY,
+      x: 0,
+      z: COURT_LENGTH - 5,
+      vz: 0.2,
+      vx: 0,
+      vy: 0,
+      y: 1.0,
+    };
+    const result = ai.update(p, b);
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('hit_type');
   });
 
   it('update tracks ball at different positions in AI half', () => {
