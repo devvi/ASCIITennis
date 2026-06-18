@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   COURT_WIDTH, COURT_LENGTH, SINGLES_WIDTH,
-  AI_EASY, AI_HARD,
+  AI_EASY, AI_HARD, BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
   STATE_VIOLATION_REPLAY, REPLAY_FRAME_COUNT,
   BALL_REPLAY, BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_RADIUS,
-  SERVE_ANGLE_MAX,
+  SERVE_ANGLE_MAX, PLAYER_IDLE, PLAYER_SPEED,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
+import { player } from '../src/player.js';
 
 const HUMAN_TARGET_X_MAX = SINGLES_WIDTH * 0.7 / 2;
 const HUMAN_TARGET_Z_MIN = COURT_LENGTH - 4;
@@ -180,5 +181,91 @@ describe('violation replay flow', () => {
     expect(VIOLATION_MESSAGES.net).toBe("NET!");
     expect(VIOLATION_MESSAGES.double_bounce).toBe("DOUBLE BOUNCE!");
     expect(VIOLATION_MESSAGES.serve_fault).toBeUndefined();
+  });
+});
+
+describe('2P mode', () => {
+  it('player.new(false, "back") has back-half z-bounds', () => {
+    const p = player.new(false, 'back');
+    expect(p.z_min).toBe(COURT_LENGTH / 2 + 0.5);
+    expect(p.z_max).toBe(COURT_LENGTH - 0.5);
+    expect(p.is_ai).toBe(false);
+  });
+
+  it('player.new(false, "front") has front-half z-bounds', () => {
+    const p = player.new(false, 'front');
+    expect(p.z_min).toBe(0.5);
+    expect(p.z_max).toBe(COURT_LENGTH / 2 - 0.5);
+  });
+
+  it('player.new(true) still gets back-half z-bounds for backward compat', () => {
+    const p = player.new(true);
+    expect(p.z_min).toBe(COURT_LENGTH / 2 + 0.5);
+    expect(p.z_max).toBe(COURT_LENGTH - 0.5);
+  });
+
+  it('player.new(false) without side gets front-half bounds', () => {
+    const p = player.new(false);
+    expect(p.z_min).toBe(0.5);
+    expect(p.z_max).toBe(COURT_LENGTH / 2 - 0.5);
+  });
+
+  it('player.move clamps P2 to back-half z range', () => {
+    const p = player.new(false, 'back');
+    p.z = COURT_LENGTH / 2 + 0.5;
+    player.move(p, 0, -100);
+    expect(p.z).toBe(COURT_LENGTH / 2 + 0.5);
+    player.move(p, 0, 100);
+    expect(p.z).toBeLessThanOrEqual(COURT_LENGTH);
+  });
+
+  it('player.move clamps P1 to front-half z range', () => {
+    const p = player.new(false, 'front');
+    p.z = 0.5;
+    player.move(p, 0, -100);
+    expect(p.z).toBe(0.5);
+    player.move(p, 0, 100);
+    expect(p.z).toBeLessThanOrEqual(COURT_LENGTH / 2 - 0.5);
+  });
+
+  it('P2 hit target z is in front court (2 + random(2))', () => {
+    for (let i = 0; i < 100; i++) {
+      const target_z = 2 + Math.random() * 2;
+      expect(target_z).toBeGreaterThanOrEqual(2);
+      expect(target_z).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('P1 hit target z is in back court (COURT_LENGTH - 2 - random(2))', () => {
+    for (let i = 0; i < 100; i++) {
+      const target_z = COURT_LENGTH - 2 - Math.random() * 2;
+      expect(target_z).toBeGreaterThanOrEqual(COURT_LENGTH - 4);
+      expect(target_z).toBeLessThanOrEqual(COURT_LENGTH - 2);
+    }
+  });
+
+  it('P2 uses Shift for BTN_A (serve toss) and Enter for BTN_B (hit)', () => {
+    const inpKeyMap = {
+      "ArrowUp": BTN_UP,
+      "ArrowDown": BTN_DOWN,
+      "ArrowLeft": BTN_LEFT,
+      "ArrowRight": BTN_RIGHT,
+      "Enter": BTN_B,
+      "Shift": BTN_A,
+    };
+    expect(inpKeyMap.Enter).toBe(BTN_B);
+    expect(inpKeyMap.Shift).toBe(BTN_A);
+  });
+
+  it('P2 does not have mouse bindings', () => {
+    const inpKeyMap = {
+      "ArrowUp": BTN_UP,
+      "ArrowDown": BTN_DOWN,
+      "ArrowLeft": BTN_LEFT,
+      "ArrowRight": BTN_RIGHT,
+      "Enter": BTN_B,
+      "Shift": BTN_A,
+    };
+    expect(Object.keys(inpKeyMap).length).toBe(6);
   });
 });

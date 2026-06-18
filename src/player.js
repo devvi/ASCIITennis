@@ -1,10 +1,13 @@
 import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED, HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX } from './constants.js';
 
 export const player = {
-  new(is_ai) {
+  new(is_ai, side) {
+    const isBack = side === 'back' || (side === undefined && is_ai);
     return {
       x: 0,
-      z: is_ai ? COURT_LENGTH - 2 : 3,
+      z: isBack ? COURT_LENGTH - 2 : 3,
+      z_min: isBack ? COURT_LENGTH / 2 + 0.5 : 0.5,
+      z_max: isBack ? COURT_LENGTH - 0.5 : COURT_LENGTH / 2 - 0.5,
       state: PLAYER_IDLE,
       hit_timer: 0,
       swing_duration: 15,
@@ -28,7 +31,7 @@ export const player = {
     const margin = 1.0;
 
     p.x = Math.max(-COURT_WIDTH/2 + margin, Math.min(COURT_WIDTH/2 - margin, new_x));
-    p.z = Math.max(0.5, Math.min(COURT_LENGTH/2 - 0.5, new_z));
+    p.z = Math.max(p.z_min, Math.min(p.z_max, new_z));
   },
 
   swing(p) {
