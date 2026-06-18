@@ -17,6 +17,8 @@
 
 Research complete — see `docs/PRD/111-add-audience.md` for requirements.
 
+**PLAN_ISSUE:** #117
+
 ### Phase 1: Tests (TDD)
 - Write `tests/audience.test.js`:
   - `audience.init()` creates N spectators at valid perimeter positions
