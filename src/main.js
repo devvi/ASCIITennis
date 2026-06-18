@@ -1,10 +1,11 @@
 import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER, STATE_VIOLATION_REPLAY,
   PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH,
-  BTN_UP, BTN_DOWN, BTN_B, BTN_A, BALL_HELD,
+  BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_B, BTN_A, BALL_HELD,
   BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE, BALL_REPLAY,
   REPLAY_FRAME_COUNT,
   SERVE_TOSS_HEIGHT, SERVE_TOSS_DURATION, SERVE_ANGLE_MAX,
+  MODE_1P, MODE_2P,
 } from './constants.js';
 import { court } from './court.js';
 import { camera } from './camera.js';
@@ -18,7 +19,9 @@ import { audience } from './audience.js';
 
 let game_state;
 let selected_diff;
+let game_mode;
 let human_player;
+let p2_player;
 let ai_player;
 let ball_obj;
 let score;
@@ -41,8 +44,10 @@ function init_game() {
 
   game_state = STATE_MENU;
   selected_diff = 1;
+  game_mode = MODE_1P;
 
   human_player = player.new(false);
+  p2_player = null;
   ai_player = null;
   ball_obj = ball.new();
   score = scoring.new();
@@ -61,6 +66,7 @@ function init_game() {
 }
 
 function start_match() {
+  p2_player = null;
   ai_player = ai.new_player(selected_diff === 1 ? "easy" : "hard");
 
   human_player.x = 0;
@@ -72,6 +78,29 @@ function start_match() {
   ai_player.z = COURT_LENGTH - 2;
   ai_player.state = PLAYER_IDLE;
   ai_player.hit_timer = 0;
+
+  score = scoring.new();
+  server = 0;
+  rally_hits = 0;
+
+  game_state = STATE_SERVING;
+  setup_serve();
+}
+
+function start_match_2p() {
+  ai_player = null;
+  human_player = player.new(false, 0);
+  p2_player = player.new(false, 1);
+
+  human_player.x = 0;
+  human_player.z = 3;
+  human_player.state = PLAYER_IDLE;
+  human_player.hit_timer = 0;
+
+  p2_player.x = 0;
+  p2_player.z = COURT_LENGTH - 2;
+  p2_player.state = PLAYER_IDLE;
+  p2_player.hit_timer = 0;
 
   score = scoring.new();
   server = 0;
@@ -93,6 +122,11 @@ function setup_serve() {
     human_player.z = 2;
     ball_obj.x = human_player.x;
     ball_obj.z = human_player.z;
+  } else if (game_mode === MODE_2P) {
+    p2_player.x = (Math.random() - 0.5) * 2;
+    p2_player.z = COURT_LENGTH - 2;
+    ball_obj.x = p2_player.x;
+    ball_obj.z = p2_player.z;
   } else {
     ai_player.x = (Math.random() - 0.5) * 2;
     ai_player.z = COURT_LENGTH - 2;
@@ -109,9 +143,10 @@ function do_serve(timing_quality, angle) {
     const target_z = COURT_LENGTH * 0.85;
     ball.serve(ball_obj, human_player.x, human_player.z, target_x, target_z, timing_quality);
   } else {
-    const target_x = ai_player.x + angle * SERVE_ANGLE_MAX;
+    const opponent = game_mode === MODE_2P ? p2_player : ai_player;
+    const target_x = opponent.x + angle * SERVE_ANGLE_MAX;
     const target_z = 1 + Math.random() * 3;
-    ball.serve(ball_obj, ai_player.x, ai_player.z, target_x, target_z, timing_quality);
+    ball.serve(ball_obj, opponent.x, opponent.z, target_x, target_z, timing_quality);
   }
   game_state = STATE_PLAYING;
   rally_hits = 0;
@@ -181,21 +216,33 @@ function update_violation_replay() {
 }
 
 function update_menu() {
-  if (input.pressed(BTN_UP)) {
-    selected_diff = Math.max(1, selected_diff - 1);
+  if (input.pressed(BTN_LEFT) || input.pressed(BTN_RIGHT)) {
+    game_mode = game_mode === MODE_1P ? MODE_2P : MODE_1P;
   }
-  if (input.pressed(BTN_DOWN)) {
-    selected_diff = Math.min(2, selected_diff + 1);
+  if (game_mode === MODE_1P) {
+    if (input.pressed(BTN_UP)) {
+      selected_diff = Math.max(1, selected_diff - 1);
+    }
+    if (input.pressed(BTN_DOWN)) {
+      selected_diff = Math.min(2, selected_diff + 1);
+    }
   }
   if (input.pressed(BTN_B)) {
-    start_match();
+    if (game_mode === MODE_1P) {
+      start_match();
+    } else {
+      start_match_2p();
+    }
   }
 }
 
 function update_serving() {
-  if (server === 0) {
+  const is_2p = game_mode === MODE_2P;
+  const current_input = server === 0 ? input.p1 : (is_2p ? input.p2 : null);
+
+  if (server === 0 || (server === 1 && is_2p)) {
     if (!serve_toss_started) {
-      if (input.pressed(BTN_A)) {
+      if (current_input.pressed(BTN_A) || current_input.pressed(BTN_B)) {
         serve_toss_started = true;
         serve_toss_frames = 0;
         ball_obj.y = 1.0;
@@ -212,10 +259,10 @@ function update_serving() {
         ball_obj.y = SERVE_TOSS_HEIGHT - (SERVE_TOSS_HEIGHT - 1.0) * t;
       }
 
-      if (input.pressed(BTN_A)) {
+      if (current_input.pressed(BTN_A) || current_input.pressed(BTN_B)) {
         const diff = Math.abs(serve_toss_frames - half);
         const timing_quality = diff <= 3 ? "s_serve" : "normal";
-        const angle = input.get_aim_angle();
+        const angle = current_input.get_aim_angle();
         do_serve(timing_quality, angle);
         serve_toss_started = false;
         serve_toss_frames = 0;
@@ -236,19 +283,19 @@ function update_serving() {
 }
 
 function update_playing() {
-  const [dx, dz] = input.get_movement();
-  player.move(human_player, dx, dz);
+  const [p1_dx, p1_dz] = input.p1.get_movement();
+  player.move(human_player, p1_dx, p1_dz);
   player.update(human_player);
 
   human_player.can_hit_this_frame = player.in_hit_range(human_player, ball_obj);
 
-  const shot = input.get_shot_type();
-  if (shot && player.can_hit(human_player, ball_obj)) {
+  const p1_shot = input.p1.get_shot_type();
+  if (p1_shot && player.can_hit(human_player, ball_obj)) {
     if (player.swing(human_player)) {
-      const angle = input.get_aim_angle();
+      const angle = input.p1.get_aim_angle();
       const target_x = angle * SINGLES_WIDTH * 0.35;
       const target_z = COURT_LENGTH - 2 - Math.random() * 2;
-      ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0);
+      ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, p1_shot, 0);
       rally_hits += 1;
       if (rally_hits >= audience.RALLY_CHEER_THRESHOLD && !rallied_cheer) {
         audience.cheer();
@@ -257,16 +304,39 @@ function update_playing() {
     }
   }
 
-  const ai_action = ai.update(ai_player, ball_obj);
-  if (ai_action) {
-    ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type, 1);
-    rally_hits += 1;
-    if (rally_hits >= audience.RALLY_CHEER_THRESHOLD && !rallied_cheer) {
-      audience.cheer();
-      rallied_cheer = true;
+  if (game_mode === MODE_1P) {
+    const ai_action = ai.update(ai_player, ball_obj);
+    if (ai_action) {
+      ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type, 1);
+      rally_hits += 1;
+      if (rally_hits >= audience.RALLY_CHEER_THRESHOLD && !rallied_cheer) {
+        audience.cheer();
+        rallied_cheer = true;
+      }
+    }
+    player.update(ai_player);
+  } else {
+    const [p2_dx, p2_dz] = input.p2.get_movement();
+    player.move(p2_player, p2_dx, p2_dz);
+    player.update(p2_player);
+
+    p2_player.can_hit_this_frame = player.in_hit_range(p2_player, ball_obj);
+
+    const p2_shot = input.p2.get_shot_type();
+    if (p2_shot && player.can_hit(p2_player, ball_obj)) {
+      if (player.swing(p2_player)) {
+        const angle = input.p2.get_aim_angle();
+        const target_x = angle * SINGLES_WIDTH * 0.35;
+        const target_z = 2 + Math.random() * 2;
+        ball.hit(ball_obj, p2_player.x, 1.0, p2_player.z, target_x, target_z, p2_shot, 1);
+        rally_hits += 1;
+        if (rally_hits >= audience.RALLY_CHEER_THRESHOLD && !rallied_cheer) {
+          audience.cheer();
+          rallied_cheer = true;
+        }
+      }
     }
   }
-  player.update(ai_player);
 
   ball.update(ball_obj);
 
@@ -321,7 +391,7 @@ function draw_game() {
   beginFrame();
 
   if (game_state === STATE_MENU) {
-    render.menu(selected_diff);
+    render.menu(selected_diff, game_mode);
     return;
   }
 
@@ -334,8 +404,10 @@ function draw_game() {
     render.ball(ball_obj);
   }
 
-  render.player(human_player, "P");
-  if (ai_player) {
+  render.player(human_player, game_mode === MODE_2P ? "P1" : "P");
+  if (game_mode === MODE_2P && p2_player) {
+    render.player(p2_player, "P2");
+  } else if (ai_player) {
     render.player(ai_player, "A");
   }
 
@@ -347,14 +419,20 @@ function draw_game() {
     render.landing_marker(replay_landing_pos);
   }
 
-  render.hud(score);
+  render.hud(score, game_mode);
 
   if (game_state === STATE_SERVING) {
     if (server === 0) {
       if (!serve_toss_started) {
-        print("Left click to serve", 35, 120);
+        print(game_mode === MODE_2P ? "P1: Space to serve" : "Left click to serve", 35, 120);
       } else {
-        print("Click to swing!", 50, 120);
+        print(game_mode === MODE_2P ? "P1: Swing!" : "Click to swing!", 50, 120);
+      }
+    } else if (game_mode === MODE_2P) {
+      if (!serve_toss_started) {
+        print("P2: Enter to serve", 35, 120);
+      } else {
+        print("P2: Swing!", 50, 120);
       }
     } else {
       print("AI serving...", 60, 120);
@@ -364,12 +442,16 @@ function draw_game() {
   render.referee(referee_state);
 
   if (game_state === STATE_POINT_SCORED) {
-    const name = point_winner === 0 ? "Player" : "AI";
+    const name = point_winner === 0
+      ? (game_mode === MODE_2P ? "P1" : "Player")
+      : (game_mode === MODE_2P ? "P2" : "AI");
     print("Point: " + name, 70, 110);
   }
 
   if (game_state === STATE_GAME_OVER) {
-    const winner = score.sets[0] > score.sets[1] ? "Player" : "AI";
+    const winner = score.sets[0] > score.sets[1]
+      ? (game_mode === MODE_2P ? "P1" : "Player")
+      : (game_mode === MODE_2P ? "P2" : "AI");
     render.game_over(winner);
   }
 }

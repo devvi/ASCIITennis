@@ -150,4 +150,33 @@ describe('player', () => {
     const b = { x: 100, y: 1.0, z: 100 };
     expect(player.in_hit_range(p, b)).toBe(false);
   });
+
+  describe('side property', () => {
+    it('new(false, 1) creates player with side: 1', () => {
+      const p = player.new(false, 1);
+      expect(p.side).toBe(1);
+    });
+
+    it('new(false) defaults to side: 0 (backward compat)', () => {
+      const p = player.new(false);
+      expect(p.side).toBe(0);
+    });
+
+    it('move clamps side:0 player to near half [0.5, COURT_LENGTH/2 - 0.5]', () => {
+      const p = player.new(false, 0);
+      player.move(p, 0, -100);
+      expect(p.z).toBeGreaterThanOrEqual(0.5);
+      player.move(p, 0, 100);
+      expect(p.z).toBeLessThanOrEqual(COURT_LENGTH / 2 - 0.5);
+    });
+
+    it('move clamps side:1 player to far half [COURT_LENGTH/2 + 0.5, COURT_LENGTH - 0.5]', () => {
+      const p = player.new(false, 1);
+      p.z = COURT_LENGTH / 2 + 1;
+      player.move(p, 0, -100);
+      expect(p.z).toBeGreaterThanOrEqual(COURT_LENGTH / 2 + 0.5);
+      player.move(p, 0, 100);
+      expect(p.z).toBeLessThanOrEqual(COURT_LENGTH - 0.5);
+    });
+  });
 });

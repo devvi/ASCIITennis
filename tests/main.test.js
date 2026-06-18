@@ -182,3 +182,20 @@ describe('violation replay flow', () => {
     expect(VIOLATION_MESSAGES.serve_fault).toBeUndefined();
   });
 });
+
+describe('2-player mode', () => {
+  it('MODE_1P constant equals 1', async () => {
+    const { MODE_1P } = await import('../src/constants.js');
+    expect(MODE_1P).toBe(1);
+  });
+
+  it('MODE_2P constant equals 2', async () => {
+    const { MODE_2P } = await import('../src/constants.js');
+    expect(MODE_2P).toBe(2);
+  });
+
+  it('MODE_1P and MODE_2P are distinct values', async () => {
+    const { MODE_1P, MODE_2P } = await import('../src/constants.js');
+    expect(MODE_1P).not.toBe(MODE_2P);
+  });
+});

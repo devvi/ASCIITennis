@@ -39,6 +39,9 @@ export const STATE_VIOLATION_REPLAY = "violation_replay";
 
 export const REPLAY_FRAME_COUNT = 90;
 
+export const MODE_1P = 1;
+export const MODE_2P = 2;
+
 export const PLAYER_IDLE = "idle";
 export const PLAYER_MOVING = "moving";
 export const PLAYER_HITTING = "hitting";

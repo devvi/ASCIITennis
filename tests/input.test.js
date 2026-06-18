@@ -178,4 +178,163 @@ describe('input', () => {
     input.update();
     expect(input.released(BTN_UP)).toBe(false);
   });
+
+  describe('p2 input', () => {
+    it('P2 key mapping: ArrowRight → BTN_RIGHT', () => {
+      pressKey('ArrowRight');
+      expect(input.p2.held(BTN_RIGHT)).toBe(true);
+    });
+
+    it('P2 key mapping: ArrowUp → BTN_UP', () => {
+      pressKey('ArrowUp');
+      expect(input.p2.held(BTN_UP)).toBe(true);
+    });
+
+    it('P2 key mapping: ArrowDown → BTN_DOWN', () => {
+      pressKey('ArrowDown');
+      expect(input.p2.held(BTN_DOWN)).toBe(true);
+    });
+
+    it('P2 key mapping: ArrowLeft → BTN_LEFT', () => {
+      pressKey('ArrowLeft');
+      expect(input.p2.held(BTN_LEFT)).toBe(true);
+    });
+
+    it('P2 key mapping: Enter → BTN_B', () => {
+      pressKey('Enter');
+      expect(input.p2.held(BTN_B)).toBe(true);
+    });
+
+    it('P2 input isolation: Arrow keys do not affect P1 state', () => {
+      pressKey('ArrowRight');
+      expect(input.p1.held(BTN_RIGHT)).toBe(false);
+    });
+
+    it('P1 input isolation: WASD does not affect P2 state', () => {
+      pressKey('w');
+      expect(input.p2.held(BTN_UP)).toBe(false);
+    });
+
+    it('p2.pressed/held/released work correctly with state transitions', () => {
+      pressKey('ArrowUp');
+      expect(input.p2.pressed(BTN_UP)).toBe(true);
+      expect(input.p2.held(BTN_UP)).toBe(true);
+      input.update();
+      expect(input.p2.pressed(BTN_UP)).toBe(false);
+      expect(input.p2.held(BTN_UP)).toBe(true);
+      releaseKey('ArrowUp');
+      expect(input.p2.released(BTN_UP)).toBe(true);
+      input.update();
+      expect(input.p2.released(BTN_UP)).toBe(false);
+    });
+
+    it('p2.get_movement returns dz=1 for ArrowUp', () => {
+      pressKey('ArrowUp');
+      const [dx, dz] = input.p2.get_movement();
+      expect(dx).toBe(0);
+      expect(dz).toBe(1);
+    });
+
+    it('p2.get_movement returns dz=-1 for ArrowDown', () => {
+      pressKey('ArrowDown');
+      const [dx, dz] = input.p2.get_movement();
+      expect(dx).toBe(0);
+      expect(dz).toBe(-1);
+    });
+
+    it('p2.get_movement returns dx=-1 for ArrowLeft', () => {
+      pressKey('ArrowLeft');
+      const [dx, dz] = input.p2.get_movement();
+      expect(dx).toBe(-1);
+      expect(dz).toBe(0);
+    });
+
+    it('p2.get_movement returns dx=1 for ArrowRight', () => {
+      pressKey('ArrowRight');
+      const [dx, dz] = input.p2.get_movement();
+      expect(dx).toBe(1);
+      expect(dz).toBe(0);
+    });
+
+    it('p2.get_shot_type returns HIT_FLAT when Enter pressed alone', () => {
+      pressKey('Enter');
+      expect(input.p2.get_shot_type()).toBe(HIT_FLAT);
+    });
+
+    it('p2.get_shot_type returns null without BTN_B press', () => {
+      pressKey('ArrowUp');
+      expect(input.p2.get_shot_type()).toBeNull();
+    });
+
+    it('p2.get_shot_type returns HIT_TOPSPIN when ArrowUp+Enter', () => {
+      pressKey('Enter');
+      pressKey('ArrowUp');
+      expect(input.p2.get_shot_type()).toBe(HIT_TOPSPIN);
+    });
+
+    it('p2.get_shot_type returns HIT_SLICE when ArrowDown+Enter', () => {
+      pressKey('Enter');
+      pressKey('ArrowDown');
+      expect(input.p2.get_shot_type()).toBe(HIT_SLICE);
+    });
+
+    it('p2.get_shot_type returns HIT_LOB when ArrowLeft+Enter', () => {
+      pressKey('Enter');
+      pressKey('ArrowLeft');
+      expect(input.p2.get_shot_type()).toBe(HIT_LOB);
+    });
+
+    it('p2.get_shot_type returns HIT_LOB when ArrowRight+Enter', () => {
+      pressKey('Enter');
+      pressKey('ArrowRight');
+      expect(input.p2.get_shot_type()).toBe(HIT_LOB);
+    });
+
+    it('p2.get_serve returns true on BTN_B press', () => {
+      pressKey('Enter');
+      expect(input.p2.get_serve()).toBe(true);
+    });
+
+    it('p2.get_serve returns true on BTN_A press (mouse)', () => {
+      handlers.mousedown({ preventDefault: () => {} });
+      expect(input.p2.get_serve()).toBe(true);
+    });
+
+    it('p2.get_serve returns false when no button pressed', () => {
+      expect(input.p2.get_serve()).toBe(false);
+    });
+
+    it('P2 keyboard keydown/keyup updates P2 button states correctly', () => {
+      pressKey('ArrowRight');
+      expect(input.p2.held(BTN_RIGHT)).toBe(true);
+      releaseKey('ArrowRight');
+      expect(input.p2.held(BTN_RIGHT)).toBe(false);
+    });
+
+    it('P2 mouse mousedown sets P2 BTN_A and BTN_B', () => {
+      handlers.mousedown({ preventDefault: () => {} });
+      expect(input.p2.held(BTN_A)).toBe(true);
+      expect(input.p2.held(BTN_B)).toBe(true);
+    });
+
+    it('P2 mouse mouseup clears P2 BTN_A and BTN_B', () => {
+      handlers.mousedown({ preventDefault: () => {} });
+      input.update();
+      handlers.mouseup({ preventDefault: () => {} });
+      expect(input.p2.held(BTN_A)).toBe(false);
+      expect(input.p2.held(BTN_B)).toBe(false);
+    });
+
+    it('input.update snapshots both P1 and P2 prev arrays for pressed/released', () => {
+      pressKey('w');
+      pressKey('ArrowUp');
+      expect(input.p1.pressed(BTN_UP)).toBe(true);
+      expect(input.p2.pressed(BTN_UP)).toBe(true);
+      input.update();
+      expect(input.p1.pressed(BTN_UP)).toBe(false);
+      expect(input.p2.pressed(BTN_UP)).toBe(false);
+      expect(input.p1.held(BTN_UP)).toBe(true);
+      expect(input.p2.held(BTN_UP)).toBe(true);
+    });
+  });
 });

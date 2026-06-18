@@ -152,4 +152,23 @@ describe('render (perspective)', () => {
     expect(mockCtx.fillText).toHaveBeenCalled();
     expect(mockCtx._fillStyle).toBe('#fff');
   });
+
+  it('P1 rendered cyan (#0ff) when side is 0', () => {
+    const p = { x: 0, z: 5, side: 0, is_ai: false, state: 'idle' };
+    vi.clearAllMocks();
+    render.player(p, 'P');
+    expect(mockCtx._fillStyle).toBe('#0ff');
+  });
+
+  it('P2 rendered green (#0f0) when side is 1', () => {
+    const p = { x: 0, z: 10, side: 1, is_ai: false, state: 'idle' };
+    vi.clearAllMocks();
+    render.player(p, 'P');
+    expect(mockCtx._fillStyle).toBe('#0f0');
+  });
+
+  it('menu renders with mode selection option', () => {
+    render.menu(1);
+    expect(mockCtx.fillText).toHaveBeenCalledWith(expect.stringContaining('1-Player'), expect.any(Number), expect.any(Number));
+  });
 });
