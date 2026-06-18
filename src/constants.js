@@ -87,6 +87,10 @@ export const SERVICE_BOX_FILL = 'rgba(255,255,255,0.05)';
 export const SINGLES_WIDTH = 8.23;
 export const NET_POST_HEIGHT = 1.07;
 
+// Audience
+export const AUDIENCE_COUNT = 24;
+export const AUDIENCE_CHEER_DURATION = 75;
+
 // Serve (GBC-style toss)
 export const SERVE_TOSS_HEIGHT = 2.5;
 export const SERVE_TOSS_DURATION = 30;

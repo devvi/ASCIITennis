@@ -14,6 +14,7 @@ import { ball } from './ball.js';
 import { ai } from './ai.js';
 import { scoring } from './scoring.js';
 import { render, initRender, beginFrame, print } from './render.js';
+import { audience } from './audience.js';
 
 let game_state;
 let selected_diff;
@@ -32,6 +33,7 @@ let serve_toss_started;
 let serve_toss_frames;
 let replay_timer;
 let replay_landing_pos;
+let audience_obj;
 
 function init_game() {
   court.init();
@@ -54,6 +56,8 @@ function init_game() {
   serve_toss_frames = 0;
   replay_timer = 0;
   replay_landing_pos = null;
+  audience_obj = audience;
+  audience_obj.init();
 }
 
 function start_match() {
@@ -114,6 +118,7 @@ function do_serve(timing_quality, angle) {
 }
 
 function resolve_point(winner) {
+  audience_obj.cheer();
   const result = scoring.award_point(score, winner);
   point_winner = winner;
   point_timer = 60;
@@ -135,6 +140,7 @@ const VIOLATION_MESSAGES = {
 };
 
 function resolve_violation_point(violation_type, hitter) {
+  audience_obj.cheer();
   const winner = 1 - hitter;
   point_winner = winner;
 
@@ -313,6 +319,7 @@ function draw_game() {
   camera.init();
   render.court();
   render.net();
+  render.audience(audience_obj);
 
   if (ball_obj) {
     render.ball(ball_obj);
@@ -374,6 +381,7 @@ function gameLoop() {
   }
 
   input.update();
+  audience_obj.update();
   draw_game();
   window.__gs = {
     game_state, human_x: human_player.x, human_z: human_player.z,
