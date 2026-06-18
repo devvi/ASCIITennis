@@ -42,7 +42,6 @@ export const scoring = {
     if (!s.tiebreak && s.games[0] === 6 && s.games[1] === 6) {
       s.tiebreak = true;
       s.points = [0, 0];
-      return "tiebreak";
     }
 
     if (s.tiebreak) {

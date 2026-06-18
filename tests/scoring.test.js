@@ -171,13 +171,13 @@ describe('scoring', () => {
     expect(s.tiebreak).toBe(false);
   });
 
-  it('award_point enters tiebreaker when games reach 6-6', () => {
+  it('award_point enters tiebreaker when games reach 6-6 and counts the point', () => {
     const s = scoring.new();
     s.games = [6, 6];
     const result = scoring.award_point(s, 0);
     expect(s.tiebreak).toBe(true);
-    expect(s.points).toEqual([0, 0]);
-    expect(result).toBe('tiebreak');
+    expect(s.points).toEqual([1, 0]);
+    expect(result).toBeNull();
   });
 
   it('tiebreaker points count as 0, 1, 2 (not 15, 30, 40)', () => {
