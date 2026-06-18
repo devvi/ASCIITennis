@@ -158,9 +158,10 @@ export const render = {
     drawNet();
   },
 
-  player(p, label) {
-    const color = p.is_ai ? '#f44' : '#0ff';
-    const racketSide = p.is_ai ? 1 : -1;
+  player(p, label, game_mode) {
+    const isP2 = game_mode === "2p" ? (label === "P2") : p.is_ai;
+    const color = isP2 ? '#f44' : '#0ff';
+    const racketSide = isP2 ? 1 : -1;
     drawPlayerFigure(p, color, racketSide);
   },
 
@@ -180,14 +181,16 @@ export const render = {
     camera.draw_char(b.x, b.y, b.z, 'O');
   },
 
-  hud(score) {
+  hud(score, game_mode) {
     ctx.fillStyle = "#fff";
     const ptDisplay = scoring.display(score);
     const ptLine = ptDisplay.split('\n')[0];
     if (ptLine.includes('Deuce')) {
       ctx.fillText(ptLine, 2, 1);
     } else {
-      ctx.fillText("P:" + scoring.point_name(score.points[0]) + " A:" + scoring.point_name(score.points[1]), 2, 1);
+      const p1Label = game_mode === "2p" ? "P1:" : "P:";
+      const p2Label = game_mode === "2p" ? "P2:" : "A:";
+      ctx.fillText(p1Label + scoring.point_name(score.points[0]) + " " + p2Label + scoring.point_name(score.points[1]), 2, 1);
     }
     ctx.fillText("Games " + score.games[0] + "-" + score.games[1], 2, 9);
     if (score.sets[0] > 0 || score.sets[1] > 0) {
@@ -241,13 +244,14 @@ export const render = {
     ctx.fillText(" \\___ \\| |_| || | | ||  \\| | |  _|  | | | ||  \\| | \\___ \\", 8, 31);
     ctx.fillText("  ___) |  _  || |_| || |\\  | | |___ | |_| || |\\  |  ___) |", 8, 39);
     ctx.fillText(" |____/|_| |_| \\___/ |_| \\_| |_____| \\___/ |_| \\_| |____/", 8, 47);
-    ctx.fillText("Select AI Difficulty:", 50, 70);
-    ctx.fillText((selected_diff === 1 ? " > " : "   ") + "EASY", 55, 80);
-    ctx.fillText((selected_diff === 2 ? " > " : "   ") + "HARD", 55, 90);
-    ctx.fillText("Click to play", 55, 110);
+    ctx.fillText("Select Mode:", 50, 70);
+    ctx.fillText((selected_diff === 1 ? " > " : "   ") + "1P EASY", 55, 80);
+    ctx.fillText((selected_diff === 2 ? " > " : "   ") + "1P HARD", 55, 90);
+    ctx.fillText((selected_diff === 3 ? " > " : "   ") + "2 PLAYERS", 55, 100);
+    ctx.fillText("Press Enter/Space to play", 40, 120);
   },
 
-  game_over(winner) {
+  game_over(winner, game_mode) {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____    _    __  __ _____ ", 35, 30);
     ctx.fillText(" / ___|  / \\  |  \\/  | ____|", 35, 38);
@@ -255,6 +259,6 @@ export const render = {
     ctx.fillText("| |_| |/ ___ \\| |  | | |___ ", 35, 54);
     ctx.fillText(" \\____/_/   \\_\\_|  |_|_____|", 35, 62);
     ctx.fillText(winner + " wins the match!", 55, 80);
-    ctx.fillText("Click to play again", 48, 95);
+    ctx.fillText("Press Enter/Space to continue", 40, 95);
   },
 };
