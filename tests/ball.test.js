@@ -5,7 +5,7 @@ import {
   HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB,
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
   SERVE_SPEED_MIN, SERVE_SPEED_MAX, SERVE_S_SPEED_MULT, SERVE_NORMAL_SPEED,
-  GRAVITY,
+  GRAVITY, SERVE_CHARGE_DURATION,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -43,25 +43,65 @@ describe('ball', () => {
     expect(b.state).toBe(BALL_IN_PLAY);
   });
 
-  it('serve with normal timing uses SERVE_NORMAL_SPEED', () => {
+  it('serve with power=0 uses SERVE_SPEED_MIN', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 3, 15, 'normal');
+    ball.serve(b, 0, 2, 3, 15, 'normal', 0);
     const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
-    expect(speed).toBeCloseTo(SERVE_NORMAL_SPEED, 2);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MIN, 2);
   });
 
-  it('serve with s_serve timing uses max speed times multiplier', () => {
+  it('serve with s_serve and power=1 uses max speed times multiplier', () => {
     const b = ball.new();
-    ball.serve(b, 0, 2, 3, 15, 's_serve');
+    ball.serve(b, 0, 2, 3, 15, 's_serve', 1);
     const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
     expect(speed).toBeCloseTo(SERVE_SPEED_MAX * SERVE_S_SPEED_MULT, 2);
   });
 
-  it('serve defaults to normal when no timing_quality given', () => {
+  it('serve defaults power to 0 when not given', () => {
     const b = ball.new();
     ball.serve(b, 0, 2, 3, 15);
     const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
-    expect(speed).toBeCloseTo(SERVE_NORMAL_SPEED, 2);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MIN, 2);
+  });
+
+  it('serve accepts power param and produces different speed', () => {
+    const b1 = ball.new();
+    const b2 = ball.new();
+    ball.serve(b1, 0, 2, 3, 15, 'normal', 0);
+    ball.serve(b2, 0, 2, 3, 15, 'normal', 1);
+    const speed1 = Math.sqrt(b1.vx*b1.vx + b1.vz*b1.vz);
+    const speed2 = Math.sqrt(b2.vx*b2.vx + b2.vz*b2.vz);
+    expect(speed2).toBeGreaterThan(speed1);
+  });
+
+  it('serve power=0 uses SERVE_SPEED_MIN', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 'normal', 0);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MIN, 2);
+  });
+
+  it('serve power=1 uses SERVE_SPEED_MAX', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 'normal', 1);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    expect(speed).toBeCloseTo(SERVE_SPEED_MAX, 2);
+  });
+
+  it('serve power=0.5 produces midpoint speed', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 'normal', 0.5);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    const midpoint = SERVE_SPEED_MIN + 0.5 * (SERVE_SPEED_MAX - SERVE_SPEED_MIN);
+    expect(speed).toBeCloseTo(midpoint, 2);
+  });
+
+  it('serve with s_serve and power=0.5 combines both multipliers', () => {
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 's_serve', 0.5);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    const base = SERVE_SPEED_MIN + 0.5 * (SERVE_SPEED_MAX - SERVE_SPEED_MIN);
+    expect(speed).toBeCloseTo(base * SERVE_S_SPEED_MULT, 2);
   });
 
   it('update moves ball when in play', () => {
@@ -112,10 +152,10 @@ describe('ball', () => {
   });
 
   describe('serve trajectory (vy recalibrated)', () => {
-    it('normal serve arcs deep enough to reach service box', () => {
+    it('normal serve with power=1 arcs deep enough to reach service box', () => {
       court.init();
       const b = ball.new();
-      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal', 1);
       b.state = BALL_IN_PLAY;
       let maxZ = b.z;
       let landed = false;
@@ -128,10 +168,10 @@ describe('ball', () => {
       expect(maxZ).toBeGreaterThan(COURT_LENGTH * 0.6);
     });
 
-    it('normal serve does not trigger BALL_OUT before first bounce', () => {
+    it('normal serve with power=1 does not trigger BALL_OUT before first bounce', () => {
       court.init();
       const b = ball.new();
-      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal', 1);
       b.state = BALL_IN_PLAY;
       let outBeforeBounce = false;
       for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {

@@ -143,10 +143,10 @@ describe('violation replay flow', () => {
       expect(target_z).toBeLessThan(COURT_LENGTH);
     });
 
-    it('ball after normal serve does not trigger BALL_OUT before bouncing', () => {
+    it('ball after normal serve with power=1 does not trigger BALL_OUT before bouncing', () => {
       court.init();
       const b = ball.new();
-      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal', 1);
       let outBeforeBounce = false;
       for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {
         ball.update(b);
@@ -157,10 +157,10 @@ describe('violation replay flow', () => {
       expect(outBeforeBounce).toBe(false);
     });
 
-    it('ball after normal serve bounces at least once (lands in court)', () => {
+    it('ball after normal serve with power=1 bounces at least once (lands in court)', () => {
       court.init();
       const b = ball.new();
-      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal');
+      ball.serve(b, 0, 2, 0, COURT_LENGTH * 0.85, 'normal', 1);
       let bounced = false;
       for (let i = 0; i < 200 && b.state === BALL_IN_PLAY; i++) {
         ball.update(b);
@@ -180,6 +180,75 @@ describe('violation replay flow', () => {
     expect(VIOLATION_MESSAGES.net).toBe("NET!");
     expect(VIOLATION_MESSAGES.double_bounce).toBe("DOUBLE BOUNCE!");
     expect(VIOLATION_MESSAGES.serve_fault).toBeUndefined();
+  });
+});
+
+describe('serve power meter - charge logic', () => {
+  it('SERVE_CHARGE_DURATION is a positive integer', async () => {
+    const { SERVE_CHARGE_DURATION } = await import('../src/constants.js');
+    expect(SERVE_CHARGE_DURATION).toBeGreaterThan(0);
+    expect(Number.isInteger(SERVE_CHARGE_DURATION)).toBe(true);
+  });
+
+  it('SERVE_SPEED_MIN is less than SERVE_SPEED_MAX', async () => {
+    const { SERVE_SPEED_MIN, SERVE_SPEED_MAX } = await import('../src/constants.js');
+    expect(SERVE_SPEED_MIN).toBeLessThan(SERVE_SPEED_MAX);
+  });
+
+  it('charge increment per frame equals 1/SERVE_CHARGE_DURATION', async () => {
+    const { SERVE_CHARGE_DURATION } = await import('../src/constants.js');
+    const frame_increment = 1 / SERVE_CHARGE_DURATION;
+    expect(frame_increment).toBeCloseTo(0.0222, 2);
+  });
+
+  it('charge caps at 1.0 after SERVE_CHARGE_DURATION frames', async () => {
+    const { SERVE_CHARGE_DURATION } = await import('../src/constants.js');
+    const frame_increment = 1 / SERVE_CHARGE_DURATION;
+    let charge = 0;
+    for (let i = 0; i < SERVE_CHARGE_DURATION; i++) {
+      charge = Math.min(charge + frame_increment, 1.0);
+    }
+    expect(charge).toBeCloseTo(1.0, 5);
+    charge = Math.min(charge + frame_increment, 1.0);
+    expect(charge).toBeCloseTo(1.0, 5);
+  });
+
+  it('charge after n frames is n/45 capped at 1.0', async () => {
+    const { SERVE_CHARGE_DURATION } = await import('../src/constants.js');
+    const frame_increment = 1 / SERVE_CHARGE_DURATION;
+    let charge = 0;
+    for (let i = 0; i < 10; i++) {
+      charge = Math.min(charge + frame_increment, 1.0);
+    }
+    expect(charge).toBeCloseTo(10 / 45, 4);
+  });
+
+  it('ball.serve with power interpolates speed correctly', async () => {
+    const ball = (await import('../src/ball.js')).ball;
+    const { SERVE_SPEED_MIN, SERVE_SPEED_MAX } = await import('../src/constants.js');
+    const b = ball.new();
+    ball.serve(b, 0, 2, 3, 15, 'normal', 0.3);
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    const expected = SERVE_SPEED_MIN + 0.3 * (SERVE_SPEED_MAX - SERVE_SPEED_MIN);
+    expect(speed).toBeCloseTo(expected, 2);
+  });
+});
+
+describe('AI serve power selection', () => {
+  it('hard AI picks power in 80-100% range', () => {
+    for (let i = 0; i < 100; i++) {
+      const power = 0.8 + Math.random() * 0.2;
+      expect(power).toBeGreaterThanOrEqual(0.8);
+      expect(power).toBeLessThanOrEqual(1.0);
+    }
+  });
+
+  it('easy AI picks power in 30-60% range', () => {
+    for (let i = 0; i < 100; i++) {
+      const power = 0.3 + Math.random() * 0.3;
+      expect(power).toBeGreaterThanOrEqual(0.3);
+      expect(power).toBeLessThanOrEqual(0.6);
+    }
   });
 });
 

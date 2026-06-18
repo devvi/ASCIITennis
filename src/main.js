@@ -4,7 +4,7 @@ import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_B, BTN_A, BALL_HELD,
   BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE, BALL_REPLAY,
   REPLAY_FRAME_COUNT,
-  SERVE_TOSS_HEIGHT, SERVE_TOSS_DURATION, SERVE_ANGLE_MAX,
+  SERVE_TOSS_HEIGHT, SERVE_TOSS_DURATION, SERVE_ANGLE_MAX, SERVE_CHARGE_DURATION,
   MODE_1P, MODE_2P,
 } from './constants.js';
 import { court } from './court.js';
@@ -35,6 +35,7 @@ let landing_pos;
 let referee_state;
 let serve_toss_started;
 let serve_toss_frames;
+let serve_charge;
 let replay_timer;
 let replay_landing_pos;
 
@@ -61,6 +62,7 @@ function init_game() {
   referee_state = { message: "", violation_type: null, timer: 0 };
   serve_toss_started = false;
   serve_toss_frames = 0;
+  serve_charge = 0;
   replay_timer = 0;
   replay_landing_pos = null;
 }
@@ -116,6 +118,7 @@ function setup_serve() {
   landing_pos = null;
   serve_toss_started = false;
   serve_toss_frames = 0;
+  serve_charge = 0;
 
   if (server === 0) {
     human_player.x = (Math.random() - 0.5) * 2;
@@ -137,16 +140,16 @@ function setup_serve() {
   ball_obj.state = BALL_HELD;
 }
 
-function do_serve(timing_quality, angle) {
+function do_serve(timing_quality, angle, power = 0) {
   if (server === 0) {
     const target_x = human_player.x + angle * SERVE_ANGLE_MAX;
     const target_z = COURT_LENGTH * 0.85;
-    ball.serve(ball_obj, human_player.x, human_player.z, target_x, target_z, timing_quality);
+    ball.serve(ball_obj, human_player.x, human_player.z, target_x, target_z, timing_quality, power);
   } else {
     const opponent = game_mode === MODE_2P ? p2_player : ai_player;
     const target_x = opponent.x + angle * SERVE_ANGLE_MAX;
     const target_z = 1 + Math.random() * 3;
-    ball.serve(ball_obj, opponent.x, opponent.z, target_x, target_z, timing_quality);
+    ball.serve(ball_obj, opponent.x, opponent.z, target_x, target_z, timing_quality, power);
   }
   game_state = STATE_PLAYING;
   rally_hits = 0;
@@ -267,6 +270,7 @@ function update_serving() {
       if (current_input.pressed(BTN_A) || current_input.pressed(BTN_B)) {
         serve_toss_started = true;
         serve_toss_frames = 0;
+        serve_charge = 0;
         ball_obj.y = 1.0;
         ball_obj.state = BALL_HELD;
       }
@@ -281,13 +285,26 @@ function update_serving() {
         ball_obj.y = SERVE_TOSS_HEIGHT - (SERVE_TOSS_HEIGHT - 1.0) * t;
       }
 
-      if (current_input.pressed(BTN_A) || current_input.pressed(BTN_B)) {
+      if (current_input.held(BTN_A) || current_input.held(BTN_B)) {
+        serve_charge = Math.min(serve_charge + 1 / SERVE_CHARGE_DURATION, 1.0);
+      }
+
+      if (serve_charge >= 1.0) {
         const diff = Math.abs(serve_toss_frames - half);
         const timing_quality = diff <= 3 ? "s_serve" : "normal";
         const angle = current_input.get_aim_angle();
-        do_serve(timing_quality, angle);
+        do_serve(timing_quality, angle, serve_charge);
         serve_toss_started = false;
         serve_toss_frames = 0;
+        serve_charge = 0;
+      } else if (current_input.released(BTN_A) || current_input.released(BTN_B)) {
+        const diff = Math.abs(serve_toss_frames - half);
+        const timing_quality = diff <= 3 ? "s_serve" : "normal";
+        const angle = current_input.get_aim_angle();
+        do_serve(timing_quality, angle, serve_charge);
+        serve_toss_started = false;
+        serve_toss_frames = 0;
+        serve_charge = 0;
       } else if (ball_obj.y <= 0.8) {
         serve_toss_frames = 0;
         ball_obj.y = 1.0;
@@ -299,7 +316,9 @@ function update_serving() {
       const accuracy = ai_player.ai_config.accuracy;
       const timing_quality = Math.random() < accuracy * 0.6 ? "s_serve" : "normal";
       const angle = Math.round((Math.random() - 0.5) * 2);
-      do_serve(timing_quality, angle);
+      const difficulty = selected_diff === 1 ? "easy" : "hard";
+      const power = difficulty === "hard" ? 0.8 + Math.random() * 0.2 : 0.3 + Math.random() * 0.3;
+      do_serve(timing_quality, angle, power);
     }
   }
 }
@@ -448,17 +467,18 @@ function draw_game() {
       if (!serve_toss_started) {
         print(game_mode === MODE_2P ? "P1: Space to serve" : "Left click to serve", 35, 120);
       } else {
-        print(game_mode === MODE_2P ? "P1: Swing!" : "Click to swing!", 50, 120);
+        print(game_mode === MODE_2P ? "P1: Release to serve" : "Release to serve", 40, 120);
       }
     } else if (game_mode === MODE_2P) {
       if (!serve_toss_started) {
         print("P2: Enter to serve", 35, 120);
       } else {
-        print("P2: Swing!", 50, 120);
+        print("P2: Release to serve", 40, 120);
       }
     } else {
       print("AI serving...", 60, 120);
     }
+    render.serve_meter(serve_charge);
   }
 
   render.referee(referee_state);

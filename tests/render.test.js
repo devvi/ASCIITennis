@@ -179,4 +179,41 @@ describe('render (perspective)', () => {
     render.hud(s);
     expect(mockCtx.fillText).toHaveBeenCalledWith(expect.stringContaining('Tiebreak'), expect.any(Number), expect.any(Number));
   });
+
+  it('serve_meter(0.3) draws bar with green color (charge < 0.6)', () => {
+    vi.clearAllMocks();
+    render.serve_meter(0.3);
+    expect(mockCtx._fillStyle).toBe('#0f0');
+  });
+
+  it('serve_meter(0.9) draws bar with red color (charge > 0.85)', () => {
+    vi.clearAllMocks();
+    render.serve_meter(0.9);
+    expect(mockCtx._fillStyle).toBe('#f00');
+  });
+
+  it('serve_meter(0) draws nothing (early return)', () => {
+    vi.clearAllMocks();
+    render.serve_meter(0);
+    expect(mockCtx.fillRect).not.toHaveBeenCalled();
+  });
+
+  it('serve_meter(1) draws full width fill bar (40px)', () => {
+    vi.clearAllMocks();
+    render.serve_meter(1);
+    const fillRectCalls = mockCtx.fillRect.mock.calls;
+    const fillCall = fillRectCalls[fillRectCalls.length - 1];
+    const fillWidth = fillCall[2];
+    expect(fillWidth).toBe(40);
+  });
+
+  it('serve_meter(0.7) draws ~28px fill bar with yellow color', () => {
+    vi.clearAllMocks();
+    render.serve_meter(0.7);
+    expect(mockCtx._fillStyle).toBe('#ff0');
+    const fillRectCalls = mockCtx.fillRect.mock.calls;
+    const fillCall = fillRectCalls[fillRectCalls.length - 1];
+    const fillWidth = fillCall[2];
+    expect(fillWidth).toBe(28);
+  });
 });

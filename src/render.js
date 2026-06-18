@@ -204,6 +204,30 @@ export const render = {
     }
   },
 
+  serve_meter(charge) {
+    if (charge <= 0) return;
+    const bar_width = 40;
+    const bar_height = 5;
+    const x = 100;
+    const y = 25;
+    const fill = bar_width * charge;
+    const border_color = '#888';
+    let fill_color;
+    if (charge < 0.6) {
+      fill_color = '#0f0';
+    } else if (charge < 0.85) {
+      fill_color = '#ff0';
+    } else {
+      fill_color = '#f00';
+    }
+    ctx.fillStyle = border_color;
+    ctx.fillRect(x - 1, y - 1, bar_width + 2, bar_height + 2);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x, y, bar_width, bar_height);
+    ctx.fillStyle = fill_color;
+    ctx.fillRect(x, y, fill, bar_height);
+  },
+
   referee(state) {
     if (!state || state.timer <= 0) return;
 
