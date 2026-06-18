@@ -18,6 +18,7 @@
 ## Plan
 
 Research complete — see `docs/PRD/118-local-2-player.md` for requirements.
+PLAN_ISSUE: #121
 
 ### Phase 1: Tests (TDD)
 - Refactor `tests/input.test.js`:
