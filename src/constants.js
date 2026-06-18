@@ -99,7 +99,7 @@ export const SERVE_NORMAL_SPEED = 0.35;
 export const SERVE_ANGLE_MAX = SINGLES_WIDTH * 0.4;
 export const SERVE_SPEED_MAX = 0.55;
 export const SERVE_SPEED_MIN = 0.25;
-export const SERVE_CHARGE_DURATION = 45;
+export const SERVE_CHARGE_DURATION = 30;
 
 export const AI_EASY = {
   reaction_time: 20,
