@@ -51,4 +51,16 @@ Write tests first before any implementation code.
 - [ ] `render.hud()` shows tiebreaker indicator
 - [ ] Point/game-over messages handle tiebreaker win text
 
-PLAN_ISSUE=
+## Architecture
+
+See `docs/DESIGN/119-tiebreaker.md` for detailed design.
+
+### Module impacts
+| Module | Change |
+|--------|--------|
+| `src/constants.js` | + `TIEBREAK_POINTS_TO_WIN = 7` |
+| `src/scoring.js` | + `tiebreak` field, 6-6 detection in `award_game`, raw counting in `award_point`, display override |
+| `src/main.js` | Tiebreak serve rotation in `resolve_point()` |
+| `src/render.js` | HUD shows "Games 6-6" + `Tiebreak: X-Y` |
+
+PLAN_ISSUE=124
