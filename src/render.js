@@ -195,6 +195,24 @@ export const render = {
     }
   },
 
+  audience(audience_obj) {
+    if (!audience_obj || !audience_obj.spectators) return;
+
+    const pose = audience_obj.get_pose(0);
+    ctx.fillStyle = '#fff';
+
+    for (const spec of audience_obj.spectators) {
+      const p = camera.project(spec.x, 0, spec.z);
+      if (!p) continue;
+      const sx = Math.round(p.sx);
+      const sy = Math.round(p.sy);
+      if (sx < -10 || sx > SCREEN_W + 10 || sy < -10 || sy > SCREEN_H + 10) continue;
+
+      print(pose.top, sx - 7, sy);
+      print(pose.bottom, sx - 7, sy + 7);
+    }
+  },
+
   referee(state) {
     if (!state || state.timer <= 0) return;
 
