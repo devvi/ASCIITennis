@@ -155,12 +155,23 @@ function do_serve(timing_quality, angle) {
 
 function resolve_point(winner) {
   audience.cheer();
+  const was_tiebreak = score.tiebreak;
+  const tb_total_before = was_tiebreak ? score.points[0] + score.points[1] : 0;
   const result = scoring.award_point(score, winner);
   point_winner = winner;
   point_timer = 60;
   game_state = STATE_POINT_SCORED;
 
-  if (result === "game") {
+  if (was_tiebreak && result !== "set" && result !== "match") {
+    const tb_total = tb_total_before + 1;
+    if (tb_total % 2 === 1) {
+      server = 1 - server;
+    }
+  } else if (result === "game") {
+    server = 1 - server;
+  }
+
+  if (result === "set") {
     server = 1 - server;
   }
 
@@ -179,6 +190,8 @@ function resolve_violation_point(violation_type, hitter) {
   audience.cheer();
   const winner = 1 - hitter;
   point_winner = winner;
+  const was_tiebreak = score.tiebreak;
+  const tb_total_before = was_tiebreak ? score.points[0] + score.points[1] : 0;
 
   ball_obj.state = BALL_REPLAY;
   replay_landing_pos = { x: ball_obj.x, z: ball_obj.z };
@@ -191,7 +204,16 @@ function resolve_violation_point(violation_type, hitter) {
 
   const result = scoring.resolve_violation(score, hitter, violation_type);
 
-  if (result === "game") {
+  if (was_tiebreak && result !== "set" && result !== "match") {
+    const tb_total = tb_total_before + 1;
+    if (tb_total % 2 === 1) {
+      server = 1 - server;
+    }
+  } else if (result === "game") {
+    server = 1 - server;
+  }
+
+  if (result === "set") {
     server = 1 - server;
   }
 

@@ -171,4 +171,12 @@ describe('render (perspective)', () => {
     render.menu(1);
     expect(mockCtx.fillText).toHaveBeenCalledWith(expect.stringContaining('1-Player'), expect.any(Number), expect.any(Number));
   });
+
+  it('hud shows tiebreaker state when score.tiebreak is true', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [3, 1];
+    render.hud(s);
+    expect(mockCtx.fillText).toHaveBeenCalledWith(expect.stringContaining('Tiebreak'), expect.any(Number), expect.any(Number));
+  });
 });

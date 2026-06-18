@@ -193,7 +193,7 @@ export const render = {
     const p2Label = game_mode === 2 ? "P2" : "A";
     const ptDisplay = scoring.display(score);
     const ptLine = ptDisplay.split('\n')[0];
-    if (ptLine.includes('Deuce')) {
+    if (ptLine.includes('Deuce') || ptLine.includes('Tiebreak')) {
       ctx.fillText(ptLine, 2, 1);
     } else {
       ctx.fillText(p1Label + ":" + scoring.point_name(score.points[0]) + " " + p2Label + ":" + scoring.point_name(score.points[1]), 2, 1);

@@ -68,6 +68,7 @@ export const VIOLATION_DOUBLE_BOUNCE = "double_bounce";
 export const POINTS = [0, 15, 30, 40];
 export const GAMES_TO_WIN_SET = 6;
 export const SETS_TO_WIN_MATCH = 2;
+export const TIEBREAK_POINTS_TO_WIN = 7;
 
 export const SCREEN_W = 240;
 export const SCREEN_H = 136;
