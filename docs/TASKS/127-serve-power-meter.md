@@ -4,12 +4,14 @@
 `src/constants.js`, `src/main.js`, `src/ball.js`, `src/render.js`, `src/input.js`, `src/ai.js`
 
 ## Impact summary
-- **constants.js** — add `SERVE_CHARGE_RATE`, `SERVE_SPEED_MIN`, `SERVE_CHARGE_DURATION` constants
+- **constants.js** — add `SERVE_SPEED_MIN`, `SERVE_CHARGE_DURATION` constants
 - **main.js** — add `serve_charge` state variable, integrate charge into `update_serving()` and `do_serve()`
 - **ball.js** — `serve()` accepts `power` parameter (0-1) to scale speed
 - **render.js** — `render.serve_meter(charge)` draws the power bar
 - **ai.js** — AI selects charge level on serve
 - **input.js** — `held()` tracking for charge duration (already works, no changes needed)
+
+**Plan issue:** #128
 
 ---
 
@@ -42,7 +44,7 @@
 - [ ] Charge increments each frame, caps at 100%
 - [ ] Release button fires serve at current charge
 - [ ] Auto-fire at max charge if held too long
-- [ ] AI `update()` returns charge level
+- [ ] AI serve selects charge by difficulty in `update_serving()`
 - [ ] Pass power param through `do_serve()`
 
 ### Phase 4: UI/output
