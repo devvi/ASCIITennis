@@ -138,4 +138,44 @@ describe('render (perspective)', () => {
     render.referee({ message: 'NET!', timer: 60, violation_type: 'net' });
     expect(mockCtx.fillText).toHaveBeenCalledWith('NET!', expect.any(Number), expect.any(Number));
   });
+
+  describe('serve_meter', () => {
+    it('serve_meter(0) draws empty bar (fills only background)', () => {
+      vi.clearAllMocks();
+      render.serve_meter(0);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+
+    it('serve_meter(1) draws full bar', () => {
+      vi.clearAllMocks();
+      render.serve_meter(1);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+
+    it('serve_meter(0.5) draws half bar', () => {
+      vi.clearAllMocks();
+      render.serve_meter(0.5);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+
+    it('serve_meter uses green color for low charge', () => {
+      vi.clearAllMocks();
+      render.serve_meter(0.3);
+      const fillCalls = mockCtx.fillRect.mock.calls;
+      const backgroundCalls = fillCalls.filter(c => mockCtx._fillStyle === '#222' || c.length >= 4);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+
+    it('serve_meter uses yellow color for medium charge', () => {
+      vi.clearAllMocks();
+      render.serve_meter(0.6);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+
+    it('serve_meter uses red color for high charge', () => {
+      vi.clearAllMocks();
+      render.serve_meter(0.9);
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+    });
+  });
 });

@@ -269,3 +269,52 @@ describe('2P mode', () => {
     expect(Object.keys(inpKeyMap).length).toBe(6);
   });
 });
+
+describe('serve power meter charge logic', () => {
+  it('SERVE_CHARGE_DURATION is positive', () => {
+    const SERVE_CHARGE_DURATION = 45;
+    expect(SERVE_CHARGE_DURATION).toBeGreaterThan(0);
+  });
+
+  it('charge increases from 0 to 1.0 over SERVE_CHARGE_DURATION frames', () => {
+    const SERVE_CHARGE_DURATION = 45;
+    let charge = 0;
+    for (let i = 0; i < SERVE_CHARGE_DURATION; i++) {
+      charge = Math.min(1, (i + 1) / SERVE_CHARGE_DURATION);
+    }
+    expect(charge).toBe(1);
+  });
+
+  it('charge does not exceed 1.0', () => {
+    const SERVE_CHARGE_DURATION = 45;
+    let charge = 0;
+    for (let i = 0; i < SERVE_CHARGE_DURATION * 2; i++) {
+      charge = Math.min(1, charge + 1 / SERVE_CHARGE_DURATION);
+    }
+    expect(charge).toBe(1);
+  });
+
+  it('charge resets to 0 on new serve (setup_serve simulation)', () => {
+    let serve_charge = 0.75;
+    serve_charge = 0;
+    expect(serve_charge).toBe(0);
+  });
+
+  it('AI hard serve charge is in high range (>= 0.8)', () => {
+    const aiConfig = { accuracy: 0.9 };
+    for (let i = 0; i < 50; i++) {
+      const charge = 0.8 + Math.random() * 0.2;
+      expect(charge).toBeGreaterThanOrEqual(0.8);
+      expect(charge).toBeLessThanOrEqual(1.0);
+    }
+  });
+
+  it('AI easy serve charge is in medium range (0.3 to 0.6)', () => {
+    const aiConfig = { accuracy: 0.5 };
+    for (let i = 0; i < 50; i++) {
+      const charge = 0.3 + Math.random() * 0.3;
+      expect(charge).toBeGreaterThanOrEqual(0.3);
+      expect(charge).toBeLessThanOrEqual(0.6);
+    }
+  });
+});

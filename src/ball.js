@@ -3,7 +3,7 @@ import {
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
   HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
-  SERVE_SPEED_MAX, SERVE_S_SPEED_MULT, SERVE_NORMAL_SPEED,
+  SERVE_SPEED_MAX, SERVE_SPEED_MIN, SERVE_S_SPEED_MULT, SERVE_NORMAL_SPEED,
 } from './constants.js';
 import { court } from './court.js';
 
@@ -101,19 +101,27 @@ export const ball = {
     return { x: landing_x, z: landing_z };
   },
 
-  serve(b, from_x, from_z, target_x, target_z, timing_quality = "normal") {
+  serve(b, from_x, from_z, target_x, target_z, timing_quality = "normal", power) {
     const dx = target_x - from_x;
     const dz = target_z - from_z;
     let dist = Math.sqrt(dx*dx + dz*dz);
     if (dist < 0.01) dist = 0.01;
-    const is_s = timing_quality === "s_serve";
-    const serve_speed = is_s ? SERVE_SPEED_MAX * SERVE_S_SPEED_MULT : SERVE_NORMAL_SPEED;
+    let serve_speed;
+    let serve_vy;
+    if (power !== undefined) {
+      serve_speed = SERVE_SPEED_MIN + (SERVE_SPEED_MAX - SERVE_SPEED_MIN) * power;
+      serve_vy = 0.22 - power * 0.08;
+    } else {
+      const is_s = timing_quality === "s_serve";
+      serve_speed = is_s ? SERVE_SPEED_MAX * SERVE_S_SPEED_MULT : SERVE_NORMAL_SPEED;
+      serve_vy = is_s ? 0.18 : 0.14;
+    }
     b.x = from_x;
     b.y = 1.5;
     b.z = from_z;
     b.vx = (dx / dist) * serve_speed;
     b.vz = (dz / dist) * serve_speed;
-    b.vy = is_s ? 0.18 : 0.14;
+    b.vy = serve_vy;
     b.spin_x = 0;
     b.spin_z = 0;
     b.bounces = 0;
