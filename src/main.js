@@ -45,8 +45,15 @@ function init_game() {
   game_mode = "1p";
   selected_diff = 1;
 
-  input1 = createInput(KEY_MAP_P1, true);
-  input2 = createInput(KEY_MAP_P2, false);
+  if (!input1) {
+    input1 = createInput(KEY_MAP_P1, true);
+    input2 = createInput(KEY_MAP_P2, false);
+    input1.init(canvas);
+    input2.init();
+  } else {
+    input1.reset();
+    input2.reset();
+  }
 
   human_player = player.new(false);
   p2_player = null;

@@ -75,11 +75,15 @@ export function createInput(keyMap, useMouse = true) {
   }
 
   return {
-    init(canvas) {
+    reset() {
       for (let i = 0; i < NUM_BUTTONS; i++) {
         prev[i] = false;
         curr[i] = false;
       }
+    },
+
+    init(canvas) {
+      this.reset();
 
       window.addEventListener("keydown", onKeyDown);
       window.addEventListener("keyup", onKeyUp);
