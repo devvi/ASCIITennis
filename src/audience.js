@@ -1,4 +1,4 @@
-import { COURT_LENGTH, COURT_WIDTH, AUDIENCE_COUNT } from './constants.js';
+import { COURT_LENGTH, COURT_WIDTH, AUDIENCE_COUNT, AUDIENCE_CHEER_DURATION } from './constants.js';
 
 export const audience = {
   spectators: [],
@@ -27,7 +27,7 @@ export const audience = {
   },
 
   cheer() {
-    this.cheer_level = 75;
+    this.cheer_level = AUDIENCE_CHEER_DURATION;
   },
 
   update() {
@@ -36,7 +36,7 @@ export const audience = {
     }
   },
 
-  get_pose(i) {
+  get_pose() {
     if (this.cheer_level > 0) {
       return { top: '\\o/', bottom: ' - ' };
     }
