@@ -216,6 +216,19 @@ export const render = {
   },
 
 
+  audience(aud) {
+    const color = aud.cheer_level > 0 ? '#ff0' : '#fff';
+    ctx.fillStyle = color;
+    for (const spec of aud.spectators) {
+      const x = spec.x + spec.offset_x;
+      const z = spec.z + spec.offset_z;
+      const pose = aud.get_pose(0);
+      camera.draw_char(x, 0.4, z, pose[0]);
+      camera.draw_char(x, 0.7, z, pose[1]);
+      camera.draw_char(x, 1.0, z, pose[2]);
+    }
+  },
+
   menu(selected_diff) {
     ctx.fillStyle = "#fff";
     ctx.fillText("  ____  _   _   ___   _   _   _____   ___   _   _   ____", 8, 15);

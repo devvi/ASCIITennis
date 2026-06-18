@@ -14,6 +14,7 @@ import { ball } from './ball.js';
 import { ai } from './ai.js';
 import { scoring } from './scoring.js';
 import { render, initRender, beginFrame, print } from './render.js';
+import { audience } from './audience.js';
 
 let game_state;
 let selected_diff;
@@ -25,6 +26,7 @@ let server;
 let point_winner;
 let point_timer;
 let rally_hits;
+let rallied_cheer;
 let serve_timer;
 let landing_pos;
 let referee_state;
@@ -35,6 +37,7 @@ let replay_landing_pos;
 
 function init_game() {
   court.init();
+  audience.init();
 
   game_state = STATE_MENU;
   selected_diff = 1;
@@ -47,6 +50,7 @@ function init_game() {
   point_winner = null;
   point_timer = 0;
   rally_hits = 0;
+  rallied_cheer = false;
   serve_timer = 0;
   landing_pos = null;
   referee_state = { message: "", violation_type: null, timer: 0 };
@@ -111,9 +115,11 @@ function do_serve(timing_quality, angle) {
   }
   game_state = STATE_PLAYING;
   rally_hits = 0;
+  rallied_cheer = false;
 }
 
 function resolve_point(winner) {
+  audience.cheer();
   const result = scoring.award_point(score, winner);
   point_winner = winner;
   point_timer = 60;
@@ -135,6 +141,7 @@ const VIOLATION_MESSAGES = {
 };
 
 function resolve_violation_point(violation_type, hitter) {
+  audience.cheer();
   const winner = 1 - hitter;
   point_winner = winner;
 
@@ -243,6 +250,10 @@ function update_playing() {
       const target_z = COURT_LENGTH - 2 - Math.random() * 2;
       ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0);
       rally_hits += 1;
+      if (rally_hits >= audience.RALLY_CHEER_THRESHOLD && !rallied_cheer) {
+        audience.cheer();
+        rallied_cheer = true;
+      }
     }
   }
 
@@ -250,6 +261,10 @@ function update_playing() {
   if (ai_action) {
     ball.hit(ball_obj, ai_player.x, 1.0, ai_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type, 1);
     rally_hits += 1;
+    if (rally_hits >= audience.RALLY_CHEER_THRESHOLD && !rallied_cheer) {
+      audience.cheer();
+      rallied_cheer = true;
+    }
   }
   player.update(ai_player);
 
@@ -313,6 +328,7 @@ function draw_game() {
   camera.init();
   render.court();
   render.net();
+  render.audience(audience);
 
   if (ball_obj) {
     render.ball(ball_obj);
@@ -373,6 +389,7 @@ function gameLoop() {
     update_game_over();
   }
 
+  audience.update();
   input.update();
   draw_game();
   window.__gs = {

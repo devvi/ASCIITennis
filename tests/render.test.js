@@ -138,4 +138,18 @@ describe('render (perspective)', () => {
     render.referee({ message: 'NET!', timer: 60, violation_type: 'net' });
     expect(mockCtx.fillText).toHaveBeenCalledWith('NET!', expect.any(Number), expect.any(Number));
   });
+
+  it('audience renders spectators when cheering', () => {
+    const aud = { spectators: [{ x: -7, z: 5, offset_x: 0, offset_z: 0 }], cheer_level: 10, RALLY_CHEER_THRESHOLD: 5, CHEER_DURATION: 60, get_pose: () => ['\\', 'o', '/'] };
+    render.audience(aud);
+    expect(mockCtx.fillText).toHaveBeenCalled();
+    expect(mockCtx._fillStyle).toBe('#ff0');
+  });
+
+  it('audience renders idle spectators in white', () => {
+    const aud = { spectators: [{ x: -7, z: 5, offset_x: 0, offset_z: 0 }], cheer_level: 0, RALLY_CHEER_THRESHOLD: 5, CHEER_DURATION: 60, get_pose: () => [' ', 'O', ' '] };
+    render.audience(aud);
+    expect(mockCtx.fillText).toHaveBeenCalled();
+    expect(mockCtx._fillStyle).toBe('#fff');
+  });
 });
