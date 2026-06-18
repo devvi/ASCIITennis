@@ -43,4 +43,4 @@
 
 ## Plan Issue
 
-`PLAN_ISSUE` will be recorded here after creation.
+PLAN_ISSUE: 122
