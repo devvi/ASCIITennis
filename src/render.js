@@ -185,7 +185,7 @@ export const render = {
     ctx.fillStyle = "#fff";
     const ptDisplay = scoring.display(score);
     const ptLine = ptDisplay.split('\n')[0];
-    if (ptLine.includes('Deuce')) {
+    if (ptLine.includes('Deuce') || score.tiebreak) {
       ctx.fillText(ptLine, 2, 1);
     } else {
       const p1Label = game_mode === "2p" ? "P1:" : "P:";

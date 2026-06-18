@@ -1,4 +1,4 @@
-import { GAMES_TO_WIN_SET, SETS_TO_WIN_MATCH } from './constants.js';
+import { GAMES_TO_WIN_SET, SETS_TO_WIN_MATCH, TIEBREAK_POINTS_TO_WIN } from './constants.js';
 
 export const scoring = {
   new() {
@@ -8,6 +8,7 @@ export const scoring = {
       sets: [0, 0],
       deuce: false,
       advantage: null,
+      tiebreak: false,
     };
   },
 
@@ -20,6 +21,9 @@ export const scoring = {
   },
 
   display(s) {
+    if (s.tiebreak) {
+      return "Tiebreak: " + s.points[0] + "-" + s.points[1];
+    }
     if (s.deuce) {
       if (s.advantage === 0) return "Deuce\nAd Player";
       if (s.advantage === 1) return "Deuce\nAd AI";
@@ -34,6 +38,25 @@ export const scoring = {
   },
 
   award_point(s, winner) {
+    // Check for tiebreaker entry: games 6-6
+    if (!s.tiebreak && s.games[0] === 6 && s.games[1] === 6) {
+      s.tiebreak = true;
+      s.points = [0, 0];
+      return "tiebreak";
+    }
+
+    if (s.tiebreak) {
+      s.points[winner] += 1;
+      const wp = s.points[winner];
+      const lp = s.points[1 - winner];
+      if (wp >= TIEBREAK_POINTS_TO_WIN && wp - lp >= 2) {
+        s.tiebreak = false;
+        s.games[winner] += 1;
+        return this.award_set(s, winner);
+      }
+      return null;
+    }
+
     if (s.deuce) {
       if (s.advantage === null) {
         s.advantage = winner;
@@ -80,6 +103,7 @@ export const scoring = {
   award_set(s, winner) {
     s.games = [0, 0];
     s.sets[winner] += 1;
+    s.tiebreak = false;
 
     if (s.sets[winner] >= SETS_TO_WIN_MATCH) {
       return "match";
@@ -103,5 +127,6 @@ export const scoring = {
     s.sets = [0, 0];
     s.deuce = false;
     s.advantage = null;
+    s.tiebreak = false;
   },
 };
