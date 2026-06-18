@@ -163,4 +163,117 @@ describe('scoring', () => {
     scoring.resolve_violation(s, 0, 'serve_fault');
     expect(s.points[1]).toBe(1);
   });
+
+  // === Tiebreaker tests ===
+
+  it('new() has tiebreak false by default', () => {
+    const s = scoring.new();
+    expect(s.tiebreak).toBe(false);
+  });
+
+  it('award_point enters tiebreaker when games reach 6-6', () => {
+    const s = scoring.new();
+    s.games = [6, 6];
+    const result = scoring.award_point(s, 0);
+    expect(s.tiebreak).toBe(true);
+    expect(s.points).toEqual([0, 0]);
+    expect(result).toBe('tiebreak');
+  });
+
+  it('tiebreaker points count as 0, 1, 2 (not 15, 30, 40)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    scoring.award_point(s, 0);
+    expect(s.points[0]).toBe(1);
+    scoring.award_point(s, 0);
+    expect(s.points[0]).toBe(2);
+  });
+
+  it('tiebreaker won at 7-0 (>=7, lead >=2)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [6, 0];
+    const result = scoring.award_point(s, 0);
+    expect(result).toBe('set');
+    expect(s.sets[0]).toBe(1);
+    expect(s.tiebreak).toBe(false);
+  });
+
+  it('tiebreaker won at 7-5', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [6, 5];
+    const result = scoring.award_point(s, 0);
+    expect(result).toBe('set');
+    expect(s.sets[0]).toBe(1);
+  });
+
+  it('tiebreaker won at 8-6 (deuce tiebreak)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [7, 6];
+    const result = scoring.award_point(s, 0);
+    expect(result).toBe('set');
+    expect(s.sets[0]).toBe(1);
+  });
+
+  it('tiebreaker does NOT end at 6-6 (no lead of 2)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [5, 5];
+    const result = scoring.award_point(s, 0);
+    expect(result).toBeNull();
+    expect(s.points).toEqual([6, 5]);
+  });
+
+  it('tiebreaker does NOT end at 7-6 (lead of 1)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [6, 6];
+    const result = scoring.award_point(s, 0);
+    expect(result).toBeNull();
+    expect(s.points).toEqual([7, 6]);
+  });
+
+  it('winning tiebreaker awards the set (games become 7-6)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.sets = [0, 0];
+    s.points = [6, 5];
+    const result = scoring.award_point(s, 0);
+    expect(result).toBe('set');
+    expect(s.games).toEqual([0, 0]);
+    expect(s.sets[0]).toBe(1);
+  });
+
+  it('after tiebreaker, new set has tiebreak false', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [6, 5];
+    scoring.award_point(s, 0);
+    expect(s.tiebreak).toBe(false);
+  });
+
+  it('display shows Tiebreak: X-Y during tiebreaker', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [3, 2];
+    expect(scoring.display(s)).toBe('Tiebreak: 3-2');
+  });
+
+  it('display shows game score as X-Y during tiebreaker (first line uses tiebreak format)', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.games = [6, 6];
+    s.points = [4, 3];
+    expect(scoring.display(s)).toBe('Tiebreak: 4-3');
+  });
+
+  it('reset clears tiebreak flag', () => {
+    const s = scoring.new();
+    s.tiebreak = true;
+    s.points = [3, 2];
+    scoring.reset(s);
+    expect(s.tiebreak).toBe(false);
+  });
 });

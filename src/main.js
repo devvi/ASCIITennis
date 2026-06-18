@@ -139,7 +139,18 @@ function resolve_point(winner) {
   point_timer = 60;
   game_state = STATE_POINT_SCORED;
 
+  if (result === null && score.tiebreak) {
+    const total = score.points[0] + score.points[1];
+    if (total % 2 === 1) {
+      server = 1 - server;
+    }
+  }
+
   if (result === "game") {
+    server = 1 - server;
+  }
+
+  if (result === "set") {
     server = 1 - server;
   }
 
@@ -170,7 +181,18 @@ function resolve_violation_point(violation_type, hitter) {
 
   const result = scoring.resolve_violation(score, hitter, violation_type);
 
+  if (result === null && score.tiebreak) {
+    const total = score.points[0] + score.points[1];
+    if (total % 2 === 1) {
+      server = 1 - server;
+    }
+  }
+
   if (result === "game") {
+    server = 1 - server;
+  }
+
+  if (result === "set") {
     server = 1 - server;
   }
 
