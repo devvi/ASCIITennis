@@ -1,6 +1,7 @@
 # Task Breakdown: Multi-Row Indoor Audience
 
 **Issue:** #131
+**PLAN_ISSUE:** #135
 **Related modules:** `src/audience.js` (rewrite), `src/render.js` (render method + venue dressing), `src/constants.js` (config values), `src/camera.js` (projection reuse), `src/court.js` (bounding reference), `tests/audience.test.js` (rewrite tests)
 
 ## Impact Summary
