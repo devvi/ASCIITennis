@@ -371,6 +371,7 @@ function draw_game() {
   }
 
   camera.init();
+  render.venue();
   render.court();
   render.net();
   render.audience(audience_obj);

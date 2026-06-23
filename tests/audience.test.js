@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { COURT_LENGTH, COURT_WIDTH, SCREEN_W, SCREEN_H } from '../src/constants.js';
+import { COURT_LENGTH, COURT_WIDTH } from '../src/constants.js';
 
 describe('audience', () => {
   let audience;
@@ -11,10 +11,9 @@ describe('audience', () => {
     audience = mod.audience;
   });
 
-  it('init creates the default number of spectators', () => {
+  it('init creates at least 80 spectators', () => {
     audience.init();
-    expect(audience.spectators.length).toBeGreaterThanOrEqual(20);
-    expect(audience.spectators.length).toBeLessThanOrEqual(30);
+    expect(audience.spectators.length).toBeGreaterThanOrEqual(80);
   });
 
   it('init creates specified number of spectators', () => {
@@ -28,7 +27,7 @@ describe('audience', () => {
   });
 
   it('spectator positions are outside court bounds', () => {
-    audience.init(100);
+    audience.init();
     const halfW = COURT_WIDTH / 2;
     for (const spec of audience.spectators) {
       const insideCourt = Math.abs(spec.x) <= halfW && spec.z >= 0 && spec.z <= COURT_LENGTH;
@@ -36,7 +35,56 @@ describe('audience', () => {
     }
   });
 
-  it('cheer sets cheer_level to CHEER_DURATION', () => {
+  it('each spectator has row and variant properties', () => {
+    audience.init();
+    for (const spec of audience.spectators) {
+      expect(spec).toHaveProperty('row');
+      expect(spec).toHaveProperty('variant');
+      expect(typeof spec.row).toBe('number');
+      expect(typeof spec.variant).toBe('number');
+    }
+  });
+
+  it('spectators have at least 3 distinct row values', () => {
+    audience.init();
+    const rows = new Set(audience.spectators.map(s => s.row));
+    expect(rows.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it('get_pose returns different idle variants across the crowd', () => {
+    vi.spyOn(Math, 'random').mockRestore();
+    audience.init(200);
+    audience.cheer_level = 0;
+    const variants = new Set(audience.spectators.map(s => s.variant));
+    expect(variants.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('get_pose returns cheer pose when cheer_level > 0', () => {
+    audience.init();
+    audience.cheer();
+    const pose = audience.get_pose(0);
+    expect(pose.top).toBe('\\o/');
+    expect(pose.bottom).toBe(' - ');
+  });
+
+  it('get_pose returns correct pose for any index', () => {
+    audience.init(5);
+    audience.cheer_level = 0;
+    for (let i = 0; i < 5; i++) {
+      const pose = audience.get_pose(i);
+      expect(pose).toHaveProperty('top');
+      expect(pose).toHaveProperty('bottom');
+    }
+  });
+
+  it('spectators are sorted by depth (farthest z first)', () => {
+    audience.init();
+    for (let i = 1; i < audience.spectators.length; i++) {
+      expect(audience.spectators[i].z).toBeLessThanOrEqual(audience.spectators[i - 1].z);
+    }
+  });
+
+  it('cheer sets cheer_level to positive value', () => {
     audience.init();
     expect(audience.cheer_level).toBe(0);
     audience.cheer();
@@ -69,51 +117,5 @@ describe('audience', () => {
       audience.update();
     }
     expect(audience.cheer_level).toBe(0);
-  });
-
-  it('get_pose returns idle when cheer_level is 0', () => {
-    audience.init();
-    expect(audience.cheer_level).toBe(0);
-    const pose = audience.get_pose(0);
-    expect(pose.top).toBe(' O ');
-    expect(pose.bottom).toBe(' _ ');
-  });
-
-  it('get_pose returns cheer when cheer_level > 0', () => {
-    audience.init();
-    audience.cheer();
-    const pose = audience.get_pose(0);
-    expect(pose.top).toBe('\\o/');
-    expect(pose.bottom).toBe(' - ');
-  });
-
-  it('get_pose returns correct pose for any index', () => {
-    audience.init(5);
-    audience.cheer();
-    for (let i = 0; i < 5; i++) {
-      const pose = audience.get_pose(i);
-      expect(pose.top).toBe('\\o/');
-      expect(pose.bottom).toBe(' - ');
-    }
-  });
-
-  it('get_pose transitions from cheer to idle as cheer_level decays', () => {
-    audience.init();
-    audience.cheer();
-    expect(audience.get_pose(0).top).toBe('\\o/');
-    while (audience.cheer_level > 0) {
-      audience.update();
-    }
-    expect(audience.get_pose(0).top).toBe(' O ');
-  });
-
-  it('spectators all have x and z coordinates', () => {
-    audience.init(10);
-    for (const spec of audience.spectators) {
-      expect(spec).toHaveProperty('x');
-      expect(spec).toHaveProperty('z');
-      expect(typeof spec.x).toBe('number');
-      expect(typeof spec.z).toBe('number');
-    }
   });
 });

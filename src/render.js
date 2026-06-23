@@ -1,5 +1,5 @@
 import { SCREEN_W, SCREEN_H, COURT_WIDTH, COURT_LENGTH, NET_HEIGHT, NET_POST_HEIGHT,
-  COURT_SURFACE, SERVICE_BOX_FILL, BALL_REPLAY } from './constants.js';
+  COURT_SURFACE, SERVICE_BOX_FILL, BALL_REPLAY, STAND_MARGIN_X, STAND_MARGIN_Z, ROOF_Y, ROOF_CHAR, LIGHT_CHAR, PILLAR_CHAR } from './constants.js';
 import { camera, setDrawChar } from './camera.js';
 import { scoring } from './scoring.js';
 import { court } from './court.js';
@@ -201,19 +201,58 @@ export const render = {
   audience(audience_obj) {
     if (!audience_obj || !audience_obj.spectators) return;
 
-    const pose = audience_obj.get_pose(0);
     ctx.fillStyle = '#fff';
 
-    for (const spec of audience_obj.spectators) {
+    for (let i = 0; i < audience_obj.spectators.length; i++) {
+      const spec = audience_obj.spectators[i];
       const p = camera.project(spec.x, 0, spec.z);
       if (!p) continue;
       const sx = Math.round(p.sx);
       const sy = Math.round(p.sy);
       if (sx < -10 || sx > SCREEN_W + 10 || sy < -10 || sy > SCREEN_H + 10) continue;
 
+      const pose = audience_obj.get_pose(i);
       print(pose.top, sx - 7, sy);
       print(pose.bottom, sx - 7, sy + 7);
     }
+  },
+
+  venue() {
+    ctx.fillStyle = '#444';
+    for (let x = 15; x < SCREEN_W - 10; x += 2) {
+      for (let y = 2; y <= 5; y++) {
+        const ch = ((x + y) % 6 < 3) ? ROOF_CHAR : '~';
+        ctx.fillText(ch, x, y);
+      }
+    }
+
+    ctx.fillStyle = '#ff0';
+    for (let lx = -COURT_WIDTH / 2; lx <= COURT_WIDTH / 2; lx += COURT_WIDTH / 5) {
+      const p = camera.project(lx, ROOF_Y, COURT_LENGTH / 2);
+      if (p) {
+        ctx.fillText(LIGHT_CHAR, Math.round(p.sx), Math.round(p.sy));
+      }
+    }
+
+    ctx.fillStyle = '#888';
+    const halfW = COURT_WIDTH / 2;
+    const pillarPositions = [
+      { x: -(halfW + STAND_MARGIN_X + 1), z: -(STAND_MARGIN_Z + 1) },
+      { x: halfW + STAND_MARGIN_X + 1, z: -(STAND_MARGIN_Z + 1) },
+      { x: -(halfW + STAND_MARGIN_X + 1), z: COURT_LENGTH + STAND_MARGIN_Z + 1 },
+      { x: halfW + STAND_MARGIN_X + 1, z: COURT_LENGTH + STAND_MARGIN_Z + 1 },
+    ];
+    for (const pos of pillarPositions) {
+      for (let h = 0; h < 3; h++) {
+        camera.draw_char(pos.x, 0.5 + h * 2, pos.z, PILLAR_CHAR);
+      }
+    }
+
+    ctx.fillStyle = '#222';
+    ctx.fillRect(155, 22, 40, 18);
+    ctx.fillStyle = '#0f0';
+    ctx.fillText('SET', 160, 24);
+    ctx.fillText('GAM', 160, 32);
   },
 
   referee(state) {
