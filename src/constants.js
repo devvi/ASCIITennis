@@ -88,8 +88,17 @@ export const SINGLES_WIDTH = 8.23;
 export const NET_POST_HEIGHT = 1.07;
 
 // Audience
-export const AUDIENCE_COUNT = 24;
+export const AUDIENCE_COUNT = 96;
 export const AUDIENCE_CHEER_DURATION = 75;
+export const AUDIENCE_ROWS = 4;
+export const ROW_SPACING = 0.8;
+export const SEAT_SPACING = 0.5;
+export const STAND_MARGIN_X = 1.2;
+export const STAND_MARGIN_Z = 1.5;
+export const ROOF_Y = 6;
+export const ROOF_CHAR = '^';
+export const LIGHT_CHAR = '*';
+export const PILLAR_CHAR = 'H';
 
 // Serve (GBC-style toss)
 export const SERVE_TOSS_HEIGHT = 2.5;
