@@ -308,7 +308,7 @@ export const render = {
     ctx.fillText("Press Enter/Space to play", 40, 120);
     ctx.fillStyle = "#555";
     const ver = GIT_HASH !== 'dev' ? `${GIT_HASH} ${GIT_DATE}` : 'dev build';
-    ctx.fillText(ver, 8, 135);
+    ctx.fillText(ver, 8, 128);
   },
 
   game_over(winner, game_mode) {
