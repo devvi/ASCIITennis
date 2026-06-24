@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
-  HIT_TOPSPIN, HIT_SLICE, HIT_LOB, HIT_FLAT,
+  HIT_TOPSPIN, HIT_SLICE, HIT_FLAT, MAX_MOUSE_HOLD_FRAMES,
 } from '../src/constants.js';
 import { input, createInput, KEY_MAP_P1, KEY_MAP_P2 } from '../src/input.js';
 
@@ -133,9 +133,11 @@ describe('createInput factory', () => {
     inp.init(mockCanvas);
     h.mousedown({ preventDefault: () => {} });
     expect(inp.held(BTN_A)).toBe(true);
+    expect(inp.held(BTN_B)).toBe(false);
+    h.mouseup({ preventDefault: () => {} });
+    expect(inp.held(BTN_A)).toBe(false);
     expect(inp.held(BTN_B)).toBe(true);
     delete globalThis.window;
-    if (h.mouseup) h.mouseup({ preventDefault: () => {} });
   });
 
   it('two inputs can be updated independently', () => {
@@ -282,14 +284,14 @@ describe('input', () => {
     expect(dz).toBe(1);
   });
 
-  it('get_aim_angle returns -1 when A held', () => {
+  it('get_aim_angle returns 0 when A held without mouse hold (no frames)', () => {
     pressKey('a');
-    expect(input.get_aim_angle()).toBe(-1);
+    expect(input.get_aim_angle()).toBeCloseTo(0);
   });
 
-  it('get_aim_angle returns 1 when D held', () => {
+  it('get_aim_angle returns 0 when D held without mouse hold (no frames)', () => {
     pressKey('d');
-    expect(input.get_aim_angle()).toBe(1);
+    expect(input.get_aim_angle()).toBe(0);
   });
 
   it('get_aim_angle returns 0 when no horiz keys held', () => {
@@ -323,30 +325,30 @@ describe('input', () => {
     expect(input.get_shot_type()).toBe(HIT_SLICE);
   });
 
-  it('get_shot_type returns HIT_LOB when LEFT+BTN_B', () => {
+  it('get_shot_type returns HIT_FLAT when LEFT+BTN_B (A/D no longer lob)', () => {
     pressKey(' ');
     pressKey('a');
-    expect(input.get_shot_type()).toBe(HIT_LOB);
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
   });
 
-  it('get_shot_type returns HIT_LOB when RIGHT+BTN_B', () => {
+  it('get_shot_type returns HIT_FLAT when RIGHT+BTN_B (A/D no longer lob)', () => {
     pressKey(' ');
     pressKey('d');
-    expect(input.get_shot_type()).toBe(HIT_LOB);
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
   });
 
-  it('mouse mousedown sets BTN_A and BTN_B', () => {
+  it('mouse mousedown sets BTN_A only (BTN_B cleared for shot-on-release)', () => {
     handlers.mousedown({ preventDefault: () => {} });
     expect(input.held(BTN_A)).toBe(true);
-    expect(input.held(BTN_B)).toBe(true);
+    expect(input.held(BTN_B)).toBe(false);
   });
 
-  it('mouse mouseup clears BTN_A and BTN_B', () => {
+  it('mouse mouseup clears BTN_A and sets BTN_B (shot trigger)', () => {
     handlers.mousedown({ preventDefault: () => {} });
     input.update();
     handlers.mouseup({ preventDefault: () => {} });
     expect(input.held(BTN_A)).toBe(false);
-    expect(input.held(BTN_B)).toBe(false);
+    expect(input.held(BTN_B)).toBe(true);
   });
 
   it('update correctly snapshots previous frame for pressed/released', () => {
@@ -360,5 +362,257 @@ describe('input', () => {
     expect(input.released(BTN_UP)).toBe(true);
     input.update();
     expect(input.released(BTN_UP)).toBe(false);
+  });
+});
+
+describe('mouse hold duration tracking', () => {
+  let handlers;
+  let mockCanvas;
+
+  beforeEach(() => {
+    handlers = {};
+    globalThis.window = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    mockCanvas = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    input.init(mockCanvas);
+  });
+
+  afterEach(() => {
+    delete globalThis.window;
+    if (handlers.mouseup) handlers.mouseup({ preventDefault: () => {} });
+    input.update();
+  });
+
+  it('mouse_hold_frames starts at 0 on mousedown (no updates)', () => {
+    handlers.mousedown({ preventDefault: () => {} });
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    expect(input.get_aim_angle()).toBeCloseTo(0);
+  });
+
+  it('mouse_hold_frames accumulates during update cycles while mouse held', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 30; i++) input.update();
+    expect(input.get_aim_angle()).toBeCloseTo(-30 / MAX_MOUSE_HOLD_FRAMES, 4);
+  });
+
+  it('mouse_hold_frames approaches -1 after MAX_MOUSE_HOLD_FRAMES updates with A held', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < MAX_MOUSE_HOLD_FRAMES; i++) input.update();
+    const angle = input.get_aim_angle();
+    expect(angle).toBeCloseTo(-1, 4);
+  });
+
+  it('mouse_hold_frames clamped at MAX_MOUSE_HOLD_FRAMES', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < MAX_MOUSE_HOLD_FRAMES * 2; i++) input.update();
+    expect(input.get_aim_angle()).toBeCloseTo(-1, 4);
+  });
+
+  it('mouse_hold_frames resets on next mousedown', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 30; i++) input.update();
+    expect(input.get_aim_angle()).toBeCloseTo(-0.5, 4);
+    handlers.mousedown({ preventDefault: () => {} });
+    expect(input.get_aim_angle()).toBeCloseTo(0);
+  });
+});
+
+describe('continuous get_aim_angle()', () => {
+  let handlers;
+  let mockCanvas;
+
+  beforeEach(() => {
+    handlers = {};
+    globalThis.window = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    mockCanvas = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    input.init(mockCanvas);
+  });
+
+  afterEach(() => {
+    delete globalThis.window;
+    if (handlers.mouseup) handlers.mouseup({ preventDefault: () => {} });
+    input.update();
+  });
+
+  it('returns 0 when no horizontal key held regardless of mouse hold', () => {
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 30; i++) input.update();
+    expect(input.get_aim_angle()).toBeCloseTo(0);
+  });
+
+  it('A held + short mouse hold produces small negative angle', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 5; i++) input.update();
+    const angle = input.get_aim_angle();
+    expect(angle).toBeLessThan(0);
+    expect(angle).toBeGreaterThan(-0.1);
+    expect(angle).toBeCloseTo(-5 / MAX_MOUSE_HOLD_FRAMES, 4);
+  });
+
+  it('D held + short mouse hold produces small positive angle', () => {
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 5; i++) input.update();
+    const angle = input.get_aim_angle();
+    expect(angle).toBeGreaterThan(0);
+    expect(angle).toBeLessThan(0.1);
+    expect(angle).toBeCloseTo(5 / MAX_MOUSE_HOLD_FRAMES, 4);
+  });
+
+  it('A held + long mouse hold approaches -1', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 50; i++) input.update();
+    expect(input.get_aim_angle()).toBeCloseTo(-50 / MAX_MOUSE_HOLD_FRAMES, 4);
+  });
+
+  it('D held + long mouse hold approaches 1', () => {
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 50; i++) input.update();
+    expect(input.get_aim_angle()).toBeCloseTo(50 / MAX_MOUSE_HOLD_FRAMES, 4);
+  });
+
+  it('angle values stay within [-1, 1] range', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < MAX_MOUSE_HOLD_FRAMES * 3; i++) input.update();
+    expect(input.get_aim_angle()).toBeGreaterThanOrEqual(-1);
+    expect(input.get_aim_angle()).toBeLessThanOrEqual(0);
+    handlers.keyup({ key: 'a', preventDefault: () => {} });
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    for (let i = 0; i < MAX_MOUSE_HOLD_FRAMES * 3; i++) input.update();
+    expect(input.get_aim_angle()).toBeGreaterThanOrEqual(0);
+    expect(input.get_aim_angle()).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('get_shot_type() without A/D lob', () => {
+  let handlers;
+  let mockCanvas;
+
+  beforeEach(() => {
+    handlers = {};
+    globalThis.window = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    mockCanvas = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    input.init(mockCanvas);
+  });
+
+  afterEach(() => {
+    delete globalThis.window;
+    const keys = ['w', 's', 'a', 'd', ' '];
+    for (const key of keys) {
+      if (handlers.keyup) handlers.keyup({ key, preventDefault: () => {} });
+    }
+    input.update();
+  });
+
+  it('A held + BTN_B pressed returns HIT_FLAT (no lob)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
+  });
+
+  it('D held + BTN_B pressed returns HIT_FLAT (no lob)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
+  });
+
+  it('W held + BTN_B pressed returns HIT_TOPSPIN (unchanged)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 'w', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_TOPSPIN);
+  });
+
+  it('S held + BTN_B pressed returns HIT_SLICE (unchanged)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 's', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_SLICE);
+  });
+
+  it('A+W held + BTN_B pressed returns HIT_TOPSPIN (W takes priority)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 'w', preventDefault: () => {} });
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_TOPSPIN);
+  });
+
+  it('D+W held + BTN_B pressed returns HIT_TOPSPIN (W takes priority)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 'w', preventDefault: () => {} });
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_TOPSPIN);
+  });
+
+  it('D+S held + BTN_B pressed returns HIT_SLICE (S takes priority)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    handlers.keydown({ key: 's', preventDefault: () => {} });
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_SLICE);
+  });
+
+  it('No keys + BTN_B pressed returns HIT_FLAT (unchanged)', () => {
+    handlers.keydown({ key: ' ', preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
+  });
+});
+
+describe('mouse release triggers shot with accumulated directional angle', () => {
+  let handlers;
+  let mockCanvas;
+
+  beforeEach(() => {
+    handlers = {};
+    globalThis.window = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    mockCanvas = {
+      addEventListener: (ev, fn) => { handlers[ev] = fn; },
+    };
+    input.init(mockCanvas);
+  });
+
+  afterEach(() => {
+    delete globalThis.window;
+    const keys = ['w', 's', 'a', 'd'];
+    for (const key of keys) {
+      if (handlers.keyup) handlers.keyup({ key, preventDefault: () => {} });
+    }
+    input.update();
+  });
+
+  it('mouseup triggers pressed(BTN_B) which fires get_shot_type', () => {
+    handlers.keydown({ key: 'a', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    for (let i = 0; i < 30; i++) input.update();
+    handlers.mouseup({ preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
+    const angle = input.get_aim_angle();
+    expect(angle).toBeCloseTo(-30 / MAX_MOUSE_HOLD_FRAMES, 4);
+  });
+
+  it('fast click (no updates between down/up) gives angle 0', () => {
+    handlers.keydown({ key: 'd', preventDefault: () => {} });
+    handlers.mousedown({ preventDefault: () => {} });
+    handlers.mouseup({ preventDefault: () => {} });
+    expect(input.get_shot_type()).toBe(HIT_FLAT);
+    expect(input.get_aim_angle()).toBeCloseTo(0);
   });
 });

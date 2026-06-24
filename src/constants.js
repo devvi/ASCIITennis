@@ -85,6 +85,7 @@ export const COURT_SURFACE_DARK = '#9a3520';
 export const COURT_OUTSIDE = '#1a1a1a';
 export const SERVICE_BOX_FILL = 'rgba(255,255,255,0.05)';
 export const SINGLES_WIDTH = 8.23;
+export const MAX_MOUSE_HOLD_FRAMES = 60;
 export const NET_POST_HEIGHT = 1.07;
 
 // Audience

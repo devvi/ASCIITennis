@@ -1,6 +1,6 @@
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
-  HIT_TOPSPIN, HIT_SLICE, HIT_LOB, HIT_FLAT,
+  HIT_TOPSPIN, HIT_SLICE, HIT_FLAT, MAX_MOUSE_HOLD_FRAMES,
 } from './constants.js';
 
 const NUM_BUTTONS = 8;
@@ -33,6 +33,7 @@ const KEY_MAP_BOTH = {
 export function createInput(keyMap, useMouse = true) {
   let prev = new Array(NUM_BUTTONS).fill(false);
   let curr = new Array(NUM_BUTTONS).fill(false);
+  let mouse_hold_frames = 0;
 
   function onKeyDown(e) {
     const btn = keyMap[e.key];
@@ -53,25 +54,27 @@ export function createInput(keyMap, useMouse = true) {
   function onMouseDown(e) {
     e.preventDefault();
     curr[BTN_A] = true;
-    curr[BTN_B] = true;
+    curr[BTN_B] = false;
+    mouse_hold_frames = 0;
   }
 
   function onMouseUp(e) {
     e.preventDefault();
     curr[BTN_A] = false;
-    curr[BTN_B] = false;
+    curr[BTN_B] = true;
   }
 
   function onTouchStart(e) {
     e.preventDefault();
     curr[BTN_A] = true;
-    curr[BTN_B] = true;
+    curr[BTN_B] = false;
+    mouse_hold_frames = 0;
   }
 
   function onTouchEnd(e) {
     e.preventDefault();
     curr[BTN_A] = false;
-    curr[BTN_B] = false;
+    curr[BTN_B] = true;
   }
 
   return {
@@ -80,6 +83,7 @@ export function createInput(keyMap, useMouse = true) {
         prev[i] = false;
         curr[i] = false;
       }
+      mouse_hold_frames = 0;
     },
 
     init(canvas) {
@@ -101,6 +105,9 @@ export function createInput(keyMap, useMouse = true) {
     update() {
       for (let i = 0; i < NUM_BUTTONS; i++) {
         prev[i] = curr[i];
+      }
+      if (curr[BTN_A]) {
+        mouse_hold_frames++;
       }
     },
 
@@ -126,18 +133,16 @@ export function createInput(keyMap, useMouse = true) {
     },
 
     get_aim_angle() {
-      if (this.held(BTN_LEFT)) return -1;
-      if (this.held(BTN_RIGHT)) return 1;
+      const t = Math.min(1, mouse_hold_frames / MAX_MOUSE_HOLD_FRAMES);
+      if (this.held(BTN_LEFT)) return -t;
+      if (this.held(BTN_RIGHT)) return t;
       return 0;
     },
 
     get_shot_type() {
       if (!this.pressed(BTN_B)) return null;
-
       if (this.held(BTN_UP)) return HIT_TOPSPIN;
       if (this.held(BTN_DOWN)) return HIT_SLICE;
-      if (this.held(BTN_LEFT) || this.held(BTN_RIGHT)) return HIT_LOB;
-
       return HIT_FLAT;
     },
   };
