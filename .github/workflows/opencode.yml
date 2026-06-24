@@ -6,6 +6,8 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
+  pull_request_target:
+    types: [closed]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
@@ -64,3 +66,72 @@ jobs:
         with:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
+
+  on-research-pr-merged:
+    if: >
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.title, 'Research:')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 1
+      - run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
+      - uses: anomalyco/opencode/github@latest
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        with:
+          model: deepseek/deepseek-v4-flash
+          use_github_token: true
+          prompt: |
+            A research PR has been merged. Read the research documents in
+            docs/PRD/ and docs/TASKS/, then execute the plan phase: create a
+            DESIGN document in docs/DESIGN/, append phased tasks to the TASKS
+            document, create a plan issue via `gh issue create`, commit and
+            push the docs, and create a plan PR. Do NOT use Closes/Fixes/
+            Resolves for the parent issue.
+
+  on-plan-pr-merged:
+    if: >
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.title, 'Plan:')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 1
+      - run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
+      - uses: anomalyco/opencode/github@latest
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        with:
+          model: deepseek/deepseek-v4-flash
+          use_github_token: true
+          prompt: |
+            A plan PR has been merged. Read the design and task documents in
+            docs/DESIGN/ and docs/TASKS/, then execute the implement phase:
+            follow the phased task list, write tests first (TDD), commit and
+            push after each phase, and finally create the implementation PR
+            with Closes for parent and plan issues.

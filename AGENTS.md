@@ -4,7 +4,7 @@
 
 All work follows a strict three-phase process:
 
-**⚠️ PHASE GATE RULE: Each phase MUST be triggered independently. After completing one phase, STOP. Do NOT auto-advance to the next phase. The next phase may only start after the previous phase's output (PR or issue) has been reviewed and merged by a human.**
+**⚠️ PHASE GATE RULE: Phases auto-advance when a PR is merged. When a research PR is merged, the plan phase triggers automatically. When a plan PR is merged, the implement phase triggers automatically. Manual trigger via `/opencode plan` or `/opencode implement` is also supported for retries or independent execution.**
 
 ### /research
 Analyze the issue/request.
@@ -61,6 +61,18 @@ Record the returned issue number as `PLAN_ISSUE` in `docs/TASKS/<issue-number>-<
 
 **CRITICAL:** The plan issue body, title, and any associated PR/commit messages MUST NOT contain `Closes`/`Fixes`/`Resolves` for the parent issue — use `Parent:` only. Parent must stay open for the subsequent implement phase.
 
+- Commit and push the design and task docs:
+  ```bash
+  git add docs/DESIGN/ docs/TASKS/
+  git commit -m "Design and tasks for <feature-name> (parent #<parent-issue>)"
+  git pull --rebase && git push
+  ```
+- Create a plan PR containing the design and task documents. The PR title MUST NOT contain `Closes`/`Fixes`/`Resolves` for the parent issue:
+  ```bash
+  gh pr create --title "Plan: <feature-name> (parent #<parent-issue>)" \
+    --body "Parent: #<parent-issue>\n\nSee docs/DESIGN/<parent-issue>.md for design details.\n\nThis PR contains the design document and phased task plan."
+  ```
+
 **Verification step:** After creating the plan issue, run `gh issue view <plan-issue-n> --json title,body` and check that neither field contains `Closes`, `Fixes`, or `Resolves`. If found, edit immediately with `gh issue edit <plan-issue-n> --body '...'` to remove them.
 
 ### /implement
@@ -100,7 +112,7 @@ gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr-number>" \
 - `opencode plan this` — create design & phased plan
 - `opencode implement this` — execute per plan
 
-Each command is an independent trigger. After any command, the CI MUST stop and wait for human review/merge before the next command can be issued.
+Each command is an independent trigger. When a PR is merged, the next phase triggers automatically via GitHub Actions (`pull_request_target` with merge detection). Manual restart is also supported by running the command directly.
 
 ## Commands
 
