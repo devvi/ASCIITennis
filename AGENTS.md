@@ -144,6 +144,17 @@ npm run test:watch  # watch mode
 npm install
 ```
 
+## Deployment
+
+GitHub Pages serves from `gh-pages` branch (not `main`).
+
+| Branch | URL |
+|--------|-----|
+| `main` | `https://devvi.github.io/ASCIITennis/` (deployed by `.github/workflows/deploy-main.yml`) |
+| `pr-<N>` | `https://devvi.github.io/ASCIITennis/pr-<N>/` (deployed by `.github/workflows/deploy-preview.yml`) |
+
+PR previews are auto-deployed on open/sync. A comment with the preview URL is posted on each PR.
+
 ## Architecture
 
 ASCIITennis: an ASCII-art tennis game. No code yet.

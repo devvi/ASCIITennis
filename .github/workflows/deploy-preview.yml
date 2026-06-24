@@ -1,0 +1,57 @@
+name: deploy-preview
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Deploy PR preview to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.MY_GITHUB_TOKEN }}
+          publish_dir: .
+          destination_dir: pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Comment preview URL
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.MY_GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const previewUrl = `https://devvi.github.io/ASCIITennis/pr-${pr.number}/`;
+            const body = `## Preview deployed\n\nTest this PR: [${previewUrl}](${previewUrl})`;
+
+            const comments = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: pr.number,
+            });
+            const existing = comments.data.find(c =>
+              c.body && c.body.includes('## Preview deployed')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: pr.number,
+                body,
+              });
+            }
