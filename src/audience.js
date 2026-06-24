@@ -14,11 +14,13 @@ export const audience = {
   spectators: [],
   cheer_level: 0,
   kill_count: 0,
+  crowd_phase: 0,
 
   init(count = AUDIENCE_COUNT) {
     this.spectators = [];
     this.cheer_level = 0;
     this.kill_count = 0;
+    this.crowd_phase = 0;
     this.generate_positions(count);
     this.sort_by_depth();
   },
@@ -67,8 +69,8 @@ export const audience = {
     this.spectators.sort((a, b) => b.z - a.z);
   },
 
-  cheer() {
-    this.cheer_level = 75;
+  cheer(intensity) {
+    this.cheer_level = intensity !== undefined ? Math.min(150, intensity) : 75;
   },
 
   update() {
@@ -106,6 +108,9 @@ export const audience = {
     if (!spec || !spec.alive) return POSES.dead;
     if (this.cheer_level > 0) {
       return POSES.cheer;
+    }
+    if (this.crowd_phase > 0) {
+      return { top: '|o|', bottom: ' _ ' };
     }
     const variant = spec.variant ?? 0;
     return POSES.idle[variant % POSES.idle.length];
