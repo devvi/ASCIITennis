@@ -260,10 +260,10 @@ export const render = {
     }
 
     ctx.fillStyle = '#222';
-    ctx.fillRect(155, 22, 40, 18);
+    ctx.fillRect(155, 8, 40, 18);
     ctx.fillStyle = '#0f0';
-    ctx.fillText('SET', 160, 24);
-    ctx.fillText('GAM', 160, 32);
+    ctx.fillText('SET', 160, 10);
+    ctx.fillText('GAM', 160, 18);
   },
 
   referee(state) {

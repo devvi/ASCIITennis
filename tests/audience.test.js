@@ -150,6 +150,54 @@ describe('audience', () => {
     });
   });
 
+  describe('sideline z-range restriction', () => {
+    it('sideline bank spectators have z values within restricted range (z <= COURT_LENGTH / 2)', () => {
+      vi.spyOn(Math, 'random').mockRestore();
+      audience.init(200);
+      const sidelineSpecs = audience.spectators.filter(s =>
+        Math.abs(s.x) > COURT_WIDTH / 2 && s.z > 0 && s.z < COURT_LENGTH
+      );
+      for (const spec of sidelineSpecs) {
+        expect(spec.z).toBeLessThanOrEqual(COURT_LENGTH / 2 + 0.3);
+      }
+    });
+
+    it('no sideline spectator has z > COURT_LENGTH / 2', () => {
+      vi.spyOn(Math, 'random').mockRestore();
+      audience.init(200);
+      for (const spec of audience.spectators) {
+        // Sideline spectators: |x| > COURT_WIDTH/2 AND z within court bounds (0..COURT_LENGTH/2)
+        if (Math.abs(spec.x) > COURT_WIDTH / 2 && spec.z >= 0 && spec.z <= COURT_LENGTH) {
+          expect(spec.z).toBeLessThanOrEqual(COURT_LENGTH / 2 + 0.3);
+        }
+      }
+    });
+
+    it('even after jitter, no spectator z value exceeds COURT_LENGTH / 2 + jitter margin', () => {
+      audience.init(200);
+      for (const spec of audience.spectators) {
+        if (Math.abs(spec.x) > COURT_WIDTH / 2 && spec.z >= 0 && spec.z <= COURT_LENGTH) {
+          expect(spec.z).toBeLessThanOrEqual(COURT_LENGTH / 2 + 0.3);
+        }
+      }
+    });
+
+    it('sideline spectators use linear (not power-biased) distribution', () => {
+      vi.spyOn(Math, 'random').mockRestore();
+      audience.init(200);
+      const sidelineSpecs = audience.spectators.filter(s =>
+        Math.abs(s.x) > COURT_WIDTH / 2 && s.z > 0 && s.z < COURT_LENGTH
+      );
+      if (sidelineSpecs.length < 10) return;
+      const mid = COURT_LENGTH / 4;
+      const nearCount = sidelineSpecs.filter(s => s.z < mid).length;
+      const farCount = sidelineSpecs.filter(s => s.z >= mid && s.z <= COURT_LENGTH / 2).length;
+      const ratio = nearCount / Math.max(1, farCount);
+      expect(ratio).toBeGreaterThanOrEqual(0.5);
+      expect(ratio).toBeLessThanOrEqual(2.0);
+    });
+  });
+
   describe('hit detection', () => {
     it('spectators have alive=true by default', () => {
       audience.init(10);
