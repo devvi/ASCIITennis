@@ -34,13 +34,12 @@ export const audience = {
       { rowAxis: 'z', rowStart: -STAND_MARGIN_Z, rowDir: -1, seatAxis: 'x', seatStart: halfW, seatEnd: halfW + STAND_MARGIN_X },
       { rowAxis: 'z', rowStart: COURT_LENGTH + STAND_MARGIN_Z, rowDir: 1, seatAxis: 'x', seatStart: -halfW - STAND_MARGIN_X, seatEnd: -halfW },
       { rowAxis: 'z', rowStart: COURT_LENGTH + STAND_MARGIN_Z, rowDir: 1, seatAxis: 'x', seatStart: halfW, seatEnd: halfW + STAND_MARGIN_X },
-      { rowAxis: 'x', rowStart: -halfW - STAND_MARGIN_X, rowDir: -1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH },
-      { rowAxis: 'x', rowStart: halfW + STAND_MARGIN_X, rowDir: 1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH },
+      { rowAxis: 'x', rowStart: -halfW - STAND_MARGIN_X, rowDir: -1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH / 2 },
+      { rowAxis: 'x', rowStart: halfW + STAND_MARGIN_X, rowDir: 1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH / 2 },
     ];
 
     for (let bankIdx = 0; bankIdx < banks.length; bankIdx++) {
       const bank = banks[bankIdx];
-      const isSideline = bank.seatAxis === 'z';
       for (let row = 0; row < AUDIENCE_ROWS; row++) {
         const seatsInRow = perRow + (remaining > 0 ? 1 : 0);
         if (remaining > 0) remaining--;
@@ -49,14 +48,7 @@ export const audience = {
         const rowPos = bank.rowStart + row * ROW_SPACING * bank.rowDir;
         for (let seat = 0; seat < seatsInRow; seat++) {
           const t = seatsInRow > 1 ? seat / (seatsInRow - 1) : 0;
-          let seatPos;
-          if (isSideline) {
-            const power = 1.8;
-            const tAdj = Math.pow(t, power);
-            seatPos = bank.seatStart + tAdj * (bank.seatEnd - bank.seatStart);
-          } else {
-            seatPos = bank.seatStart + t * (bank.seatEnd - bank.seatStart);
-          }
+          const seatPos = bank.seatStart + t * (bank.seatEnd - bank.seatStart);
           const x = bank.seatAxis === 'x' ? seatPos : rowPos;
           const z = bank.seatAxis === 'z' ? seatPos : rowPos;
           this.spectators.push({

@@ -145,6 +145,44 @@ describe('render (perspective)', () => {
     expect(mockCtx.fillText).toHaveBeenCalledWith('NET!', expect.any(Number), expect.any(Number));
   });
 
+  it('referee figure has clear character separation (different y positions for each body part)', () => {
+    vi.clearAllMocks();
+    render.referee({ message: '', timer: 60, violation_type: null });
+    const calls = mockCtx.fillText.mock.calls;
+    const refCalls = calls.filter(c => ['@', '|', '/', '\\'].includes(c[0]));
+    const yPositions = refCalls.map(c => c[2]);
+    const uniqueY = new Set(yPositions);
+    expect(uniqueY.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it('scoreboard renders SET and GAM text', () => {
+    vi.clearAllMocks();
+    render.venue();
+    const calls = mockCtx.fillText.mock.calls;
+    const setCall = calls.find(c => c[0] === 'SET');
+    const gamCall = calls.find(c => c[0] === 'GAM');
+    expect(setCall).toBeDefined();
+    expect(gamCall).toBeDefined();
+  });
+
+  it('scoreboard and referee both render without error', () => {
+    vi.clearAllMocks();
+    render.venue();
+    render.referee({ message: '', timer: 0, violation_type: null });
+    const calls = mockCtx.fillText.mock.calls;
+    const setCall = calls.find(c => c[0] === 'SET');
+    const gamCall = calls.find(c => c[0] === 'GAM');
+    const headCall = calls.find(c => c[0] === '@');
+    expect(setCall).toBeDefined();
+    expect(gamCall).toBeDefined();
+    expect(headCall).toBeDefined();
+  });
+
+  it('violation message renders during violation replay', () => {
+    render.referee({ message: 'DOUBLE BOUNCE!', timer: 60, violation_type: 'double_bounce' });
+    expect(mockCtx.fillText).toHaveBeenCalledWith('DOUBLE BOUNCE!', expect.any(Number), expect.any(Number));
+  });
+
   describe('serve_meter', () => {
     it('serve_meter(0) draws empty bar (fills only background)', () => {
       vi.clearAllMocks();
