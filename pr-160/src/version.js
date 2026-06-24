@@ -1,2 +1,2 @@
-export const GIT_HASH = 'c79d559 PR #160';
-export const GIT_DATE = '2026-06-24';
+export const GIT_HASH = '5961e23 PR #160';
+export const GIT_DATE = '2026-06-25';
