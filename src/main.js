@@ -1,9 +1,11 @@
 import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER, STATE_VIOLATION_REPLAY,
+  STATE_KILL_CAM,
   PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH,
   BTN_UP, BTN_DOWN, BTN_B, BTN_A, BALL_HELD,
-  BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE, BALL_REPLAY,
+  BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE, BALL_REPLAY, BALL_FLYING_OUT,
   REPLAY_FRAME_COUNT,
+  KILL_CAM_DURATION,
   SERVE_TOSS_HEIGHT, SERVE_TOSS_DURATION, SERVE_ANGLE_MAX, SERVE_CHARGE_DURATION,
 } from './constants.js';
 import { court } from './court.js';
@@ -13,7 +15,7 @@ import { player } from './player.js';
 import { ball } from './ball.js';
 import { ai } from './ai.js';
 import { scoring } from './scoring.js';
-import { render, initRender, beginFrame, print } from './render.js';
+import { render, initRender, beginFrame, print, activate_kill_flash } from './render.js';
 import { audience } from './audience.js';
 
 let game_state;
@@ -35,6 +37,8 @@ let serve_toss_frames;
 let serve_charge;
 let replay_timer;
 let replay_landing_pos;
+let kill_cam_timer;
+let fly_out_hitter;
 let audience_obj;
 let input1;
 let input2;
@@ -71,6 +75,8 @@ function init_game() {
   serve_toss_frames = 0;
   replay_timer = 0;
   replay_landing_pos = null;
+  kill_cam_timer = 0;
+  fly_out_hitter = null;
   audience_obj = audience;
   audience_obj.init();
 }
@@ -317,6 +323,29 @@ function update_playing() {
 
   landing_pos = ball.predict_landing(ball_obj);
 
+  if (ball_obj.state === BALL_FLYING_OUT) {
+    ball.update(ball_obj);
+    const hitIndex = audience_obj.check_hit(ball_obj.x, ball_obj.z);
+    if (hitIndex >= 0) {
+      audience_obj.kill(hitIndex);
+      audience_obj.cheer();
+      const result = scoring.award_kill(score, fly_out_hitter);
+      point_winner = fly_out_hitter;
+      kill_cam_timer = KILL_CAM_DURATION;
+      game_state = STATE_KILL_CAM;
+      activate_kill_flash();
+      if (result === "game") {
+        server = 1 - server;
+      }
+      if (result === "match") {
+        game_state = STATE_GAME_OVER;
+      }
+    } else if (ball_obj.y < -10 || ball_obj.z > COURT_LENGTH + 20 || ball_obj.z < -5) {
+      resolve_violation_point("out", fly_out_hitter);
+    }
+    return;
+  }
+
   if (ball_obj.state === BALL_DOUBLE_BOUNCE) {
     if (ball_obj.last_hit_by !== null) {
       resolve_violation_point("double_bounce", ball_obj.last_hit_by);
@@ -324,7 +353,8 @@ function update_playing() {
   } else if (ball_obj.state === BALL_OUT) {
     const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
     if (hitter !== null) {
-      resolve_violation_point("out", hitter);
+      fly_out_hitter = hitter;
+      ball_obj.state = BALL_FLYING_OUT;
     }
   } else if (ball_obj.state === BALL_NET) {
     const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
@@ -341,6 +371,15 @@ function update_playing() {
     if (hitter !== null) {
       resolve_violation_point("out", hitter);
     }
+  }
+}
+
+function update_kill_cam() {
+  kill_cam_timer -= 1;
+  if (kill_cam_timer <= 0) {
+    referee_state.timer = 0;
+    point_timer = 60;
+    game_state = STATE_POINT_SCORED;
   }
 }
 
@@ -443,6 +482,8 @@ function gameLoop() {
     update_playing();
   } else if (game_state === STATE_VIOLATION_REPLAY) {
     update_violation_replay();
+  } else if (game_state === STATE_KILL_CAM) {
+    update_kill_cam();
   } else if (game_state === STATE_POINT_SCORED) {
     update_point_scored();
   } else if (game_state === STATE_GAME_OVER) {

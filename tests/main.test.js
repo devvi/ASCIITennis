@@ -318,3 +318,54 @@ describe('serve power meter charge logic', () => {
     }
   });
 });
+
+describe('kill cam flow', () => {
+  it('STATE_KILL_CAM constant is exported', async () => {
+    const mod = await import('../src/constants.js');
+    expect(mod.STATE_KILL_CAM).toBe('kill_cam');
+  });
+
+  it('BALL_FLYING_OUT constant is exported', async () => {
+    const mod = await import('../src/constants.js');
+    expect(mod.BALL_FLYING_OUT).toBe('flying_out');
+  });
+
+  it('KILL_RADIUS is a positive number', async () => {
+    const mod = await import('../src/constants.js');
+    expect(mod.KILL_RADIUS).toBeGreaterThan(0);
+  });
+
+  it('KILL_CAM_DURATION is a positive integer', async () => {
+    const mod = await import('../src/constants.js');
+    expect(mod.KILL_CAM_DURATION).toBeGreaterThan(0);
+    expect(Number.isInteger(mod.KILL_CAM_DURATION)).toBe(true);
+  });
+
+  it('ball in BALL_FLYING_OUT moves toward audience and maintains state', () => {
+    court.init();
+    const b = ball.new();
+    b.state = 'flying_out';
+    b.x = SINGLES_WIDTH + 0.5;
+    b.y = 2.0;
+    b.z = COURT_LENGTH + 1;
+    b.vx = 0.3;
+    b.vy = -0.05;
+    b.vz = 0.5;
+    const initialZ = b.z;
+    ball.update(b);
+    expect(b.z).not.toBe(initialZ);
+    expect(b.state).toBe('flying_out');
+  });
+
+  it('BALL_OUT detection still occurs on out-of-bounds bounce in normal play', () => {
+    court.init();
+    const b = ball.new();
+    b.state = 'in_play';
+    b.x = SINGLES_WIDTH + 1;
+    b.z = COURT_LENGTH / 2;
+    b.y = BALL_RADIUS - 0.01;
+    b.vy = -0.1;
+    ball.update(b);
+    expect(b.state).toBe('out');
+  });
+});
