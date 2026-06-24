@@ -3,6 +3,7 @@ import { SCREEN_W, SCREEN_H, COURT_WIDTH, COURT_LENGTH, NET_HEIGHT, NET_POST_HEI
 import { camera, setDrawChar } from './camera.js';
 import { scoring } from './scoring.js';
 import { court } from './court.js';
+import { GIT_HASH, GIT_DATE } from './version.js';
 
 const SCALE = 4;
 let ctx;
@@ -305,6 +306,9 @@ export const render = {
     ctx.fillText((selected_diff === 2 ? " > " : "   ") + "1P HARD", 55, 90);
     ctx.fillText((selected_diff === 3 ? " > " : "   ") + "2 PLAYERS", 55, 100);
     ctx.fillText("Press Enter/Space to play", 40, 120);
+    ctx.fillStyle = "#555";
+    const ver = GIT_HASH !== 'dev' ? `${GIT_HASH} ${GIT_DATE}` : 'dev build';
+    ctx.fillText(ver, 8, 135);
   },
 
   game_over(winner, game_mode) {

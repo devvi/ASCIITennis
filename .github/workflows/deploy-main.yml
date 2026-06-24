@@ -15,7 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      - name: Inject git info into version.js
+        run: |
+          HASH=$(git rev-parse --short HEAD)
+          DATE=$(git log -1 --format=%ad --date=format:'%Y-%m-%d')
+          cat > src/version.js << EOF
+          export const GIT_HASH = '$HASH';
+          export const GIT_DATE = '$DATE';
+          EOF
 
       - name: Deploy to gh-pages root
         uses: peaceiris/actions-gh-pages@v4

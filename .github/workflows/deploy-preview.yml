@@ -16,7 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      - name: Inject git info into version.js
+        run: |
+          HASH=$(git rev-parse --short HEAD)
+          DATE=$(git log -1 --format=%ad --date=format:'%Y-%m-%d')
+          PR_NUM=${{ github.event.pull_request.number }}
+          cat > src/version.js << EOF
+          export const GIT_HASH = '$HASH PR #$PR_NUM';
+          export const GIT_DATE = '$DATE';
+          EOF
 
       - name: Deploy PR preview to gh-pages
         uses: peaceiris/actions-gh-pages@v4
