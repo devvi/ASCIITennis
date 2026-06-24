@@ -18,10 +18,13 @@ export const ball = {
       bounces: 0,
       last_hit_by: null,
       last_bounce_side: null,
+      trail: [],
+      show_speed_lines: false,
+      trail_char: 'o',
     };
   },
 
-  update(b) {
+  update(b, gravity_override) {
     const is_replay = b.state === BALL_REPLAY;
     const is_flying = b.state === BALL_FLYING_OUT;
     if (b.state !== BALL_IN_PLAY && !is_replay && !is_flying) return;
@@ -47,13 +50,27 @@ export const ball = {
 
     const prev_z = b.z;
 
+    if (b.state === BALL_IN_PLAY || is_flying) {
+      b.trail.push({ x: b.x, y: b.y, z: b.z });
+      if (b.trail.length > 5) b.trail.shift();
+    }
+
     b.vx = b.vx - b.vx * AIR_RESISTANCE + b.spin_x * SPIN_FACTOR;
     b.vz = b.vz - b.vz * AIR_RESISTANCE + b.spin_z * SPIN_FACTOR;
-    b.vy = b.vy + GRAVITY;
+    if (gravity_override) {
+      b.vy = b.vy + GRAVITY * gravity_override.y;
+      b.vx = b.vx + GRAVITY * (gravity_override.x || 0);
+      b.vz = b.vz + GRAVITY * (gravity_override.z || 0);
+    } else {
+      b.vy = b.vy + GRAVITY;
+    }
 
     b.x = b.x + b.vx;
     b.y = b.y + b.vy;
     b.z = b.z + b.vz;
+
+    const speed = Math.sqrt(b.vx*b.vx + b.vz*b.vz);
+    b.show_speed_lines = speed > 0.4;
 
     if (b.y < BALL_RADIUS) {
       b.y = BALL_RADIUS;
@@ -145,7 +162,7 @@ export const ball = {
     b.last_bounce_side = null;
   },
 
-  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter) {
+  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter, speed_mult) {
     const params = HIT_PARAMS[hit_type] || HIT_PARAMS[HIT_FLAT];
 
     const dx = target_x - hit_x;
@@ -153,12 +170,12 @@ export const ball = {
     let dist = Math.sqrt(dx*dx + dz*dz);
     if (dist < 0.01) dist = 0.01;
 
-    const speed = params.speed;
+    const base_speed = params.speed * (speed_mult || 1.0);
     b.x = hit_x;
     b.y = hit_y;
     b.z = hit_z;
-    b.vx = (dx / dist) * speed;
-    b.vz = (dz / dist) * speed;
+    b.vx = (dx / dist) * base_speed;
+    b.vz = (dz / dist) * base_speed;
     const vy_values = { [HIT_FLAT]: 0.14, [HIT_TOPSPIN]: 0.18, [HIT_SLICE]: 0.18, [HIT_LOB]: 0.50 };
     b.vy = vy_values[hit_type] !== undefined ? vy_values[hit_type] : 0.14;
     b.spin_x = Math.random() * params.spin * 2 - params.spin;
@@ -166,6 +183,7 @@ export const ball = {
     b.bounces = 0;
     b.state = BALL_IN_PLAY;
     b.last_bounce_side = null;
+    b.trail = [];
     if (hitter !== undefined) {
       b.last_hit_by = hitter;
     }

@@ -11,6 +11,10 @@ export const camera = {
     this.pitch = pitch;
   },
 
+  init_pong() {
+    this.pitch = 0;
+  },
+
   project(x, y, z) {
     const dx = x;
     const dy = y - CAM_HEIGHT;

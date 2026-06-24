@@ -1,4 +1,4 @@
-import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED, HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX } from './constants.js';
+import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED, HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX, PERFECT_WINDOW, ITEM_COLLECT_RANGE } from './constants.js';
 
 export const player = {
   new(is_ai, side) {
@@ -13,6 +13,15 @@ export const player = {
       swing_duration: 15,
       speed: PLAYER_SPEED,
       is_ai: is_ai || false,
+      item: null,
+      item_active: false,
+      item_timer: 0,
+      hit_range_mult: 1.0,
+      shield_active: false,
+      net_climb: false,
+      net_climb_timer: 0,
+      head_bounce_timer: 0,
+      combo_level: 0,
     };
   },
 
@@ -22,6 +31,23 @@ export const player = {
       if (p.hit_timer <= 0) {
         p.state = PLAYER_IDLE;
       }
+    }
+    if (p.item_timer > 0) {
+      p.item_timer -= 1;
+      if (p.item_timer <= 0) {
+        p.item_active = false;
+        p.hit_range_mult = 1.0;
+        p.shield_active = false;
+      }
+    }
+    if (p.net_climb_timer > 0) {
+      p.net_climb_timer -= 1;
+      if (p.net_climb_timer <= 0) {
+        p.net_climb = false;
+      }
+    }
+    if (p.head_bounce_timer > 0) {
+      p.head_bounce_timer -= 1;
     }
   },
 
@@ -34,18 +60,30 @@ export const player = {
     p.z = Math.max(p.z_min, Math.min(p.z_max, new_z));
   },
 
-  swing(p) {
+  swing(p, ball) {
     if (p.hit_timer > 0) return false;
     p.state = PLAYER_HITTING;
     p.hit_timer = p.swing_duration;
     return true;
   },
 
+  swing_with_timing(p, ball) {
+    if (p.hit_timer > 0) return null;
+    p.state = PLAYER_HITTING;
+    p.hit_timer = p.swing_duration;
+    if (!ball) return 'normal';
+    const dist = Math.abs(ball.z - p.z);
+    if (dist < 0.5) return 'PERFECT';
+    if (dist < 1.5) return 'GOOD';
+    return 'LATE';
+  },
+
   _in_range(p, ball) {
     const dx = p.x - ball.x;
     const dz = p.z - ball.z;
     const horiz_dist = Math.sqrt(dx*dx + dz*dz);
-    return horiz_dist < HIT_RANGE_H && ball.y >= HIT_HEIGHT_MIN && ball.y <= HIT_HEIGHT_MAX;
+    const hit_range = HIT_RANGE_H * (p.hit_range_mult || 1.0);
+    return horiz_dist < hit_range && ball.y >= HIT_HEIGHT_MIN && ball.y <= HIT_HEIGHT_MAX;
   },
 
   can_hit(p, ball) {
@@ -55,5 +93,25 @@ export const player = {
 
   in_hit_range(p, ball) {
     return this._in_range(p, ball);
+  },
+
+  collect_item(p, type) {
+    p.item = type;
+  },
+
+  use_item(p) {
+    if (!p.item) return null;
+    const type = p.item;
+    p.item = null;
+    p.item_active = true;
+    p.item_timer = 300;
+    return type;
+  },
+
+  can_collect_item(p, item_pos) {
+    if (!item_pos) return false;
+    const dx = p.x - item_pos.x;
+    const dz = p.z - item_pos.z;
+    return Math.sqrt(dx*dx + dz*dz) < ITEM_COLLECT_RANGE;
   },
 };
