@@ -20,6 +20,7 @@
 ## Plan
 
 Research complete — see `docs/PRD/151-fun-improvement.md` for requirements.
+PLAN_ISSUE: #158
 
 ### Phase 1: Rally Combo & Feedback System
 
