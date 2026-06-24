@@ -324,7 +324,6 @@ function update_playing() {
   landing_pos = ball.predict_landing(ball_obj);
 
   if (ball_obj.state === BALL_FLYING_OUT) {
-    ball.update(ball_obj);
     const hitIndex = audience_obj.check_hit(ball_obj.x, ball_obj.z);
     if (hitIndex >= 0) {
       audience_obj.kill(hitIndex);
