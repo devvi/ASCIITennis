@@ -83,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ "$PR_TITLE" =~ \#([0-9]+)\)$ ]]; then
+          if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
             PARENT="${BASH_REMATCH[1]}"
             echo "Posting /opencode plan to issue #$PARENT"
             gh issue comment "$PARENT" --body "/opencode plan this"
@@ -97,7 +97,7 @@ jobs:
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.title, 'Plan:')
+      startsWith(github.event.pull_request.title, 'Plan')
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -108,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ "$PR_TITLE" =~ \#([0-9]+)\)$ ]]; then
+          if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
             PARENT="${BASH_REMATCH[1]}"
             echo "Posting /opencode implement to issue #$PARENT"
             gh issue comment "$PARENT" --body "/opencode implement this"
