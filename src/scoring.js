@@ -88,6 +88,10 @@ export const scoring = {
     return "set";
   },
 
+  award_kill(s, hitter) {
+    return this.award_point(s, hitter);
+  },
+
   resolve_violation(s, last_hitter, violation_type) {
     if (last_hitter === null || last_hitter === undefined) {
       return null;

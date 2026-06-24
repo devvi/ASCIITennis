@@ -1,4 +1,4 @@
-import { COURT_LENGTH, COURT_WIDTH, AUDIENCE_COUNT, AUDIENCE_ROWS, ROW_SPACING, STAND_MARGIN_X, STAND_MARGIN_Z } from './constants.js';
+import { COURT_LENGTH, COURT_WIDTH, AUDIENCE_COUNT, AUDIENCE_ROWS, ROW_SPACING, STAND_MARGIN_X, STAND_MARGIN_Z, KILL_RADIUS } from './constants.js';
 
 const POSES = {
   idle: [
@@ -7,15 +7,18 @@ const POSES = {
     { top: " O'", bottom: ' _ ' },
   ],
   cheer: { top: '\\o/', bottom: ' - ' },
+  dead: { top: ' X ', bottom: '|_|' },
 };
 
 export const audience = {
   spectators: [],
   cheer_level: 0,
+  kill_count: 0,
 
   init(count = AUDIENCE_COUNT) {
     this.spectators = [];
     this.cheer_level = 0;
+    this.kill_count = 0;
     this.generate_positions(count);
     this.sort_by_depth();
   },
@@ -35,7 +38,9 @@ export const audience = {
       { rowAxis: 'x', rowStart: halfW + STAND_MARGIN_X, rowDir: 1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH },
     ];
 
-    for (const bank of banks) {
+    for (let bankIdx = 0; bankIdx < banks.length; bankIdx++) {
+      const bank = banks[bankIdx];
+      const isSideline = bank.seatAxis === 'z';
       for (let row = 0; row < AUDIENCE_ROWS; row++) {
         const seatsInRow = perRow + (remaining > 0 ? 1 : 0);
         if (remaining > 0) remaining--;
@@ -44,7 +49,14 @@ export const audience = {
         const rowPos = bank.rowStart + row * ROW_SPACING * bank.rowDir;
         for (let seat = 0; seat < seatsInRow; seat++) {
           const t = seatsInRow > 1 ? seat / (seatsInRow - 1) : 0;
-          const seatPos = bank.seatStart + t * (bank.seatEnd - bank.seatStart);
+          let seatPos;
+          if (isSideline) {
+            const power = 1.8;
+            const tAdj = Math.pow(t, power);
+            seatPos = bank.seatStart + tAdj * (bank.seatEnd - bank.seatStart);
+          } else {
+            seatPos = bank.seatStart + t * (bank.seatEnd - bank.seatStart);
+          }
           const x = bank.seatAxis === 'x' ? seatPos : rowPos;
           const z = bank.seatAxis === 'z' ? seatPos : rowPos;
           this.spectators.push({
@@ -52,6 +64,7 @@ export const audience = {
             z: z + (Math.random() - 0.5) * 0.3,
             row,
             variant: Math.floor(Math.random() * POSES.idle.length),
+            alive: true,
           });
         }
       }
@@ -72,11 +85,37 @@ export const audience = {
     }
   },
 
+  check_hit(x, z) {
+    let nearest = -1;
+    let minDist = Infinity;
+    for (let i = 0; i < this.spectators.length; i++) {
+      const s = this.spectators[i];
+      if (!s.alive) continue;
+      const dx = x - s.x;
+      const dz = z - s.z;
+      const dist = Math.sqrt(dx*dx + dz*dz);
+      if (dist < KILL_RADIUS && dist < minDist) {
+        minDist = dist;
+        nearest = i;
+      }
+    }
+    return nearest;
+  },
+
+  kill(i) {
+    if (i < 0 || i >= this.spectators.length) return;
+    if (!this.spectators[i].alive) return;
+    this.spectators[i].alive = false;
+    this.kill_count++;
+  },
+
   get_pose(i) {
+    const spec = this.spectators[i];
+    if (!spec || !spec.alive) return POSES.dead;
     if (this.cheer_level > 0) {
       return POSES.cheer;
     }
-    const variant = this.spectators[i]?.variant ?? 0;
+    const variant = spec.variant ?? 0;
     return POSES.idle[variant % POSES.idle.length];
   },
 };

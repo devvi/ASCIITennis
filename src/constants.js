@@ -110,6 +110,12 @@ export const SERVE_SPEED_MAX = 0.55;
 export const SERVE_SPEED_MIN = 0.25;
 export const SERVE_CHARGE_DURATION = 30;
 
+// Kill cam / fly-out
+export const BALL_FLYING_OUT = "flying_out";
+export const STATE_KILL_CAM = "kill_cam";
+export const KILL_RADIUS = 1.0;
+export const KILL_CAM_DURATION = 30;
+
 export const AI_EASY = {
   reaction_time: 20,
   accuracy: 0.5,
