@@ -12,9 +12,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  opencode:
+  research-on-issue-opened:
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
+      - uses: anomalyco/opencode/github@v1.17.6
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        with:
+          model: deepseek/deepseek-v4-flash
+          use_github_token: true
+          prompt: |
+            Research this issue. Read the issue title and body, create PRD
+            and TASK documents in docs/PRD/ and docs/TASKS/, commit and push
+            them, then create a research PR with the findings. Do NOT close the
+            parent issue with Closes/Fixes/Resolves.
+
+  handle-comment-command:
     if: |
-      (github.event_name == 'issues' && github.event.action == 'opened') ||
       (github.event_name == 'issue_comment' && contains(format(' {0} ', github.event.comment.body), ' /opencode ')) ||
       (github.event_name == 'pull_request_review_comment' && contains(format(' {0} ', github.event.comment.body), ' /oc '))
     runs-on: ubuntu-latest
@@ -37,4 +64,3 @@ jobs:
         with:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
-          prompt: ${{ github.event_name == 'issues' && 'Research this issue. Read the issue title and body, create PRD and TASK documents in docs/PRD/ and docs/TASKS/, commit and push them, then create a research PR with the findings. Do NOT close the parent issue with Closes/Fixes/Resolves.' || '' }}
