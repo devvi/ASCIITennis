@@ -163,4 +163,50 @@ describe('scoring', () => {
     scoring.resolve_violation(s, 0, 'serve_fault');
     expect(s.points[1]).toBe(1);
   });
+
+  describe('award_kill', () => {
+    it('award_kill increments points for hitter', () => {
+      const s = scoring.new();
+      scoring.award_kill(s, 0);
+      expect(s.points[0]).toBe(1);
+      expect(s.points[1]).toBe(0);
+    });
+
+    it('award_kill awards game at 4-2 progression', () => {
+      const s = scoring.new();
+      s.points = [3, 2];
+      const result = scoring.award_kill(s, 0);
+      expect(result).toBe('game');
+      expect(s.games[0]).toBe(1);
+    });
+
+    it('award_kill progresses 15 -> 30 -> 40 for consecutive kills', () => {
+      const s = scoring.new();
+      scoring.award_kill(s, 0);
+      expect(s.points[0]).toBe(1);
+      scoring.award_kill(s, 0);
+      expect(s.points[0]).toBe(2);
+      scoring.award_kill(s, 0);
+      expect(s.points[0]).toBe(3);
+    });
+
+    it('award_kill returns set result at set threshold', () => {
+      const s = scoring.new();
+      s.games = [5, 4];
+      s.points = [3, 2];
+      const result = scoring.award_kill(s, 0);
+      expect(result).toBe('set');
+      expect(s.sets[0]).toBe(1);
+    });
+
+    it('award_kill returns match result at match threshold', () => {
+      const s = scoring.new();
+      s.sets = [1, 0];
+      s.games = [5, 4];
+      s.points = [3, 2];
+      const result = scoring.award_kill(s, 0);
+      expect(result).toBe('match');
+      expect(s.sets[0]).toBe(2);
+    });
+  });
 });

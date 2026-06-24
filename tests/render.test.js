@@ -123,9 +123,15 @@ describe('render (perspective)', () => {
     expect(mockCtx.fillText).toHaveBeenCalledWith('@', expect.any(Number), expect.any(Number));
   });
 
-  it('referee does nothing when timer expired', () => {
+  it('referee draws referee figure even when timer is 0 (always visible)', () => {
     vi.clearAllMocks();
-    render.referee({ message: 'OUT!', timer: 0, violation_type: 'out' });
+    render.referee({ message: '', timer: 0, violation_type: null });
+    expect(mockCtx.fillText).toHaveBeenCalledWith('@', expect.any(Number), expect.any(Number));
+  });
+
+  it('referee does not render when state is undefined', () => {
+    vi.clearAllMocks();
+    render.referee(undefined);
     expect(mockCtx.fillText).not.toHaveBeenCalled();
   });
 

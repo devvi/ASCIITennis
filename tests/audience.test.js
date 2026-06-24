@@ -118,4 +118,121 @@ describe('audience', () => {
     }
     expect(audience.cheer_level).toBe(0);
   });
+
+  describe('perspective density', () => {
+    it('sideline bank spectators have z values biased toward near-camera (z < COURT_LENGTH/2)', () => {
+      audience.init(200);
+      const half = COURT_LENGTH / 2;
+      const sidelineSpecs = audience.spectators.filter(s =>
+        s.z < COURT_LENGTH && s.z > 0 && Math.abs(s.x) > COURT_WIDTH / 2
+      );
+      const nearCount = sidelineSpecs.filter(s => s.z < half).length;
+      const farCount = sidelineSpecs.filter(s => s.z >= half).length;
+      expect(nearCount).toBeGreaterThan(farCount);
+    });
+
+    it('sideline spectators z values stay within [0, COURT_LENGTH]', () => {
+      audience.init(200);
+      const sidelineSpecs = audience.spectators.filter(s =>
+        Math.abs(s.x) > COURT_WIDTH / 2 && s.z > 0 && s.z < COURT_LENGTH
+      );
+      for (const spec of sidelineSpecs) {
+        expect(spec.z).toBeGreaterThanOrEqual(0);
+        expect(spec.z).toBeLessThanOrEqual(COURT_LENGTH);
+      }
+    });
+
+    it('baseline bank spectators (near/end) span x only, z values are at fixed positions', () => {
+      audience.init(96);
+      for (const spec of audience.spectators) {
+        expect(Math.abs(spec.x)).toBeGreaterThanOrEqual(COURT_WIDTH / 2 - 0.5);
+      }
+    });
+  });
+
+  describe('hit detection', () => {
+    it('spectators have alive=true by default', () => {
+      audience.init(10);
+      for (const spec of audience.spectators) {
+        expect(spec.alive).toBe(true);
+      }
+    });
+
+    it('kill_count starts at 0', () => {
+      audience.init();
+      expect(audience.kill_count).toBe(0);
+    });
+
+    it('check_hit returns -1 when no spectator within KILL_RADIUS', () => {
+      audience.init(96);
+      const idx = audience.check_hit(999, 999);
+      expect(idx).toBe(-1);
+    });
+
+    it('check_hit returns index of nearest alive spectator within KILL_RADIUS', () => {
+      audience.init(96);
+      const spec = audience.spectators[0];
+      const idx = audience.check_hit(spec.x, spec.z);
+      expect(idx).toBeGreaterThanOrEqual(0);
+    });
+
+    it('check_hit ignores dead spectators', () => {
+      audience.init(10);
+      for (let i = 0; i < audience.spectators.length; i++) {
+        audience.kill(i);
+      }
+      const idx = audience.check_hit(0, 0);
+      expect(idx).toBe(-1);
+    });
+
+    it('kill marks spectator alive=false', () => {
+      audience.init(10);
+      audience.kill(0);
+      expect(audience.spectators[0].alive).toBe(false);
+    });
+
+    it('kill increments kill_count', () => {
+      audience.init(10);
+      audience.kill(0);
+      expect(audience.kill_count).toBe(1);
+      audience.kill(1);
+      expect(audience.kill_count).toBe(2);
+    });
+
+    it('multiple kills increment kill_count and mark multiple spectators dead', () => {
+      audience.init(10);
+      audience.kill(0);
+      audience.kill(2);
+      audience.kill(4);
+      expect(audience.kill_count).toBe(3);
+      expect(audience.spectators[0].alive).toBe(false);
+      expect(audience.spectators[2].alive).toBe(false);
+      expect(audience.spectators[4].alive).toBe(false);
+      expect(audience.spectators[1].alive).toBe(true);
+    });
+
+    it('get_pose returns death pose for dead spectator', () => {
+      audience.init(10);
+      audience.kill(0);
+      const pose = audience.get_pose(0);
+      expect(pose.top).toBe(' X ');
+      expect(pose.bottom).toBe('|_|');
+    });
+
+    it('get_pose returns cheer pose for alive spectator when cheering', () => {
+      audience.init(10);
+      audience.cheer();
+      const pose = audience.get_pose(0);
+      expect(pose.top).toBe('\\o/');
+      expect(pose.bottom).toBe(' - ');
+    });
+
+    it('get_pose returns idle pose for alive spectator when not cheering', () => {
+      audience.init(10);
+      audience.cheer_level = 0;
+      const pose = audience.get_pose(0);
+      expect(pose.top).toBeDefined();
+      expect(pose.bottom).toBeDefined();
+    });
+  });
 });
