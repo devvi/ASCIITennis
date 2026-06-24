@@ -38,7 +38,7 @@ jobs:
 
       - name: Fix failing tests
         if: steps.test.outputs.exit_code != '0'
-        uses: anomalyco/opencode/github@v1.17.6
+        uses: anomalyco/opencode/github@latest
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
@@ -55,7 +55,7 @@ jobs:
       - name: Review & fix critical issues
         if: steps.test.outputs.exit_code == '0'
         timeout-minutes: 10
-        uses: anomalyco/opencode/github@v1.17.6
+        uses: anomalyco/opencode/github@latest
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}

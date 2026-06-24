@@ -40,7 +40,6 @@ where `{A,B,C,D}` are derived from camera constants and pitch.
 | scoring.test.js | Point/game/set/match, violation resolution | award_kill() |
 | main.test.js | Targeting bounds, violation flow | Kill-cam flow, fly-out → hit → kill → point |
 | render.test.js | Court, net, player, ball, HUD, referee | Death pose rendering, kill flash HUD, referee always visible |
-
 ## Impact Summary
 
 | Module | Impact | Description |
@@ -197,3 +196,34 @@ award_kill(s, hitter) {
 - Remove the `state.timer <= 0` guard for the *figure* rendering
 - Keep `state.timer > 0` guard only for the *violation message text* — message should only show during replay
 - Verify: referee must render during serving, playing, point_scored, kill_cam, and (still) violation_replay
+
+---
+
+## Plan Issue Task Lists
+
+**PLAN_ISSUE:** #141
+
+### Phase 1: Tests (TDD)
+- [ ] 1a. Audience perspective density tests — sideline bank z values biased toward near-camera
+- [ ] 1b. Referee rendering tests — minimum screen-space separation, always-visible, violation message
+- [ ] 1c. Spectator hit detection tests — `check_hit()`, `kill()`, `alive`/`dead` state, death pose
+- [ ] 1d. Ball fly-out tests — `BALL_FLYING_OUT` state, physics continuation, termination
+- [ ] 1e. Scoring kill tests — `award_kill()` progression
+- [ ] 1f. Main game flow tests — kill cam, fly-out → hit → kill → point, miss fallback
+
+### Phase 2: Data structures
+- [ ] 2a. constants.js additions — `BALL_FLYING_OUT`, `KILL_RADIUS`, `KILL_CAM_DURATION`, `STATE_KILL_CAM`
+- [ ] 2b. audience.js — per-spectator `alive` state, `kill_count`, `check_hit()`, `kill()` methods
+- [ ] 2c. ball.js — `BALL_FLYING_OUT` branch in `update()` (skip bounds/net, continue physics)
+
+### Phase 3: Core logic
+- [ ] 3a. audience.js — perspective density fix for sideline banks (inverse projection)
+- [ ] 3b. referee rendering fix — screen-space ASCII figure, always visible
+- [ ] 3c. spectator hit detection — implement `check_hit()` with linear scan, `kill()` logic
+- [ ] 3d. main.js — game flow: `BALL_OUT` → `BALL_FLYING_OUT`, hit→kill→cam, miss→violation_replay
+- [ ] 3e. scoring.js — `award_kill()` delegation to `award_point()`
+
+### Phase 4: UI / output
+- [ ] 4a. death pose rendering — ` X ` / `|_|` for dead spectators in `render.audience()`
+- [ ] 4b. kill flash HUD — `"KILL +1"` text near scoreboard during kill-cam
+- [ ] 4c. referee always visible — remove timer guard, render during all game states

@@ -3,9 +3,15 @@ import { SCREEN_W, SCREEN_H, COURT_WIDTH, COURT_LENGTH, NET_HEIGHT, NET_POST_HEI
 import { camera, setDrawChar } from './camera.js';
 import { scoring } from './scoring.js';
 import { court } from './court.js';
+import { GIT_HASH, GIT_DATE } from './version.js';
 
 const SCALE = 4;
 let ctx;
+let kill_flash_timer = 0;
+
+export function activate_kill_flash() {
+  kill_flash_timer = 30;
+}
 
 function printChar(ch, x, y) {
   ctx.fillText(ch, x, y);
@@ -196,12 +202,15 @@ export const render = {
     if (score.sets[0] > 0 || score.sets[1] > 0) {
       ctx.fillText("Sets " + score.sets[0] + "-" + score.sets[1], 2, 17);
     }
+    if (kill_flash_timer > 0) {
+      ctx.fillStyle = '#ff0';
+      print("KILL +1", 100, 1);
+      kill_flash_timer--;
+    }
   },
 
   audience(audience_obj) {
     if (!audience_obj || !audience_obj.spectators) return;
-
-    ctx.fillStyle = '#fff';
 
     for (let i = 0; i < audience_obj.spectators.length; i++) {
       const spec = audience_obj.spectators[i];
@@ -211,6 +220,8 @@ export const render = {
       const sy = Math.round(p.sy);
       if (sx < -10 || sx > SCREEN_W + 10 || sy < -10 || sy > SCREEN_H + 10) continue;
 
+      const alive = spec.alive !== false;
+      ctx.fillStyle = alive ? '#fff' : '#666';
       const pose = audience_obj.get_pose(i);
       print(pose.top, sx - 7, sy);
       print(pose.bottom, sx - 7, sy + 7);
@@ -256,20 +267,25 @@ export const render = {
   },
 
   referee(state) {
-    if (!state || state.timer <= 0) return;
+    if (!state) return;
 
     const refX = COURT_WIDTH / 2 + 1.0;
     const refZ = COURT_LENGTH / 2;
+    const anchor = camera.project(refX, 0, refZ);
+    if (!anchor) return;
+
+    const sx = Math.round(anchor.sx);
+    const sy = Math.round(anchor.sy);
 
     ctx.fillStyle = '#fff';
-    camera.draw_char(refX, 1.2, refZ, '@');
-    camera.draw_char(refX, 0.9, refZ, '|');
-    camera.draw_char(refX - 0.4, 0.9, refZ, '/');
-    camera.draw_char(refX + 0.4, 0.9, refZ, '\\');
-    camera.draw_char(refX - 0.3, 0.4, refZ, '/');
-    camera.draw_char(refX + 0.3, 0.4, refZ, '\\');
+    print('@', sx - 3, sy - 12);
+    print('|', sx - 3, sy - 5);
+    print('/', sx - 7, sy - 5);
+    print('\\', sx + 1, sy - 5);
+    print('/', sx - 6, sy + 2);
+    print('\\', sx + 1, sy + 2);
 
-    if (state.message) {
+    if (state.message && state.timer > 0) {
       ctx.fillStyle = '#ff0';
       print(state.message, 140, 20);
     }
@@ -305,6 +321,9 @@ export const render = {
     ctx.fillText((selected_diff === 2 ? " > " : "   ") + "1P HARD", 55, 90);
     ctx.fillText((selected_diff === 3 ? " > " : "   ") + "2 PLAYERS", 55, 100);
     ctx.fillText("Press Enter/Space to play", 40, 120);
+    ctx.fillStyle = "#555";
+    const ver = GIT_HASH !== 'dev' ? `${GIT_HASH} ${GIT_DATE}` : 'dev build';
+    ctx.fillText(ver, 8, 128);
   },
 
   game_over(winner, game_mode) {

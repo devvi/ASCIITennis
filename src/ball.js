@@ -1,5 +1,6 @@
 import {
   BALL_HELD, BALL_IN_PLAY, BALL_REPLAY, BALL_OUT, BALL_NET, BALL_BOUNCE, BALL_DOUBLE_BOUNCE,
+  BALL_FLYING_OUT,
   BALL_RADIUS, COURT_LENGTH,
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
   HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
@@ -22,7 +23,21 @@ export const ball = {
 
   update(b) {
     const is_replay = b.state === BALL_REPLAY;
-    if (b.state !== BALL_IN_PLAY && !is_replay) return;
+    const is_flying = b.state === BALL_FLYING_OUT;
+    if (b.state !== BALL_IN_PLAY && !is_replay && !is_flying) return;
+
+    if (is_flying) {
+      b.vx = b.vx - b.vx * AIR_RESISTANCE + (b.spin_x || 0) * SPIN_FACTOR;
+      b.vz = b.vz - b.vz * AIR_RESISTANCE + (b.spin_z || 0) * SPIN_FACTOR;
+      b.vy = b.vy + GRAVITY;
+      b.x = b.x + b.vx;
+      b.y = b.y + b.vy;
+      b.z = b.z + b.vz;
+      if (b.y < -10 || b.z > COURT_LENGTH + 20 || b.z < -(5)) {
+        return;
+      }
+      return;
+    }
 
     if (is_replay) {
       if (b.z < -5 || b.z > COURT_LENGTH + 5) {

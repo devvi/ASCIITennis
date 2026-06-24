@@ -453,6 +453,89 @@ describe('ball', () => {
     expect(b.state).toBe(BALL_OUT);
   });
 
+  describe('BALL_FLYING_OUT state', () => {
+    it('ball in BALL_FLYING_OUT continues physics (moves with velocity)', () => {
+      const b = ball.new();
+      court.init();
+      b.state = 'flying_out';
+      b.x = 0;
+      b.y = 2.0;
+      b.z = COURT_LENGTH + 1;
+      b.vx = 0.1;
+      b.vy = -0.05;
+      b.vz = 0.2;
+      const oldZ = b.z;
+      ball.update(b);
+      expect(b.z).not.toBe(oldZ);
+    });
+
+    it('BALL_FLYING_OUT applies gravity to vy', () => {
+      const b = ball.new();
+      court.init();
+      b.state = 'flying_out';
+      b.y = 2.0;
+      b.vy = 0;
+      b.z = COURT_LENGTH + 1;
+      ball.update(b);
+      expect(b.vy).toBeLessThan(0);
+    });
+
+    it('BALL_FLYING_OUT skips bounce detection (does not set BALL_OUT)', () => {
+      const b = ball.new();
+      court.init();
+      b.state = 'flying_out';
+      b.x = SINGLES_WIDTH + 5;
+      b.y = 0.01;
+      b.z = COURT_LENGTH / 2;
+      b.vy = -0.1;
+      ball.update(b);
+      expect(b.state).toBe('flying_out');
+    });
+
+    it('BALL_FLYING_OUT skips net collision detection', () => {
+      const b = ball.new();
+      court.init();
+      b.state = 'flying_out';
+      b.x = 0;
+      b.y = NET_HEIGHT - 0.1;
+      b.z = COURT_LENGTH / 2 - 5;
+      b.vz = 10;
+      b.vy = 0;
+      ball.update(b);
+      expect(b.state).toBe('flying_out');
+    });
+
+    it('BALL_FLYING_OUT ball continues past far baseline without state change', () => {
+      const b = ball.new();
+      court.init();
+      b.state = 'flying_out';
+      b.x = 0;
+      b.y = 2.0;
+      b.z = COURT_LENGTH + 5;
+      b.vz = 0.2;
+      for (let i = 0; i < 10; i++) {
+        ball.update(b);
+      }
+      expect(b.z).toBeGreaterThan(COURT_LENGTH + 5);
+      expect(b.state).toBe('flying_out');
+    });
+
+    it('BALL_FLYING_OUT ball air resistance affects velocity', () => {
+      const b = ball.new();
+      court.init();
+      b.state = 'flying_out';
+      b.x = 0;
+      b.y = 2.0;
+      b.z = COURT_LENGTH + 1;
+      b.vx = 0.5;
+      b.vy = 0;
+      b.vz = 0;
+      const oldVx = b.vx;
+      ball.update(b);
+      expect(Math.abs(b.vx)).toBeLessThan(Math.abs(oldVx));
+    });
+  });
+
   describe('serve power param', () => {
     it('serve with power=1 uses SERVE_SPEED_MAX', () => {
       const b = ball.new();
