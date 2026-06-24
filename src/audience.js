@@ -32,8 +32,8 @@ export const audience = {
     const banks = [
       { rowAxis: 'z', rowStart: -STAND_MARGIN_Z, rowDir: -1, seatAxis: 'x', seatStart: -halfW - STAND_MARGIN_X, seatEnd: -halfW },
       { rowAxis: 'z', rowStart: -STAND_MARGIN_Z, rowDir: -1, seatAxis: 'x', seatStart: halfW, seatEnd: halfW + STAND_MARGIN_X },
-      { rowAxis: 'z', rowStart: COURT_LENGTH + STAND_MARGIN_Z, rowDir: 1, seatAxis: 'x', seatStart: -halfW - STAND_MARGIN_X, seatEnd: -halfW },
-      { rowAxis: 'z', rowStart: COURT_LENGTH + STAND_MARGIN_Z, rowDir: 1, seatAxis: 'x', seatStart: halfW, seatEnd: halfW + STAND_MARGIN_X },
+      { rowAxis: 'x', rowStart: -halfW - STAND_MARGIN_X - AUDIENCE_ROWS * ROW_SPACING, rowDir: -1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH / 2 },
+      { rowAxis: 'x', rowStart: halfW + STAND_MARGIN_X + AUDIENCE_ROWS * ROW_SPACING, rowDir: 1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH / 2 },
       { rowAxis: 'x', rowStart: -halfW - STAND_MARGIN_X, rowDir: -1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH / 2 },
       { rowAxis: 'x', rowStart: halfW + STAND_MARGIN_X, rowDir: 1, seatAxis: 'z', seatStart: 0, seatEnd: COURT_LENGTH / 2 },
     ];
