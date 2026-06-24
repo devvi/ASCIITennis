@@ -34,6 +34,8 @@ export function beginFrame() {
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 }
 
+export function getCtx() { return ctx; }
+
 export function print(str, x, y) {
   ctx.fillText(str, x, y);
 }
@@ -138,10 +140,23 @@ function drawPlayerFigure(p, color, racketSide) {
   camera.draw_char(p.x, 0.01, p.z, 'O');
 
   ctx.fillStyle = color;
-  camera.draw_char(p.x, 0.25, p.z, 'O');
+
+  if (p.hit_range_mult && p.hit_range_mult > 1) {
+    camera.draw_char(p.x, 0.15, p.z, '[');
+    camera.draw_char(p.x, 0.25, p.z, 'O');
+    camera.draw_char(p.x, 0.35, p.z, ']');
+  } else {
+    camera.draw_char(p.x, 0.25, p.z, 'O');
+  }
   camera.draw_char(p.x, 0.55, p.z, '_');
   camera.draw_char(p.x, 0.9, p.z, '.');
   camera.draw_char(p.x, 1.25, p.z, ':');
+
+  if (p.shield_active) {
+    ctx.fillStyle = '#44f';
+    camera.draw_char(p.x - 0.3, 0.2, p.z, '~');
+    camera.draw_char(p.x + 0.3, 0.2, p.z, '~');
+  }
 
   if (p.state === 'hitting') {
     ctx.fillStyle = '#ddd';
@@ -187,7 +202,7 @@ export const render = {
     camera.draw_char(b.x, b.y, b.z, 'O');
   },
 
-  hud(score, game_mode) {
+  hud(score, game_mode, opts) {
     ctx.fillStyle = "#fff";
     const ptDisplay = scoring.display(score);
     const ptLine = ptDisplay.split('\n')[0];
@@ -206,6 +221,52 @@ export const render = {
       ctx.fillStyle = '#ff0';
       print("KILL +1", 100, 1);
       kill_flash_timer--;
+    }
+    if (opts) {
+      if (opts.item) {
+        ctx.fillStyle = '#0f0';
+        ctx.fillText("ITEM: " + opts.item, 2, 25);
+      }
+      if (opts.target_score !== null && opts.target_score !== undefined) {
+        ctx.fillStyle = '#fa0';
+        ctx.fillText("SCORE: " + opts.target_score, 2, 33);
+      }
+      if (opts.longest_rally !== null && opts.longest_rally !== undefined) {
+        ctx.fillStyle = '#ff0';
+        ctx.fillText("BEST: " + opts.longest_rally, 150, 9);
+      }
+      if (opts.cheat_code_active) {
+        ctx.fillStyle = '#f0f';
+        ctx.fillText("SUPER MODE!", 160, 25);
+      }
+      if (opts.time_slow_active) {
+        ctx.fillStyle = '#44f';
+        ctx.fillText("SLOW", 180, 33);
+      }
+      if (opts.head_bounce) {
+        ctx.fillStyle = '#ff0';
+        ctx.fillText("!", 130, 17);
+      }
+      if (opts.game_mode === 'zombie') {
+        ctx.fillStyle = '#0f0';
+        ctx.fillText("ZOMBIE MODE", 150, 17);
+      }
+      if (opts.game_mode === 'target_practice') {
+        ctx.fillStyle = '#f80';
+        ctx.fillText("TARGET PRACTICE", 130, 17);
+      }
+      if (opts.game_mode === 'rally_challenge') {
+        ctx.fillStyle = '#ff0';
+        ctx.fillText("RALLY CHALLENGE", 130, 17);
+      }
+      if (opts.game_mode === 'gravity_shift') {
+        ctx.fillStyle = '#0ff';
+        ctx.fillText("GRAVITY SHIFT", 140, 17);
+      }
+      if (opts.game_mode === 'pong_mode') {
+        ctx.fillStyle = '#fff';
+        ctx.fillText("PONG MODE", 150, 17);
+      }
     }
   },
 
@@ -266,7 +327,7 @@ export const render = {
     ctx.fillText('GAM', 160, 18);
   },
 
-  referee(state) {
+  referee(state, face) {
     if (!state) return;
 
     const refX = COURT_WIDTH / 2 + 1.0;
@@ -284,6 +345,11 @@ export const render = {
     print('\\', sx + 1, sy - 5);
     print('/', sx - 6, sy + 2);
     print('\\', sx + 1, sy + 2);
+
+    if (face) {
+      ctx.fillStyle = '#ff0';
+      print(face, sx - 3, sy - 12);
+    }
 
     if (state.message && state.timer > 0) {
       ctx.fillStyle = '#ff0';
@@ -335,5 +401,131 @@ export const render = {
     ctx.fillText(" \\____/_/   \\_\\_|  |_|_____|", 35, 62);
     ctx.fillText(winner + " wins the match!", 55, 80);
     ctx.fillText("Press Enter/Space to continue", 40, 95);
+  },
+
+  // Phase 1: Rally Combo & Feedback
+  rally_counter(len) {
+    ctx.fillStyle = "#ff0";
+    ctx.fillText("RALLY: " + len, 95, 1);
+  },
+
+  combo_indicator(combo) {
+    ctx.fillStyle = "#0ff";
+    ctx.fillText("COMBO x" + combo, 95, 9);
+  },
+
+  timing_feedback(fb) {
+    if (!fb || fb.timer <= 0) return;
+    const alpha = Math.min(1, fb.timer / 30);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = fb.text === 'PERFECT' ? '#0f0' : fb.text === 'GOOD' ? '#ff0' : '#f88';
+    const p = camera.project(fb.x, 1.5, fb.z);
+    if (p) {
+      ctx.fillText(fb.text, Math.round(p.sx) - 20, Math.round(p.sy) - 20);
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  // Phase 2: Items
+  item_box(item) {
+    if (!item) return;
+    const blink = Math.floor(Date.now() / 500) % 2 === 0;
+    ctx.fillStyle = blink ? '#fff' : '#aaa';
+    camera.draw_char(item.x, 0.01, item.z, '?');
+  },
+
+  // Phase 3: Particles & Effects
+  particles(particles) {
+    if (!particles || particles.length === 0) return;
+    for (const p of particles) {
+      ctx.fillStyle = '#fff';
+      camera.draw_char(p.x, p.y, p.z, p.char);
+    }
+  },
+
+  ball_trail(trail) {
+    if (!trail || trail.length < 2) return;
+    for (let i = 0; i < trail.length - 1; i++) {
+      const t = trail[i];
+      const alpha = (i + 1) / trail.length * 0.6;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ff0';
+      camera.draw_char(t.x, t.y, t.z, 'o');
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  speed_lines(ball) {
+    if (!ball) return;
+    ctx.fillStyle = '#888';
+    const speed = Math.sqrt(ball.vx*ball.vx + ball.vz*ball.vz);
+    if (speed > 0.4) {
+      const nx = ball.vx / speed;
+      const nz = ball.vz / speed;
+      for (let i = 1; i <= 3; i++) {
+        const sx = ball.x - nx * i * 0.3;
+        const sz = ball.z - nz * i * 0.3;
+        camera.draw_char(sx, ball.y, sz, '=');
+      }
+    }
+  },
+
+  slow_indicator() {
+    ctx.fillStyle = '#44f';
+    ctx.fillText("SLOW", 180, 1);
+    ctx.fillStyle = 'rgba(0,0,255,0.1)';
+    ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  },
+
+  head_bounce(player) {
+    const p = camera.project(player.x, PLAYER_EYE_Y + 0.3, player.z);
+    if (p) {
+      ctx.fillStyle = '#ff0';
+      ctx.fillText('!', Math.round(p.sx) - 3, Math.round(p.sy) - 10);
+    }
+  },
+
+  // Phase 4: Special modes & Easter eggs
+  special_menu(selected) {
+    ctx.fillStyle = "#fff";
+    ctx.fillText("SPECIAL MODES", 50, 30);
+    const modes = ["Zombie Tennis", "Target Practice", "Rally Challenge", "Gravity Shift", "Pong Mode"];
+    for (let i = 0; i < modes.length; i++) {
+      ctx.fillText((selected === i ? " > " : "   ") + modes[i], 55, 50 + i * 10);
+    }
+    ctx.fillStyle = "#888";
+    ctx.fillText("Press Q/Esc to go back", 40, 120);
+  },
+
+  zombie(z) {
+    ctx.fillStyle = '#0f0';
+    camera.draw_char(z.x, 0.3, z.z, 'Z');
+  },
+
+  target(t) {
+    ctx.fillStyle = '#f80';
+    camera.draw_char(t.x, 0.01, t.z, 'T');
+    ctx.fillStyle = '#fa0';
+    camera.draw_char(t.x, 0.3, t.z, '0');
+  },
+
+  gravity_indicator(dir) {
+    ctx.fillStyle = '#0ff';
+    let arrow = '?';
+    if (dir.y < 0) arrow = '↓';
+    else if (dir.y > 0) arrow = '↑';
+    else if (dir.z < 0) arrow = '←';
+    else if (dir.z > 0) arrow = '→';
+    else if (dir.x < 0) arrow = '↙';
+    else if (dir.x > 0) arrow = '↗';
+    ctx.fillText("GRAVITY: " + arrow, 2, 25);
+  },
+
+  all_dead_screen() {
+    ctx.fillStyle = '#f00';
+    ctx.fillText("R.I.P.", 100, 60);
+    ctx.fillText("All spectators have perished.", 40, 70);
+    ctx.fillStyle = '#888';
+    ctx.fillText("The show must go on...", 55, 80);
   },
 };

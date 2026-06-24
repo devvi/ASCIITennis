@@ -1,5 +1,5 @@
 import {
-  BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
+  BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B, BTN_X,
   HIT_TOPSPIN, HIT_SLICE, HIT_LOB, HIT_FLAT,
 } from './constants.js';
 
@@ -11,6 +11,7 @@ export const KEY_MAP_P1 = {
   "a": BTN_LEFT, "A": BTN_LEFT,
   "d": BTN_RIGHT, "D": BTN_RIGHT,
   " ": BTN_B,
+  "e": BTN_X, "E": BTN_X,
 };
 
 export const KEY_MAP_P2 = {
@@ -20,6 +21,7 @@ export const KEY_MAP_P2 = {
   "ArrowRight": BTN_RIGHT,
   "Enter": BTN_B,
   "Shift": BTN_A,
+  "e": BTN_X, "E": BTN_X,
 };
 
 const KEY_MAP_BOTH = {
@@ -28,6 +30,7 @@ const KEY_MAP_BOTH = {
   "a": BTN_LEFT, "A": BTN_LEFT, "ArrowLeft": BTN_LEFT,
   "d": BTN_RIGHT, "D": BTN_RIGHT, "ArrowRight": BTN_RIGHT,
   " ": BTN_B, "Enter": BTN_B,
+  "e": BTN_X, "E": BTN_X,
 };
 
 export function createInput(keyMap, useMouse = true) {
