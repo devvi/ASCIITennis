@@ -96,7 +96,7 @@
 
 ## Plan Issue Task Lists
 
-**PLAN_ISSUE:** TBD (to be created)
+**PLAN_ISSUE:** #155
 
 ### Phase 1: Tests (TDD)
 - [ ] 1a. Mouse hold duration tracking tests
