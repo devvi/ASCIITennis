@@ -99,7 +99,7 @@ In `render.js`:
 
 ## Plan Issue Task Lists
 
-**PLAN_ISSUE:** #146
+**PLAN_ISSUE:** #147
 
 ### Phase 1: Tests (TDD)
 - [ ] 1a. Audience sideline z-range tests — restricted range, no opponent court occlusion
