@@ -86,7 +86,7 @@ jobs:
           if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
             PARENT="${BASH_REMATCH[1]}"
             echo "Posting /opencode plan to issue #$PARENT"
-            gh issue comment "$PARENT" --body "/opencode plan this"
+            gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
           else
             echo "Could not extract parent issue number from title: $PR_TITLE"
             exit 1
@@ -111,7 +111,7 @@ jobs:
           if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
             PARENT="${BASH_REMATCH[1]}"
             echo "Posting /opencode implement to issue #$PARENT"
-            gh issue comment "$PARENT" --body "/opencode implement this"
+            gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
           else
             echo "Could not extract parent issue number from title: $PR_TITLE"
             exit 1
