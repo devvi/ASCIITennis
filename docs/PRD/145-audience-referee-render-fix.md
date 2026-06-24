@@ -22,11 +22,9 @@ The `power=1.8` function (`tAdj = Math.pow(t, 1.8)`) only shifts the distributio
 **Root cause:** The scoreboard drawn in `render.venue()` and the referee figure drawn in `render.referee()` occupy overlapping screen areas:
 
 - **Scoreboard:** Dark rectangle at `(155, 22, 40, 18)` — covers `x ∈ [155, 195]`, `y ∈ [22, 40]`. Green text `"SET"` at `(160, 24)` and `"GAM"` at `(160, 32)`.
-- **Referee (projected):** Anchor at world `(COURT_WIDTH/2 + 1.0, 0, COURT_LENGTH/2)` projects to approximately `sx ≈ 158, sy ≈ 41`. The head `@` is at `(155, 29)` and body parts at `y ≈ 36` — all within the scoreboard rectangle.
+- **Referee (screen-space from projected anchor):** Anchor at world `(COURT_WIDTH/2 + 1.0, 0, COURT_LENGTH/2)` projects to approximately `sx ≈ 158, sy ≈ 41`. The head `@` is at `(155, 29)` and body at `(155, 36)` — both within the scoreboard rectangle `y ∈ [22, 40]`.
 
-Since `render.venue()` is called before `render.referee()` in `draw_game()`, the green "SET GAM" text draws first, and the referee's white characters draw on top. The overlapping text causes the referee area to display garbled output that reads as "SET GAM".
-
-Additionally, the referee still uses 3D-projected body parts (with small world-space offsets ±0.3–0.4m), producing <3px character separation — individual body parts are illegible.
+Since `render.venue()` is called before `render.referee()` in `draw_game()`, the green "SET GAM" text draws first, and the referee's white characters draw on top. The interleaved text causes the referee area to display garbled output that reads as "SET GAM".
 
 ## Feature List
 
@@ -47,8 +45,8 @@ Additionally, the referee still uses 3D-projected body parts (with small world-s
 - Sideline spectators do not extend beyond `COURT_LENGTH / 2` (the net) along the z-axis, OR alternatively are split into two separate near-half and far-half blocks that leave the opponent's court area clear.
 - Sideline spectators appear visually evenly distributed across their z-range on screen (no extreme gaps or clumps).
 - Opponent-side court lines (z > COURT_LENGTH/2, within singles/doubles width) are not occluded by spectator characters.
-- Scoreboard panel does not overlap with the referee figure.
-- Referee figure uses screen-space rendering, with minimum 7px separation between body parts (each on its own text line).
-- Referee figure is clearly readable — head (`@`), body (`|`), arms (`/ \`), legs (`/ \`) — in all game states.
+- Scoreboard panel does not overlap with the referee figure (move scoreboard above the referee area, e.g., to `y ∈ [8, 22]`).
+- Referee figure maintains existing screen-space rendering with proper 7px separation between body parts (each on its own text line).
+- Referee figure remains clearly readable — head (`@`), body (`|`), arms (`/ \`), legs (`/ \`) — in all game states.
 - Violation messages still appear correctly during `STATE_VIOLATION_REPLAY`.
 - No regression in spectator cheer, death pose, or hit-detection mechanics.
