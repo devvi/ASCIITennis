@@ -142,8 +142,6 @@ export function createInput(keyMap, useMouse = true) {
         if (this.held(BTN_RIGHT)) return t;
         return 0;
       }
-      if (this.held(BTN_LEFT)) return -1;
-      if (this.held(BTN_RIGHT)) return 1;
       return 0;
     },
 

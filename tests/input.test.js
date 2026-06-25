@@ -284,14 +284,14 @@ describe('input', () => {
     expect(dz).toBe(1);
   });
 
-  it('get_aim_angle returns -1 when A held without mouse hold (keyboard fallback)', () => {
+  it('get_aim_angle returns 0 when A held without mouse hold (no keyboard fallback)', () => {
     pressKey('a');
-    expect(input.get_aim_angle()).toBe(-1);
+    expect(input.get_aim_angle()).toBe(0);
   });
 
-  it('get_aim_angle returns 1 when D held without mouse hold (keyboard fallback)', () => {
+  it('get_aim_angle returns 0 when D held without mouse hold (no keyboard fallback)', () => {
     pressKey('d');
-    expect(input.get_aim_angle()).toBe(1);
+    expect(input.get_aim_angle()).toBe(0);
   });
 
   it('get_aim_angle returns 0 when no horiz keys held', () => {
@@ -389,7 +389,7 @@ describe('mouse hold duration tracking', () => {
   it('mouse_hold_frames starts at 0 on mousedown (no updates)', () => {
     handlers.mousedown({ preventDefault: () => {} });
     handlers.keydown({ key: 'a', preventDefault: () => {} });
-    expect(input.get_aim_angle()).toBe(-1);
+    expect(input.get_aim_angle()).toBe(0);
   });
 
   it('mouse_hold_frames accumulates during update cycles while mouse held', () => {
@@ -420,7 +420,7 @@ describe('mouse hold duration tracking', () => {
     for (let i = 0; i < 30; i++) input.update();
     expect(input.get_aim_angle()).toBeCloseTo(-0.5, 4);
     handlers.mousedown({ preventDefault: () => {} });
-    expect(input.get_aim_angle()).toBe(-1);
+    expect(input.get_aim_angle()).toBe(0);
   });
 });
 
@@ -608,11 +608,11 @@ describe('mouse release triggers shot with accumulated directional angle', () =>
     expect(angle).toBeCloseTo(-30 / MAX_MOUSE_HOLD_FRAMES, 4);
   });
 
-  it('fast click (no updates between down/up) gives full direction angle', () => {
+  it('fast click (no updates between down/up) gives zero angle', () => {
     handlers.keydown({ key: 'd', preventDefault: () => {} });
     handlers.mousedown({ preventDefault: () => {} });
     handlers.mouseup({ preventDefault: () => {} });
     expect(input.get_shot_type()).toBe(HIT_FLAT);
-    expect(input.get_aim_angle()).toBe(1);
+    expect(input.get_aim_angle()).toBe(0);
   });
 });
