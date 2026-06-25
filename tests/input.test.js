@@ -284,27 +284,27 @@ describe('input', () => {
     expect(dz).toBe(1);
   });
 
-  it('get_aim_angle returns small random angle when A held without mouse hold', () => {
+  it('get_aim_angle returns 0 when A held without mouse hold', () => {
     pressKey('a');
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 
-  it('get_aim_angle returns small random angle when D held without mouse hold', () => {
+  it('get_aim_angle returns 0 when D held without mouse hold', () => {
     pressKey('d');
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 
-  it('get_aim_angle returns small random angle when no horiz keys held', () => {
+  it('get_aim_angle returns 0 when no horiz keys held', () => {
     pressKey('w');
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 
-  it('get_aim_angle returns small random angle when no keys held', () => {
+  it('get_aim_angle returns 0 when no keys held', () => {
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 
   it('get_shot_type returns HIT_FLAT when BTN_B pressed alone', () => {
@@ -394,7 +394,7 @@ describe('mouse hold duration tracking', () => {
     handlers.mousedown({ preventDefault: () => {} });
     handlers.keydown({ key: 'a', preventDefault: () => {} });
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 
   it('mouse_hold_frames accumulates during update cycles while mouse held', () => {
@@ -426,7 +426,7 @@ describe('mouse hold duration tracking', () => {
     expect(input.get_aim_angle()).toBeCloseTo(-Math.sqrt(30 / MAX_MOUSE_HOLD_FRAMES), 4);
     handlers.mousedown({ preventDefault: () => {} });
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 });
 
@@ -580,6 +580,71 @@ describe('get_shot_type() without A/D lob', () => {
   });
 });
 
+describe('P2 directional control via Shift+Arrow keys', () => {
+  let handlers;
+  let p2Input;
+
+  function makeHandlers() {
+    const h = {};
+    globalThis.window = {
+      addEventListener: (ev, fn) => { h[ev] = fn; },
+    };
+    return h;
+  }
+
+  function cleanup() {
+    delete globalThis.window;
+    for (const key of ['Shift', 'ArrowLeft', 'ArrowRight']) {
+      if (handlers.keyup) handlers.keyup({ key, preventDefault: () => {} });
+    }
+    p2Input.update();
+  }
+
+  function pressKey(key) {
+    handlers.keydown({ key, preventDefault: () => {} });
+  }
+
+  beforeEach(() => {
+    handlers = makeHandlers();
+    p2Input = createInput(KEY_MAP_P2, false);
+    p2Input.init();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('Shift held + ArrowLeft produces proportional negative angle', () => {
+    pressKey('Shift');
+    pressKey('ArrowLeft');
+    for (let i = 0; i < 30; i++) p2Input.update();
+    const angle = p2Input.get_aim_angle();
+    expect(angle).toBeLessThan(0);
+    expect(angle).toBeCloseTo(-Math.sqrt(30 / MAX_MOUSE_HOLD_FRAMES), 4);
+  });
+
+  it('Shift held + ArrowRight produces proportional positive angle', () => {
+    pressKey('Shift');
+    pressKey('ArrowRight');
+    for (let i = 0; i < 30; i++) p2Input.update();
+    const angle = p2Input.get_aim_angle();
+    expect(angle).toBeGreaterThan(0);
+    expect(angle).toBeCloseTo(Math.sqrt(30 / MAX_MOUSE_HOLD_FRAMES), 4);
+  });
+
+  it('No Shift + ArrowLeft returns 0 (straight)', () => {
+    pressKey('ArrowLeft');
+    const angle = p2Input.get_aim_angle();
+    expect(angle).toBe(0);
+  });
+
+  it('No Shift + ArrowRight returns 0 (straight)', () => {
+    pressKey('ArrowRight');
+    const angle = p2Input.get_aim_angle();
+    expect(angle).toBe(0);
+  });
+});
+
 describe('mouse release triggers shot with accumulated directional angle', () => {
   let handlers;
   let mockCanvas;
@@ -614,12 +679,12 @@ describe('mouse release triggers shot with accumulated directional angle', () =>
     expect(angle).toBeCloseTo(-Math.sqrt(30 / MAX_MOUSE_HOLD_FRAMES), 4);
   });
 
-  it('fast click (no updates between down/up) gives small random angle', () => {
+  it('fast click (no updates between down/up) gives angle 0', () => {
     handlers.keydown({ key: 'd', preventDefault: () => {} });
     handlers.mousedown({ preventDefault: () => {} });
     handlers.mouseup({ preventDefault: () => {} });
     expect(input.get_shot_type()).toBe(HIT_FLAT);
     const angle = input.get_aim_angle();
-    expect(Math.abs(angle)).toBeLessThanOrEqual(0.05);
+    expect(angle).toBe(0);
   });
 });
