@@ -225,7 +225,8 @@ export const render = {
     if (opts) {
       if (opts.item) {
         ctx.fillStyle = '#0f0';
-        ctx.fillText("ITEM: " + opts.item, 2, 25);
+        const itemDescs = { F: 'Power shot', B: 'Wide reach', S: 'Auto return', M: 'Extra ball', T: 'Slow motion' };
+        ctx.fillText("ITEM: " + opts.item + " (" + itemDescs[opts.item] + ")", 2, 25);
       }
       if (opts.target_score !== null && opts.target_score !== undefined) {
         ctx.fillStyle = '#fa0';
@@ -395,21 +396,24 @@ export const render = {
 
   manual() {
     ctx.fillStyle = "#fff";
-    ctx.fillText("CONTROLS", 100, 10);
-    ctx.fillText("Player 1 (WASD)", 30, 30);
-    ctx.fillText("W/Up: Move up", 40, 42);
-    ctx.fillText("S/Down: Move down", 40, 50);
-    ctx.fillText("A/Left: Move left", 40, 58);
-    ctx.fillText("D/Right: Move right", 40, 66);
-    ctx.fillText("Space: Hit / Confirm", 40, 74);
-    ctx.fillText("E: Use item / Back", 40, 82);
-    ctx.fillText("Click: Serve toss / Hit", 40, 90);
-    ctx.fillText("Up+Space: Topspin", 40, 98);
-    ctx.fillText("Down+Space: Slice", 40, 106);
-    ctx.fillText("Player 2 (Arrow Keys)", 30, 120);
-    ctx.fillText("Enter: Hit / Confirm", 40, 132);
-    ctx.fillText("Shift: Serve toss", 40, 140);
-    ctx.fillText("Press Q to go back", 40, 154);
+    ctx.fillText("CONTROLS", 100, 8);
+    ctx.fillText("Player 1 (WASD)", 10, 22);
+    ctx.fillText("W/Up: Move up", 20, 30);
+    ctx.fillText("S/Down: Move down", 20, 38);
+    ctx.fillText("A/Left: Move left", 20, 46);
+    ctx.fillText("D/Right: Move right", 20, 54);
+    ctx.fillText("Space: Hit / Confirm", 20, 62);
+    ctx.fillText("E: Use item", 20, 70);
+    ctx.fillText("Click: Serve toss / Hit", 20, 78);
+    ctx.fillText("Up+Space: Topspin", 20, 86);
+    ctx.fillText("Down+Space: Slice", 20, 94);
+    ctx.fillText("Player 2 (Arrow Keys)", 120, 22);
+    ctx.fillText("Enter: Hit / Confirm", 130, 30);
+    ctx.fillText("Shift: Serve toss", 130, 38);
+    ctx.fillText("Ctrl/Num0: Use item", 130, 46);
+    ctx.fillText("Up+Enter: Topspin", 130, 54);
+    ctx.fillText("Down+Enter: Slice", 130, 62);
+    ctx.fillText("Press Q/Esc to go back", 60, 126);
   },
 
   game_over(winner, game_mode) {
@@ -508,10 +512,23 @@ export const render = {
   // Phase 4: Special modes & Easter eggs
   special_menu(selected) {
     ctx.fillStyle = "#fff";
-    ctx.fillText("SPECIAL MODES", 50, 30);
+    ctx.fillText("SPECIAL MODES", 50, 15);
     const modes = ["Zombie Tennis", "Target Practice", "Rally Challenge", "Gravity Shift", "Pong Mode"];
+    const descriptions = [
+      "Zombies chase you; hit them with the ball",
+      "Hit target plates to score points",
+      "Keep the rally going as long as possible",
+      "Gravity direction changes periodically",
+      "Classic pong-style gameplay",
+    ];
     for (let i = 0; i < modes.length; i++) {
-      ctx.fillText((selected === i ? " > " : "   ") + modes[i], 55, 50 + i * 10);
+      const y = 30 + i * 14;
+      ctx.fillText((selected === i ? " > " : "   ") + modes[i], 55, y);
+      if (selected === i) {
+        ctx.fillStyle = "#888";
+        ctx.fillText(descriptions[i], 70, y + 8);
+        ctx.fillStyle = "#fff";
+      }
     }
     ctx.fillStyle = "#888";
     ctx.fillText("Press Q/Esc to go back", 40, 120);
