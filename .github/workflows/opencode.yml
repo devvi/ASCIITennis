@@ -36,11 +36,17 @@ jobs:
         with:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
-          prompt: |
+            prompt: |
             Research this issue. Read the issue title and body, create PRD
             and TASK documents in docs/PRD/ and docs/TASKS/, commit and push
             them, then create a research PR with the findings. Do NOT close the
             parent issue with Closes/Fixes/Resolves.
+            IMPORTANT: The research PR title MUST follow this exact format:
+            "Research: <feature-name> (parent #<issue-number>)"
+            For example: "Research: UI optimization (parent #161)"
+            This is required for the auto-chain workflow to detect and
+            trigger the plan phase after merge. Do NOT use other prefixes
+            like "Issue:" or "Feature:".
 
   handle-comment-command:
     if: |
