@@ -8,9 +8,11 @@ on:
     types: [created]
   pull_request_target:
     types: [closed]
+  push:
+    branches: [main]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -36,7 +38,7 @@ jobs:
         with:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
-            prompt: |
+          prompt: |
             Research this issue. Read the issue title and body, create PRD
             and TASK documents in docs/PRD/ and docs/TASKS/, commit and push
             them, then create a research PR with the findings. Do NOT close the
@@ -121,4 +123,49 @@ jobs:
           else
             echo "Could not extract parent issue number from title: $PR_TITLE"
             exit 1
+          fi
+
+  on-merge-push:
+    if: >
+      github.event_name == 'push' &&
+      github.event.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Detect merge commit and advance auto-chain
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: |
+          COMMIT_MSG=$(jq -r '.head_commit.message // empty' "$GITHUB_EVENT_PATH")
+          if [ -z "$COMMIT_MSG" ]; then
+            echo "No head_commit found, skipping"
+            exit 0
+          fi
+          PR_NUM=$(echo "$COMMIT_MSG" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+          if [ -z "$PR_NUM" ]; then
+            echo "Not a merge commit (no PR number found), skipping"
+            exit 0
+          fi
+          echo "Detected merged PR #$PR_NUM"
+          PR_TITLE=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json title --jq '.title' 2>/dev/null)
+          if [ -z "$PR_TITLE" ]; then
+            echo "Could not fetch PR #$PR_NUM details, skipping"
+            exit 0
+          fi
+          echo "PR title: $PR_TITLE"
+          PARENT=$(echo "$PR_TITLE" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+          if [ -z "$PARENT" ]; then
+            echo "Could not extract parent issue number from title: $PR_TITLE"
+            exit 0
+          fi
+          if [[ "$PR_TITLE" == Research:* ]]; then
+            echo "Posting /opencode plan to parent issue #$PARENT"
+            gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
+          elif [[ "$PR_TITLE" == Plan:* ]]; then
+            echo "Posting /opencode implement to parent issue #$PARENT"
+            gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
+          else
+            echo "PR #$PR_NUM is neither Research nor Plan, skipping"
           fi
