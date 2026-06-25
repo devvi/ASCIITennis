@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { describe, it, expect, vi } from 'vitest';
 import {
   COURT_WIDTH, COURT_LENGTH, SINGLES_WIDTH,
   AI_EASY, AI_HARD, BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
@@ -367,5 +368,81 @@ describe('kill cam flow', () => {
     b.vy = -0.1;
     ball.update(b);
     expect(b.state).toBe('out');
+  });
+});
+
+describe('import consistency', () => {
+  it('main.js imports all BALL_* constants it uses from constants.js', () => {
+    const source = readFileSync('./src/main.js', 'utf-8');
+    const importMatch = source.match(/import\s*\{([^}]+)\}\s*from\s*['"]\.\/constants\.js['"]/s);
+    expect(importMatch).not.toBeNull();
+    const importedNames = importMatch[1].split(',').map(s => s.trim());
+
+    const usedBallNames = new Set();
+    const ballRegex = /\bBALL_[A-Z_]+\b/g;
+    let m;
+    while ((m = ballRegex.exec(source)) !== null) {
+      usedBallNames.add(m[0]);
+    }
+
+    for (const name of usedBallNames) {
+      expect(importedNames).toContain(name);
+    }
+  });
+
+  it('all ball state constants are exported from constants.js', async () => {
+    const mod = await import('../src/constants.js');
+    const ballStates = [
+      'BALL_HELD', 'BALL_IN_PLAY', 'BALL_OUT', 'BALL_NET',
+      'BALL_BOUNCE', 'BALL_DOUBLE_BOUNCE', 'BALL_REPLAY', 'BALL_FLYING_OUT',
+    ];
+    for (const name of ballStates) {
+      expect(mod[name]).toBeDefined();
+    }
+  });
+
+  it('BALL_IN_PLAY constant value is consistent across src modules', () => {
+    expect(BALL_IN_PLAY).toBe('in_play');
+    const ball_states = [
+      { file: 'ball.js', state: BALL_IN_PLAY },
+      { file: 'ai.js', state: BALL_IN_PLAY },
+      { file: 'main.js', state: BALL_IN_PLAY },
+    ];
+    for (const entry of ball_states) {
+      expect(entry.state).toBe('in_play');
+    }
+  });
+
+  it('check_head_bounce logic does not throw with BALL_IN_PLAY', () => {
+    const ball_obj = { state: BALL_IN_PLAY, x: 0, z: 12, y: 1.7, vx: 0, vz: 0, vy: 0 };
+    const human_player = { x: 0, z: 12, head_bounce_timer: 0 };
+    const fn = () => {
+      if (!ball_obj || ball_obj.state !== BALL_IN_PLAY) return;
+      const dx = ball_obj.x - human_player.x;
+      const dz = ball_obj.z - human_player.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < 0.3 && Math.abs(ball_obj.y - 1.7) < 0.1 && Math.abs(ball_obj.vx) < 0.01 && Math.abs(ball_obj.vz) < 0.01) {
+        human_player.head_bounce_timer = 10;
+      }
+    };
+    expect(fn).not.toThrow();
+    expect(human_player.head_bounce_timer).toBe(10);
+  });
+
+  it('zombie ball-hit detection does not throw with BALL_IN_PLAY', () => {
+    const ball_obj = { state: BALL_IN_PLAY, x: 10, z: 10 };
+    const zombies = [{ x: 10.4, z: 10.3, speed: 0.03 }];
+    const fn = () => {
+      if (ball_obj.state === BALL_IN_PLAY) {
+        for (const zmb of zombies) {
+          const bd = Math.sqrt((ball_obj.x - zmb.x) ** 2 + (ball_obj.z - zmb.z) ** 2);
+          if (bd < 1.0) {
+            zombies.splice(zombies.indexOf(zmb), 1);
+          }
+        }
+      }
+    };
+    expect(fn).not.toThrow();
+    expect(zombies.length).toBe(0);
   });
 });

@@ -130,3 +130,40 @@ export const AI_HARD = {
   aggression: 0.7,
   speed: 1.0,
 };
+
+// Phase 1: Rally Combo & Feedback
+export const RALLY_MILESTONES = [5, 10, 15, 20];
+export const SCREEN_SHAKE_DURATION = 4;
+export const SCREEN_SHAKE_INTENSITY = 2;
+export const PERFECT_WINDOW = 5;
+export const COMBO_SPEED_BOOST = 0.02;
+
+// Phase 2: Power-ups & Court Items
+export const ITEM_SPAWN_INTERVAL = 600;
+export const ITEM_COLLECT_RANGE = 1.0;
+export const ITEM_LIFETIME = 600;
+export const ITEM_ACTIVE_DURATION = 300;
+export const ITEM_TYPES = { FIRE: 'F', BIG_RACKET: 'B', SHIELD: 'S', MULTI_BALL: 'M', TIME_SLOW: 'T' };
+
+// Phase 3: Particles
+export const MAX_PARTICLES = 30;
+export const PARTICLE_LIFE = 5;
+
+// Phase 4: Special Game Modes
+export const STATE_ZOMBIE_TENNIS = "zombie";
+export const STATE_TARGET_PRACTICE = "target_practice";
+export const STATE_RALLY_CHALLENGE = "rally_challenge";
+export const STATE_GRAVITY_SHIFT = "gravity_shift";
+export const STATE_PONG_MODE = "pong_mode";
+
+export const MAX_ZOMBIES = 5;
+export const ZOMBIE_SPEED = 0.03;
+export const NUM_TARGETS = 8;
+export const TARGET_RADIUS = 0.8;
+export const GRAVITY_VECTORS = [
+  { x: 0, y: -1, z: 0 },
+  { x: 0, y: 0, z: -1 },
+  { x: 0, y: 0, z: 1 },
+  { x: -1, y: 0, z: 0 },
+  { x: 1, y: 0, z: 0 },
+];
