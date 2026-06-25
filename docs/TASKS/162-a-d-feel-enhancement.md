@@ -13,14 +13,15 @@
 
 ## Summary
 
-A/D keys are used for both movement (`get_movement()`) and shot direction (`get_aim_angle()`). The current keyboard fallback in `get_aim_angle()` returns binary ±1 when A/D is held without mouse hold, making it impossible to hit straight while moving. The fix removes this fallback, defaulting to straight (angle=0) unless the mouse (or Shift for P2) is held. Directional control becomes a deliberate action via mouse/shift hold + A/D, providing proportional control based on hold duration.
+A/D keys are used for both movement (`get_movement()`) and shot direction (`get_aim_angle()`). The current keyboard fallback in `get_aim_angle()` returns a small random angle `(Math.random() - 0.5) * 0.1` when no mouse is held, causing every keyboard-only shot to have tiny unpredictable drift. The fix replaces this drift with a clean 0 (straight), unless the mouse (or Shift for P2) is held. Directional control becomes a deliberate action via mouse/shift hold + A/D, providing proportional sqrt-based control via `-√t` / `+√t` based on hold duration.
 
 ## Phased Plan
 
 ### Phase 1: Tests
 - [ ] Update `tests/input.test.js`:
-  - Change `get_aim_angle returns -1 when A held without mouse hold` to expect `0`
-  - Change `get_aim_angle returns 1 when D held without mouse hold` to expect `0`
+  - Update "get_aim_angle returns small random angle when A held without mouse hold" to expect `0`
+  - Update "get_aim_angle returns small random angle when D held without mouse hold" to expect `0`
+  - Update "get_aim_angle returns small random angle when no keys held" to expect `0`
   - Add test: `get_aim_angle returns 0 when A held + mouse just pressed (fresh mousedown)`
   - Add test: P2 Shift held + ArrowLeft → proportional angle
   - Add test: P2 Shift held + ArrowRight → proportional angle
@@ -29,9 +30,9 @@ A/D keys are used for both movement (`get_movement()`) and shot direction (`get_
   - Integration test: `target_x` should be `0` when hit with movement keys held but no mouse
 
 ### Phase 2: Core logic (`src/input.js`)
-- [ ] Modify `get_aim_angle()`: remove the `else` branch that returns ±1 when `mouse_hold_frames === 0`
+- [ ] Modify `get_aim_angle()`: replace `return (Math.random() - 0.5) * 0.1` with `return 0` when `mouse_hold_frames === 0`
 - [ ] When `t === 0` (no mouse hold), return `0` regardless of A/D state
-- [ ] Verify mouse-hold branch (`t > 0`) is unchanged and still returns `-t`/`+t`
+- [ ] Verify mouse-hold branch (`t > 0`) is unchanged and still returns `-√t`/`+√t`
 
 ### Phase 3: P2 direction parity
 - [ ] P2 Shift already maps to BTN_A, so `mouse_hold_frames` increments on Shift hold
