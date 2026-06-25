@@ -1,6 +1,6 @@
 import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER, STATE_VIOLATION_REPLAY,
-  STATE_KILL_CAM,
+  STATE_KILL_CAM, STATE_MANUAL,
   STATE_ZOMBIE_TENNIS, STATE_TARGET_PRACTICE, STATE_RALLY_CHALLENGE, STATE_GRAVITY_SHIFT, STATE_PONG_MODE,
   PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH,
   BTN_UP, BTN_DOWN, BTN_B, BTN_A, BTN_X, BALL_HELD, BALL_IN_PLAY,
@@ -25,6 +25,7 @@ import { render, initRender, beginFrame, print, activate_kill_flash, getCtx } fr
 import { audience } from './audience.js';
 
 let game_state;
+let previous_game_state;
 let game_mode;
 let selected_diff;
 let selected_mode_idx;
@@ -366,6 +367,7 @@ function update_menu() {
     } else if (idx === 2) {
       start_match("2p");
     } else if (idx === 3) {
+      selected_mode_idx = 0;
       game_state = "special_menu";
     }
   }
@@ -696,7 +698,7 @@ function update_playing() {
 
   if (ball_obj.state === BALL_DOUBLE_BOUNCE) {
     if (ball_obj.last_hit_by !== null) {
-      resolve_violation_point("double_bounce", ball_obj.last_hit_by);
+      resolve_point(ball_obj.last_hit_by);
     }
   } else if (ball_obj.state === BALL_OUT) {
     const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
@@ -759,6 +761,11 @@ function draw_game() {
 
   if (game_state === "special_menu") {
     render.special_menu(selected_mode_idx);
+    return;
+  }
+
+  if (game_state === STATE_MANUAL) {
+    render.manual();
     return;
   }
 
@@ -1024,4 +1031,21 @@ initRender(canvas);
 init_game();
 input1.init(canvas);
 input2.init();
+
+// ESC key: toggle manual / back from special menu
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if (game_state === STATE_MANUAL) {
+      game_state = previous_game_state;
+    } else if (game_state === "special_menu") {
+      game_state = STATE_MENU;
+      selected_mode_idx = 0;
+    } else if (game_state !== STATE_MENU) {
+      previous_game_state = game_state;
+      game_state = STATE_MANUAL;
+    }
+    e.preventDefault();
+  }
+});
+
 requestAnimationFrame(gameLoop);

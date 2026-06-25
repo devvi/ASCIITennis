@@ -386,10 +386,30 @@ export const render = {
     ctx.fillText((selected_diff === 1 ? " > " : "   ") + "1P EASY", 55, 80);
     ctx.fillText((selected_diff === 2 ? " > " : "   ") + "1P HARD", 55, 90);
     ctx.fillText((selected_diff === 3 ? " > " : "   ") + "2 PLAYERS", 55, 100);
-    ctx.fillText("Press Enter/Space to play", 40, 120);
+    ctx.fillText((selected_diff === 4 ? " > " : "   ") + "SPECIAL MODES", 55, 110);
+    ctx.fillText("Press Enter/Space to play", 40, 125);
     ctx.fillStyle = "#555";
     const ver = GIT_HASH !== 'dev' ? `${GIT_HASH} ${GIT_DATE}` : 'dev build';
     ctx.fillText(ver, 8, 128);
+  },
+
+  manual() {
+    ctx.fillStyle = "#fff";
+    ctx.fillText("CONTROLS", 100, 10);
+    ctx.fillText("Player 1 (WASD)", 30, 30);
+    ctx.fillText("W/Up: Move up", 40, 42);
+    ctx.fillText("S/Down: Move down", 40, 50);
+    ctx.fillText("A/Left: Move left", 40, 58);
+    ctx.fillText("D/Right: Move right", 40, 66);
+    ctx.fillText("Space: Hit / Confirm", 40, 74);
+    ctx.fillText("E: Use item / Back", 40, 82);
+    ctx.fillText("Click: Serve toss / Hit", 40, 90);
+    ctx.fillText("Up+Space: Topspin", 40, 98);
+    ctx.fillText("Down+Space: Slice", 40, 106);
+    ctx.fillText("Player 2 (Arrow Keys)", 30, 120);
+    ctx.fillText("Enter: Hit / Confirm", 40, 132);
+    ctx.fillText("Shift: Serve toss", 40, 140);
+    ctx.fillText("Press Q to go back", 40, 154);
   },
 
   game_over(winner, game_mode) {
