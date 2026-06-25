@@ -114,6 +114,7 @@ export const SERVE_CHARGE_DURATION = 30;
 // Kill cam / fly-out
 export const BALL_FLYING_OUT = "flying_out";
 export const STATE_KILL_CAM = "kill_cam";
+export const STATE_MANUAL = "manual";
 export const KILL_RADIUS = 1.0;
 export const KILL_CAM_DURATION = 30;
 
