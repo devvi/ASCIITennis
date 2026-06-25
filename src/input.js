@@ -138,11 +138,11 @@ export function createInput(keyMap, useMouse = true) {
     get_aim_angle() {
       const t = Math.min(1, mouse_hold_frames / MAX_MOUSE_HOLD_FRAMES);
       if (t > 0) {
-        if (this.held(BTN_LEFT)) return -t;
-        if (this.held(BTN_RIGHT)) return t;
+        if (this.held(BTN_LEFT)) return -Math.sqrt(t);
+        if (this.held(BTN_RIGHT)) return Math.sqrt(t);
         return 0;
       }
-      return 0;
+      return (Math.random() - 0.5) * 0.1;
     },
 
     get_shot_type() {
