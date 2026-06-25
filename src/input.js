@@ -134,8 +134,13 @@ export function createInput(keyMap, useMouse = true) {
 
     get_aim_angle() {
       const t = Math.min(1, mouse_hold_frames / MAX_MOUSE_HOLD_FRAMES);
-      if (this.held(BTN_LEFT)) return -t;
-      if (this.held(BTN_RIGHT)) return t;
+      if (t > 0) {
+        if (this.held(BTN_LEFT)) return -t;
+        if (this.held(BTN_RIGHT)) return t;
+        return 0;
+      }
+      if (this.held(BTN_LEFT)) return -1;
+      if (this.held(BTN_RIGHT)) return 1;
       return 0;
     },
 
