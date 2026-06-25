@@ -142,7 +142,7 @@ export function createInput(keyMap, useMouse = true) {
         if (this.held(BTN_RIGHT)) return Math.sqrt(t);
         return 0;
       }
-      return (Math.random() - 0.5) * 0.1;
+      return 0;
     },
 
     get_shot_type() {
