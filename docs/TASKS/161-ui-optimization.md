@@ -16,7 +16,11 @@
 
 The `selected_diff` variable is used both as a difficulty selector (1=Easy, 2=Hard) and as a menu cursor (3="2 PLAYERS", 4="SPECIAL MODES"). A dedicated `selected_mode_idx` already exists (used in `update_menu`) but the render function still uses `selected_diff`. The render should use `selected_mode_idx` instead, or both should be synchronized.
 
-### Bug 2: Score Points Awarded to Wrong Player on Spectator Kill
+### Bug 2: Score Points Awarded to Wrong Player
+
+Two separate scoring bugs where the wrong player receives the point.
+
+#### Bug 2a: Spectator Kill
 
 | Aspect | Detail |
 |--------|--------|
@@ -25,6 +29,16 @@ The `selected_diff` variable is used both as a difficulty selector (1=Easy, 2=Ha
 | Fix | `return this.award_point(s, 1 - hitter)` |
 | Existing tests | `scoring.test.js` — no test for `award_kill` |
 | Impact | Every kill-cam point is awarded to the wrong player |
+
+#### Bug 2b: Double Bounce (Normal Point Scoring)
+
+| Aspect | Detail |
+|--------|--------|
+| Root Cause | `main.js:697-699` — `BALL_DOUBLE_BOUNCE` always goes through `resolve_violation_point` which gives point to `1 - last_hit_by`. Does not distinguish between winner (ball bounced twice on opponent's side) vs fault (ball bounced twice on own side). |
+| Location | `src/main.js:697-699` |
+| Fix | Check `ball_obj.last_bounce_side` vs `ball_obj.last_hit_by`: if different → winner on opponent's side → `resolve_point(hitter)`; if same → fault on own side → `resolve_violation_point("double_bounce", hitter)` |
+| Existing tests | `scoring.test.js` — `resolve_violation` for double_bounce tests opponent award (correct for fault case, but doesn't test winner case) |
+| Impact | Every normal rally point that ends with a double bounce (i.e., virtually all of them) scores backwards |
 
 ### Feature 3: Controls Manual Screen
 
@@ -70,7 +84,13 @@ The `selected_diff` variable is used both as a difficulty selector (1=Easy, 2=Ha
 - Change `return this.award_point(s, hitter)` to `return this.award_point(s, 1 - hitter)`
 - Verify no other callers depend on the buggy behavior
 
-#### 3c. Implement help screen
+#### 3c. Fix double bounce point award
+- In `main.js` `BALL_DOUBLE_BOUNCE` handler: check `ball_obj.last_bounce_side` vs `ball_obj.last_hit_by`
+- If different → winner on opponent's side → `resolve_point(hitter)` (hitter wins the point)
+- If same → fault on own side → `resolve_violation_point("double_bounce", hitter)` (opponent wins, show violation)
+- Update tests in `scoring.test.js` and `main.test.js` to cover both sub-cases
+
+#### 3d. Implement help screen
 - In `gameLoop()` / `draw_game()`: intercept ESC (mapped to `BTN_X` or new binding) to toggle help state
 - Save current state before entering help
 - Pause game updates while in help state
@@ -100,7 +120,8 @@ The `selected_diff` variable is used both as a difficulty selector (1=Easy, 2=Ha
 ### Phase 3: Core logic
 - [ ] 3a. Fix menu rendering to show SPECIAL MODES
 - [ ] 3b. Fix `award_kill` to award point to opponent
-- [ ] 3c. Implement ESC-to-help state transition logic
+- [ ] 3c. Fix double bounce point award (check `last_bounce_side` vs `last_hit_by`)
+- [ ] 3d. Implement ESC-to-help state transition logic
 
 ### Phase 4: UI/output
 - [ ] 4a. Implement help screen rendering with key bindings

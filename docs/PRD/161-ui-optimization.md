@@ -27,16 +27,20 @@ Add `selected_diff === 4` rendering for "SPECIAL MODES" in `render.menu()`.
 
 ---
 
-## Bug 2: Score Points Awarded to Wrong Player on Spectator Kill
+## Bug 2: Score Points Awarded to Wrong Player
 
-### Symptom
+Two separate scoring bugs exist where the wrong player receives the point.
+
+### Bug 2a: Spectator Kill Awards Point to Hitter
+
+#### Symptom
 When the ball goes out of bounds and hits a spectator (triggering the kill cam), the point is awarded to the hitter instead of their opponent. This means:
 - Player hits ball out → ball kills spectator → Player gets the point (should be AI)
 - AI hits ball out → ball kills spectator → AI gets the point (should be Player)
 
 This creates the appearance that "AI scores on P, Player scores on A" because ball trajectories out of bounds frequently pass through spectator seating areas.
 
-### Root Cause
+#### Root Cause
 `src/scoring.js:91-93` — `award_kill()` passes the hitter directly as the point winner:
 ```js
 award_kill(s, hitter) {
@@ -46,8 +50,40 @@ award_kill(s, hitter) {
 
 The hitter hit the ball OUT; their opponent should win the point. `resolve_violation_point()` in `main.js` correctly uses `1 - hitter` for the non-kill out path.
 
-### Fix
+#### Fix
 Change `award_kill` to award the point to the opponent: `return this.award_point(s, 1 - hitter)`.
+
+### Bug 2b: Double Bounce Always Awards Point to Opponent (Normal Point Scoring Wrong)
+
+#### Symptom
+During normal rally play, when the ball bounces twice on the opponent's side (i.e., a clean winner), the point is awarded to the player who failed to return the ball instead of the player who hit the winner. This makes all normal rally points score backwards.
+
+#### Root Cause
+`src/main.js:697-699` — `BALL_DOUBLE_BOUNCE` handling always goes through `resolve_violation_point`, which awards the point to `1 - last_hit_by` (the opponent of whoever last touched the ball):
+
+```js
+if (ball_obj.state === BALL_DOUBLE_BOUNCE) {
+    if (ball_obj.last_hit_by !== null) {
+      resolve_violation_point("double_bounce", ball_obj.last_hit_by);
+    }
+  }
+```
+
+The ball physics (`src/ball.js:86-91`) tracks which side the bounce occurs on via `last_bounce_side`. Two sub-cases exist:
+
+| Scenario | `last_bounce_side` vs `last_hit_by` | Correct winner |
+|----------|--------------------------------------|----------------|
+| Hitter hits a winner (ball bounces twice on opponent's side) | `last_bounce_side ≠ last_hit_by` | `last_hit_by` (hitter) |
+| Hitter faults (ball bounces twice on own side) | `last_bounce_side = last_hit_by` | `1 - last_hit_by` (opponent) |
+
+The current code always uses the second case, so winners are scored backwards.
+
+#### Fix
+In `src/main.js`, check `ball_obj.last_bounce_side`:
+
+If `ball_obj.last_bounce_side !== ball_obj.last_hit_by` → winner on opponent's side → use `resolve_point(hitter)` (normal point, no violation message).
+
+If `ball_obj.last_bounce_side === ball_obj.last_hit_by` → fault on own side → use `resolve_violation_point("double_bounce", hitter)` (violation, opponent gets point, show "DOUBLE BOUNCE" message).
 
 ---
 
