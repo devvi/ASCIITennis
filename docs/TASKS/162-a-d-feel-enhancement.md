@@ -2,6 +2,7 @@
 
 **Parent Issue:** #162
 **PRD:** docs/PRD/162-a-d-feel-enhancement.md
+**PLAN_ISSUE:** #167
 
 ## Related Modules
 
