@@ -83,20 +83,45 @@ jobs:
       startsWith(github.event.pull_request.title, 'Research:')
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      id-token: write
+      contents: write
       pull-requests: write
+      issues: write
     steps:
-      - name: Extract parent issue and post /opencode plan comment
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
+      - uses: anomalyco/opencode/github@latest
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        with:
+          model: deepseek/deepseek-v4-flash
+          use_github_token: true
+          prompt: |
+            Read the PRD and TASK docs from docs/PRD/ and docs/TASKS/.
+            Execute the plan phase: create DESIGN document in docs/DESIGN/,
+            append phases to docs/TASKS/, create a plan issue, commit and push,
+            then create a plan PR.
+            IMPORTANT: The plan PR title MUST follow this exact format:
+            "Plan: <feature-name> (parent #<issue-number>)"
+            Do NOT use Closes/Fixes/Resolves for the parent issue.
+      - name: Enable auto-merge on plan PR
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
-            PARENT="${BASH_REMATCH[1]}"
-            echo "Posting /opencode plan to issue #$PARENT"
-            gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
+          PARENT=$(echo "${{ github.event.pull_request.title }}" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+          sleep 5
+          PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,title,createdAt \
+            --jq 'map(select(.title | test("Plan:") and test("#'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
+          if [ -n "$PLAN_PR" ] && [ "$PLAN_PR" != "null" ]; then
+            echo "Enabling auto-merge on plan PR #$PLAN_PR"
+            gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
           else
-            echo "Could not extract parent issue number from title: $PR_TITLE"
+            echo "No plan PR found for parent #$PARENT"
             exit 1
           fi
 

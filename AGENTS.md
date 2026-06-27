@@ -4,7 +4,7 @@
 
 All work follows a strict three-phase process:
 
-**⚠️ PHASE GATE RULE: Phases auto-advance when a PR is merged. When a research PR is merged, the plan phase triggers automatically. When a plan PR is merged, the implement phase triggers automatically. Manual trigger via `/opencode plan` or `/opencode implement` is also supported for retries or independent execution.**
+**⚠️ PHASE GATE RULE: Phases auto-advance when a PR is merged. When a research PR is merged, the plan phase runs automatically and its resulting plan PR is auto-merged (if possible). When the plan PR is merged, the implement phase triggers automatically. Manual trigger via `/opencode plan` or `/opencode implement` is also supported for retries or independent execution.**
 
 ### /research
 Analyze the issue/request.
