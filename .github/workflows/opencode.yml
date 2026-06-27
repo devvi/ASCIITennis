@@ -87,7 +87,20 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+    outputs:
+      parent: ${{ steps.extract-parent.outputs.parent }}
     steps:
+      - name: Extract parent issue number
+        id: extract-parent
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
+            echo "parent=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Could not extract parent issue number from title: $PR_TITLE"
+            exit 1
+          fi
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
@@ -98,25 +111,28 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          PARENT_ISSUE: ${{ steps.extract-parent.outputs.parent }}
         with:
           model: deepseek/deepseek-v4-flash
           use_github_token: true
           prompt: |
             Read the PRD and TASK docs from docs/PRD/ and docs/TASKS/.
-            Execute the plan phase: create DESIGN document in docs/DESIGN/,
+            Execute the plan phase for parent issue #$PARENT_ISSUE:
+            create DESIGN document in docs/DESIGN/,
             append phases to docs/TASKS/, create a plan issue, commit and push,
             then create a plan PR.
             IMPORTANT: The plan PR title MUST follow this exact format:
-            "Plan: <feature-name> (parent #<issue-number>)"
-            Do NOT use Closes/Fixes/Resolves for the parent issue.
+            "Plan: <feature-name> (parent #$PARENT_ISSUE)"
+            The plan PR body MUST NOT contain "Closes", "Fixes", or "Resolves"
+            for #$PARENT_ISSUE. Use "Parent: #$PARENT_ISSUE" instead.
       - name: Enable auto-merge on plan PR
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          PARENT: ${{ steps.extract-parent.outputs.parent }}
         run: |
-          PARENT=$(echo "${{ github.event.pull_request.title }}" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
           sleep 5
-          PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,title,createdAt \
-            --jq 'map(select(.title | test("^Plan") and test("#'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
+          PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,title,createdAt,headRefName \
+            --jq 'map(select(.title | test("^Plan") and (.headRefName | test("opencode/issue'"$PARENT"'")))) | sort_by(.createdAt) | last | .number')
           if [ -n "$PLAN_PR" ] && [ "$PLAN_PR" != "null" ]; then
             echo "Enabling auto-merge on plan PR #$PLAN_PR"
             gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
