@@ -75,6 +75,7 @@ let cheat_code_buffer;
 let cheat_code_active;
 let all_dead_triggered;
 let referee_face;
+let frame_count;
 
 function init_game() {
   court.init();
@@ -139,6 +140,7 @@ function init_game() {
   cheat_code_buffer = [];
   cheat_code_active = false;
   all_dead_triggered = false;
+  frame_count = 0;
 }
 
 function update_special_menu() {
@@ -448,6 +450,19 @@ function update_playing() {
     if (item_type === ITEM_TYPES.TIME_SLOW) {
       time_slow_active = true;
       time_slow_timer = ITEM_ACTIVE_DURATION;
+    } else if (item_type === ITEM_TYPES.BIG_RACKET) {
+      human_player.hit_range_mult = 2.0;
+    } else if (item_type === ITEM_TYPES.SHIELD) {
+      human_player.shield_active = true;
+    } else if (item_type === ITEM_TYPES.MULTI_BALL) {
+      second_ball = ball.new();
+      second_ball.x = human_player.x + (Math.random() - 0.5) * 2;
+      second_ball.z = human_player.z + 1;
+      second_ball.vx = (Math.random() - 0.5) * 0.2;
+      second_ball.vz = 0.3;
+      second_ball.state = BALL_IN_PLAY;
+    } else if (item_type === ITEM_TYPES.FIRE) {
+      human_player.fire_boost = true;
     }
   }
 
@@ -461,10 +476,11 @@ function update_playing() {
       const target_x = angle * SINGLES_WIDTH * 0.35;
       const target_z = COURT_LENGTH - 2 - Math.random() * 2;
       const combo_mult = 1.0 + COMBO_SPEED_BOOST * combo_level;
-      const fire_mult = human_player.item_active && human_player.item === null ? 1.5 : 1.0;
+      const fire_mult = human_player.fire_boost ? 1.5 : 1.0;
       ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0, combo_mult * fire_mult);
 
-      if (human_player.item_active && human_player.item === null) {
+      if (human_player.fire_boost) {
+        human_player.fire_boost = false;
         human_player.item_active = false;
         human_player.item_timer = 0;
       }
@@ -506,6 +522,27 @@ function update_playing() {
     player.move(p2_player, dx2 * speed_mult, dz2 * speed_mult);
     player.update(p2_player);
 
+    if (input2.pressed(BTN_X)) {
+      const item_type = player.use_item(p2_player);
+      if (item_type === ITEM_TYPES.TIME_SLOW) {
+        time_slow_active = true;
+        time_slow_timer = ITEM_ACTIVE_DURATION;
+      } else if (item_type === ITEM_TYPES.BIG_RACKET) {
+        p2_player.hit_range_mult = 2.0;
+      } else if (item_type === ITEM_TYPES.SHIELD) {
+        p2_player.shield_active = true;
+      } else if (item_type === ITEM_TYPES.MULTI_BALL) {
+        second_ball = ball.new();
+        second_ball.x = p2_player.x + (Math.random() - 0.5) * 2;
+        second_ball.z = p2_player.z - 1;
+        second_ball.vx = (Math.random() - 0.5) * 0.2;
+        second_ball.vz = -0.3;
+        second_ball.state = BALL_IN_PLAY;
+      } else if (item_type === ITEM_TYPES.FIRE) {
+        p2_player.fire_boost = true;
+      }
+    }
+
     const shot2 = input2.get_shot_type();
     if (shot2 && player.can_hit(p2_player, ball_obj)) {
       if (player.swing(p2_player)) {
@@ -540,6 +577,19 @@ function update_playing() {
     }
   }
 
+  // P2 Shield auto-return
+  if (p2_player && p2_player.shield_active && ball_obj.state === BALL_IN_PLAY && ball_obj.vz < 0 && ball_obj.z < COURT_LENGTH / 2) {
+    const dist = Math.sqrt(
+      (p2_player.x - ball_obj.x) ** 2 + (p2_player.z - ball_obj.z) ** 2
+    );
+    if (dist < HIT_RANGE_H * 2) {
+      ball.hit(ball_obj, ball_obj.x, ball_obj.y, ball_obj.z, 3, 5, 1, 1);
+      p2_player.shield_active = false;
+      p2_player.item_active = false;
+      rally_length += 1;
+    }
+  }
+
   // Multi-ball update
   if (second_ball) {
     ball.update(second_ball, null);
@@ -561,6 +611,9 @@ function update_playing() {
     }
     if (player.can_collect_item(human_player, item) && !human_player.item) {
       player.collect_item(human_player, item.type);
+      items.splice(i, 1);
+    } else if (p2_player && player.can_collect_item(p2_player, item) && !p2_player.item) {
+      player.collect_item(p2_player, item.type);
       items.splice(i, 1);
     }
   }
@@ -790,7 +843,7 @@ function draw_game() {
 
   // Items
   for (const item of items) {
-    render.item_box(item);
+    render.item_box(item, frame_count);
   }
 
   // Targets
@@ -842,6 +895,7 @@ function draw_game() {
     rally_length,
     combo_level,
     item: human_player.item,
+    p2_item: p2_player?.item || null,
     target_score: game_mode === STATE_TARGET_PRACTICE ? target_score : null,
     longest_rally: game_mode === STATE_RALLY_CHALLENGE ? longest_rally : null,
     time_slow_active,
@@ -1010,6 +1064,7 @@ function gameLoop() {
     audience_obj.crowd_phase = 0;
   }
 
+  frame_count += 1;
   input1.update();
   input2.update();
   audience_obj.update();
