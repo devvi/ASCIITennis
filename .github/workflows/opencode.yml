@@ -152,17 +152,30 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - name: Extract parent issue and post /opencode implement comment
+      - name: Extract parent issue from PR body and post /opencode implement comment
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
+          PR_BODY=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body --jq '.body // ""')
+          PARENT=""
+          if [[ "$PR_BODY" =~ [Pp]arent:\ *#([0-9]+) ]]; then
             PARENT="${BASH_REMATCH[1]}"
-            echo "Posting /opencode implement to issue #$PARENT"
+          elif [[ "$PR_BODY" =~ [Pp]arent\ *#([0-9]+) ]]; then
+            PARENT="${BASH_REMATCH[1]}"
+          fi
+          if [ -z "$PARENT" ]; then
+            echo "Could not extract parent issue from PR body, falling back to title"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            if [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
+              PARENT="${BASH_REMATCH[1]}"
+            fi
+          fi
+          if [ -n "$PARENT" ]; then
+            echo "Posting /opencode implement to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
           else
-            echo "Could not extract parent issue number from title: $PR_TITLE"
+            echo "Could not extract parent issue number from PR #$PR_NUMBER"
             exit 1
           fi
 
@@ -190,15 +203,22 @@ jobs:
             exit 0
           fi
           echo "Detected merged PR #$PR_NUM"
-          PR_TITLE=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json title --jq '.title' 2>/dev/null)
-          if [ -z "$PR_TITLE" ]; then
+          PR_INFO=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json title,body --jq '{title: .title, body: (.body // "")}' 2>/dev/null)
+          if [ -z "$PR_INFO" ]; then
             echo "Could not fetch PR #$PR_NUM details, skipping"
             exit 0
           fi
+          PR_TITLE=$(echo "$PR_INFO" | jq -r '.title')
+          PR_BODY=$(echo "$PR_INFO" | jq -r '.body')
           echo "PR title: $PR_TITLE"
-          PARENT=$(echo "$PR_TITLE" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+          PARENT=""
+          if [[ "$PR_BODY" =~ [Pp]arent:\ *#([0-9]+) ]]; then
+            PARENT="${BASH_REMATCH[1]}"
+          elif [[ "$PR_TITLE" =~ \#([0-9]+) ]]; then
+            PARENT="${BASH_REMATCH[1]}"
+          fi
           if [ -z "$PARENT" ]; then
-            echo "Could not extract parent issue number from title: $PR_TITLE"
+            echo "Could not extract parent issue number from PR #$PR_NUM"
             exit 0
           fi
           if [[ "$PR_TITLE" == Research* ]]; then
