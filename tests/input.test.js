@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
-  HIT_TOPSPIN, HIT_SLICE, HIT_FLAT, MAX_MOUSE_HOLD_FRAMES,
+  HIT_TOPSPIN, HIT_SLICE, HIT_FLAT, MAX_MOUSE_HOLD_FRAMES, DIRECTIONAL_ANGLE,
 } from '../src/constants.js';
 import { input, createInput, KEY_MAP_P1, KEY_MAP_P2 } from '../src/input.js';
 
@@ -284,16 +284,16 @@ describe('input', () => {
     expect(dz).toBe(1);
   });
 
-  it('get_aim_angle returns 0 when A held without mouse hold', () => {
+  it('get_aim_angle returns -DIRECTIONAL_ANGLE when A held without mouse hold', () => {
     pressKey('a');
     const angle = input.get_aim_angle();
-    expect(angle).toBe(0);
+    expect(angle).toBe(-DIRECTIONAL_ANGLE);
   });
 
-  it('get_aim_angle returns 0 when D held without mouse hold', () => {
+  it('get_aim_angle returns DIRECTIONAL_ANGLE when D held without mouse hold', () => {
     pressKey('d');
     const angle = input.get_aim_angle();
-    expect(angle).toBe(0);
+    expect(angle).toBe(DIRECTIONAL_ANGLE);
   });
 
   it('get_aim_angle returns 0 when no horiz keys held', () => {
@@ -632,16 +632,16 @@ describe('P2 directional control via Shift+Arrow keys', () => {
     expect(angle).toBeCloseTo(Math.sqrt(30 / MAX_MOUSE_HOLD_FRAMES), 4);
   });
 
-  it('No Shift + ArrowLeft returns 0 (straight)', () => {
+  it('No Shift + ArrowLeft returns -DIRECTIONAL_ANGLE', () => {
     pressKey('ArrowLeft');
     const angle = p2Input.get_aim_angle();
-    expect(angle).toBe(0);
+    expect(angle).toBe(-DIRECTIONAL_ANGLE);
   });
 
-  it('No Shift + ArrowRight returns 0 (straight)', () => {
+  it('No Shift + ArrowRight returns DIRECTIONAL_ANGLE', () => {
     pressKey('ArrowRight');
     const angle = p2Input.get_aim_angle();
-    expect(angle).toBe(0);
+    expect(angle).toBe(DIRECTIONAL_ANGLE);
   });
 });
 
@@ -679,12 +679,12 @@ describe('mouse release triggers shot with accumulated directional angle', () =>
     expect(angle).toBeCloseTo(-Math.sqrt(30 / MAX_MOUSE_HOLD_FRAMES), 4);
   });
 
-  it('fast click (no updates between down/up) gives angle 0', () => {
+  it('fast click (no updates between down/up) with D held gives DIRECTIONAL_ANGLE', () => {
     handlers.keydown({ key: 'd', preventDefault: () => {} });
     handlers.mousedown({ preventDefault: () => {} });
     handlers.mouseup({ preventDefault: () => {} });
     expect(input.get_shot_type()).toBe(HIT_FLAT);
     const angle = input.get_aim_angle();
-    expect(angle).toBe(0);
+    expect(angle).toBe(DIRECTIONAL_ANGLE);
   });
 });
