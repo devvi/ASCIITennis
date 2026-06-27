@@ -49,6 +49,26 @@ jobs:
             This is required for the auto-chain workflow to detect and
             trigger the plan phase after merge. Do NOT use other prefixes
             like "Issue:" or "Feature:".
+      - name: Validate and fix research PR title
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+        run: |
+          sleep 5
+          RESEARCH_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,title,headRefName \
+            --jq 'map(select(.headRefName | test("opencode/issue'"$ISSUE_NUM"'"))) | last | .number')
+          if [ -z "$RESEARCH_PR" ] || [ "$RESEARCH_PR" = "null" ]; then
+            echo "No research PR found for issue #$ISSUE_NUM, skipping validation"
+            exit 0
+          fi
+          CURRENT_TITLE=$(gh pr view "$RESEARCH_PR" --repo "$GITHUB_REPOSITORY" --json title --jq '.title')
+          if [[ "$CURRENT_TITLE" == Research:* ]] || [[ "$CURRENT_TITLE" == Research\ * ]]; then
+            echo "Research PR title is valid: '$CURRENT_TITLE'"
+          else
+            echo "Fixing research PR #$RESEARCH_PR title (current: '$CURRENT_TITLE')"
+            NEW_TITLE="Research: $CURRENT_TITLE (parent #$ISSUE_NUM)"
+            gh pr edit "$RESEARCH_PR" --repo "$GITHUB_REPOSITORY" --title "$NEW_TITLE"
+          fi
 
   handle-comment-command:
     if: |
@@ -80,7 +100,13 @@ jobs:
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.title, 'Research')
+      (
+        startsWith(github.event.pull_request.title, 'Research') ||
+        (
+          startsWith(github.event.pull_request.head.ref, 'opencode/issue') &&
+          !startsWith(github.event.pull_request.title, 'Plan')
+        )
+      )
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -125,28 +151,52 @@ jobs:
             "Plan: <feature-name> (parent #$PARENT_ISSUE)"
             The plan PR body MUST NOT contain "Closes", "Fixes", or "Resolves"
             for #$PARENT_ISSUE. Use "Parent: #$PARENT_ISSUE" instead.
-      - name: Enable auto-merge on plan PR
+      - name: Validate plan PR title
+        id: validate-plan
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
           PARENT: ${{ steps.extract-parent.outputs.parent }}
         run: |
           sleep 5
           PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,title,createdAt,headRefName \
-            --jq 'map(select(.title | test("^Plan") and (.headRefName | test("opencode/issue'"$PARENT"'")))) | sort_by(.createdAt) | last | .number')
-          if [ -n "$PLAN_PR" ] && [ "$PLAN_PR" != "null" ]; then
-            echo "Enabling auto-merge on plan PR #$PLAN_PR"
-            gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
-          else
+            --jq 'map(select(.headRefName | test("opencode/issue'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
+          if [ -z "$PLAN_PR" ] || [ "$PLAN_PR" = "null" ]; then
             echo "No plan PR found for parent #$PARENT"
             exit 1
           fi
+          echo "plan_pr=$PLAN_PR" >> "$GITHUB_OUTPUT"
+          CURRENT_TITLE=$(gh pr view "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --json title --jq '.title')
+          if [[ "$CURRENT_TITLE" == Plan:* ]] || [[ "$CURRENT_TITLE" == Plan\ * ]]; then
+            echo "Plan PR title is valid: '$CURRENT_TITLE'"
+          else
+            echo "Fixing plan PR #$PLAN_PR title (current: '$CURRENT_TITLE')"
+            if [[ "$CURRENT_TITLE" =~ \(parent\ #([0-9]+)\) ]]; then
+              NEW_TITLE="Plan: $CURRENT_TITLE"
+            else
+              NEW_TITLE="Plan: $CURRENT_TITLE (parent #$PARENT)"
+            fi
+            gh pr edit "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --title "$NEW_TITLE"
+          fi
+      - name: Enable auto-merge on plan PR
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          PLAN_PR: ${{ steps.validate-plan.outputs.plan_pr }}
+        run: |
+          echo "Enabling auto-merge on plan PR #$PLAN_PR"
+          gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
 
   on-plan-pr-merged:
     if: >
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.title, 'Plan')
+      (
+        startsWith(github.event.pull_request.title, 'Plan') ||
+        (
+          startsWith(github.event.pull_request.head.ref, 'opencode/issue') &&
+          !startsWith(github.event.pull_request.title, 'Research')
+        )
+      )
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -221,12 +271,23 @@ jobs:
             echo "Could not extract parent issue number from PR #$PR_NUM"
             exit 0
           fi
-          if [[ "$PR_TITLE" == Research* ]]; then
+          PR_BRANCH=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json headRefName --jq '.headRefName' 2>/dev/null)
+          if [[ "$PR_TITLE" == Research* ]] || [[ "$PR_TITLE" == \#* ]]; then
             echo "Posting /opencode plan to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
           elif [[ "$PR_TITLE" == Plan* ]]; then
             echo "Posting /opencode implement to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
+          elif [[ "$PR_BRANCH" == opencode/issue* ]]; then
+            if [[ "$PR_BODY" == *"Parent:"* ]] || [[ "$PR_BODY" == *"Phase 1:"* ]]; then
+              echo "Detected plan PR by body content, posting /opencode implement"
+              gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
+            elif [[ "$PR_BODY" == *"Research"* ]] || [[ "$PR_BODY" == *"findings"* ]]; then
+              echo "Detected research PR by body content, posting /opencode plan"
+              gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
+            else
+              echo "PR #$PR_NUM has opencode branch but unrecognized body, skipping"
+            fi
           else
             echo "PR #$PR_NUM is neither Research nor Plan, skipping"
           fi
