@@ -459,8 +459,10 @@ function update_playing() {
       second_ball.x = human_player.x + (Math.random() - 0.5) * 2;
       second_ball.z = human_player.z + 1;
       second_ball.vx = (Math.random() - 0.5) * 0.2;
-      second_ball.vz = -0.3;
+      second_ball.vz = 0.3;
       second_ball.state = BALL_IN_PLAY;
+    } else if (item_type === ITEM_TYPES.FIRE) {
+      human_player.fire_boost = true;
     }
   }
 
@@ -474,10 +476,11 @@ function update_playing() {
       const target_x = angle * SINGLES_WIDTH * 0.35;
       const target_z = COURT_LENGTH - 2 - Math.random() * 2;
       const combo_mult = 1.0 + COMBO_SPEED_BOOST * combo_level;
-      const fire_mult = human_player.item_active && human_player.item === null ? 1.5 : 1.0;
+      const fire_mult = human_player.fire_boost ? 1.5 : 1.0;
       ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0, combo_mult * fire_mult);
 
-      if (human_player.item_active && human_player.item === null) {
+      if (human_player.fire_boost) {
+        human_player.fire_boost = false;
         human_player.item_active = false;
         human_player.item_timer = 0;
       }
@@ -533,8 +536,10 @@ function update_playing() {
         second_ball.x = p2_player.x + (Math.random() - 0.5) * 2;
         second_ball.z = p2_player.z - 1;
         second_ball.vx = (Math.random() - 0.5) * 0.2;
-        second_ball.vz = 0.3;
+        second_ball.vz = -0.3;
         second_ball.state = BALL_IN_PLAY;
+      } else if (item_type === ITEM_TYPES.FIRE) {
+        p2_player.fire_boost = true;
       }
     }
 
@@ -568,6 +573,19 @@ function update_playing() {
       ball.hit(ball_obj, ball_obj.x, ball_obj.y, ball_obj.z, 3, 5, 1, 1);
       human_player.shield_active = false;
       human_player.item_active = false;
+      rally_length += 1;
+    }
+  }
+
+  // P2 Shield auto-return
+  if (p2_player && p2_player.shield_active && ball_obj.state === BALL_IN_PLAY && ball_obj.vz < 0 && ball_obj.z < COURT_LENGTH / 2) {
+    const dist = Math.sqrt(
+      (p2_player.x - ball_obj.x) ** 2 + (p2_player.z - ball_obj.z) ** 2
+    );
+    if (dist < HIT_RANGE_H * 2) {
+      ball.hit(ball_obj, ball_obj.x, ball_obj.y, ball_obj.z, 3, 5, 1, 1);
+      p2_player.shield_active = false;
+      p2_player.item_active = false;
       rally_length += 1;
     }
   }
