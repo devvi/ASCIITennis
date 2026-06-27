@@ -17,61 +17,70 @@
 ## Plan
 
 Research complete — see `docs/PRD/173-item-usability-fix.md` for requirements.
-PLAN_ISSUE: TBD
+Design — see `docs/DESIGN/173-item-usability-fix.md` for architecture and module design.
+PLAN_ISSUE: #181
 
 ### Phase 1: Tests (TDD)
 
-#### 1a. Item type effect activation tests
-- `player.use_item()` returns the correct item type and clears `p.item`
-- `player.use_item()` sets `p.item_active = true` and `p.item_timer = ITEM_ACTIVE_DURATION`
-- BIG_RACKET: `use_item()` caller sets `p.hit_range_mult = 2.0`
-- SHIELD: `use_item()` caller sets `p.shield_active = true`
-- MULTI_BALL: `use_item()` caller spawns `second_ball`
-- FIRE: next shot gets 1.5x speed multiplier
-- TIME_SLOW: sets `time_slow_active = true` and `time_slow_timer = ITEM_ACTIVE_DURATION`
-- P2 can collect and use items (collection loop checks both players)
+#### 1a. `player.use_item()` unit tests
+- Add test: `use_item()` returns the correct item type when player has an item
+- Add test: `use_item()` clears `p.item` after use
+- Add test: `use_item()` sets `p.item_active = true`
+- Add test: `use_item()` sets `p.item_timer = ITEM_ACTIVE_DURATION` (not hardcoded 300)
+- Add test: `use_item()` returns `null` when player has no item
 
-#### 1b. Item rendering tests
-- Item box blink uses frame-based timer, not wall clock
+#### 1b. Item type effect activation tests (main.js handler)
+- Add test: BIG_RACKET use sets `human_player.hit_range_mult = 2.0`
+- Add test: SHIELD use sets `human_player.shield_active = true`
+- Add test: MULTI_BALL use spawns `second_ball` with valid position and velocity
+- Add test: TIME_SLOW use sets `time_slow_active = true` and `time_slow_timer = ITEM_ACTIVE_DURATION`
+- Add test: FIRE shot gets 1.5x speed multiplier when `item_active` is true
 
-### Phase 2: Core logic — fix item use handler in `main.js`
+#### 1c. P2 item collection & usage tests
+- Add test: P2 can collect items in 2P mode
+- Add test: P2 can use items in 2P mode
+- Add test: Both players can each carry one item simultaneously
 
-#### 2a. Fix `update_playing()` item use handler (lines 446-452)
-Add effect activation for BIG_RACKET, SHIELD, MULTI_BALL after `player.use_item()`:
-```js
-const item_type = player.use_item(human_player);
-if (item_type === ITEM_TYPES.TIME_SLOW) { ... }
-else if (item_type === ITEM_TYPES.BIG_RACKET) { human_player.hit_range_mult = 2.0; }
-else if (item_type === ITEM_TYPES.SHIELD) { human_player.shield_active = true; }
-else if (item_type === ITEM_TYPES.MULTI_BALL) { /* spawn second_ball */ }
-// FIRE is handled implicitly in hit logic
-```
+#### 1d. Item rendering tests
+- Add test: `item_box()` blink uses frame-based timer (e.g. `Math.floor(frame / 15) % 2`)
+- Add test: HUD displays P2 item when `opts.p2_item` is set
 
-#### 2b. Fix `player.use_item()` in `player.js`
-- Replace hardcoded `300` with `ITEM_ACTIVE_DURATION`
+### Phase 2: Core logic — fix item use handler
 
-#### 2c. Extend item collection to both players
-- Loop should check `human_player` AND `p2_player` (if exists)
+#### 2a. Fix `update_playing()` item use handler (main.js:446-452)
+Add `else if` branches for `BIG_RACKET` (`hit_range_mult = 2.0`), `SHIELD` (`shield_active = true`), and `MULTI_BALL` (spawn `second_ball` with proper position/velocity toward opponent).
 
-#### 2d. Multi-ball second ball spawn
-- Initialize `second_ball = ball.new()` on MULTI_BALL use
-- Set position near player, random velocity toward opponent's court
+`FIRE` remains implicitly handled by the existing `fire_mult` check at hit time.
+
+#### 2b. Fix `player.use_item()` in player.js:107
+Replace hardcoded `300` with `ITEM_ACTIVE_DURATION`. This requires importing the constant.
+
+#### 2c. Extend item collection to P2 (main.js:555-566)
+Add `else if` branch to check `p2_player` (if exists) for collection. Only one player may collect a given item.
+
+#### 2d. Add P2 item use handler (main.js:504-519)
+In the 2P block, add `input2.pressed(BTN_X)` handler with identical activation branches (BIG_RACKET, SHIELD, MULTI_BALL, TIME_SLOW), targeting `p2_player` instead of `human_player`.
 
 ### Phase 3: UI/output
 
-#### 3a. Fix item blink rendering
-- Pass frame counter to `render.item_box()` instead of using `Date.now()`
+#### 3a. Fix item blink rendering (render.js:456)
+- Add `frame` parameter to `item_box(item, frame)`
+- Replace `Math.floor(Date.now() / 500) % 2 === 0` with `Math.floor(frame / 15) % 2 === 0`
+- Update caller in `draw_game()` (main.js:792-794) to pass frame counter
 
-#### 3b. P2 item HUD
-- Show collected item on both player HUD indicators
+#### 3b. P2 item HUD (render.js:226-230)
+- Accept `opts.p2_item` in HUD render function
+- Display P2 item when in 2P mode
+- Update caller in `draw_game()` to pass `p2_player.item`
 
 ### Phase 4: Verification
 
-#### 4a. Manual testing checklist
+#### 4a. Run all existing tests
+- `npm test` passes
+- No regressions in non-item tests
+
+#### 4b. Manual testing checklist
 - Spawn items, collect as P1, verify all 5 item types produce correct effects
 - In 2P mode, verify P2 can collect and use items
 - Verify item timer cleanup works after effect expires
-
-#### 4b. Automated test verification
-- All existing tests pass
-- New item effect tests pass
+- Verify FIRE shot speed boost only applies on the next hit
