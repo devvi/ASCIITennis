@@ -80,7 +80,7 @@ jobs:
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.title, 'Research:')
+      startsWith(github.event.pull_request.title, 'Research')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -116,7 +116,7 @@ jobs:
           PARENT=$(echo "${{ github.event.pull_request.title }}" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
           sleep 5
           PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,title,createdAt \
-            --jq 'map(select(.title | test("Plan:") and test("#'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
+            --jq 'map(select(.title | test("^Plan") and test("#'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
           if [ -n "$PLAN_PR" ] && [ "$PLAN_PR" != "null" ]; then
             echo "Enabling auto-merge on plan PR #$PLAN_PR"
             gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
@@ -185,10 +185,10 @@ jobs:
             echo "Could not extract parent issue number from title: $PR_TITLE"
             exit 0
           fi
-          if [[ "$PR_TITLE" == Research:* ]]; then
+          if [[ "$PR_TITLE" == Research* ]]; then
             echo "Posting /opencode plan to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
-          elif [[ "$PR_TITLE" == Plan:* ]]; then
+          elif [[ "$PR_TITLE" == Plan* ]]; then
             echo "Posting /opencode implement to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
           else
