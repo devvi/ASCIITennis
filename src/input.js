@@ -1,6 +1,7 @@
 import {
   BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B, BTN_X,
-  HIT_TOPSPIN, HIT_SLICE, HIT_FLAT, MAX_MOUSE_HOLD_FRAMES,
+  HIT_TOPSPIN, HIT_SLICE, HIT_FLAT,
+  DIRECTIONAL_ANGLE,
 } from './constants.js';
 
 const NUM_BUTTONS = 8;
@@ -136,12 +137,8 @@ export function createInput(keyMap, useMouse = true) {
     },
 
     get_aim_angle() {
-      const t = Math.min(1, mouse_hold_frames / MAX_MOUSE_HOLD_FRAMES);
-      if (t > 0) {
-        if (this.held(BTN_LEFT)) return -Math.sqrt(t);
-        if (this.held(BTN_RIGHT)) return Math.sqrt(t);
-        return 0;
-      }
+      if (this.held(BTN_LEFT)) return -DIRECTIONAL_ANGLE;
+      if (this.held(BTN_RIGHT)) return DIRECTIONAL_ANGLE;
       return 0;
     },
 
