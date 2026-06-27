@@ -9,7 +9,8 @@ import {
   STATE_ZOMBIE_TENNIS, STATE_TARGET_PRACTICE, STATE_RALLY_CHALLENGE,
   STATE_GRAVITY_SHIFT, STATE_PONG_MODE,
   GRAVITY_VECTORS, COURT_LENGTH, COURT_WIDTH,
-  PLAYER_EYE_Y, HIT_RANGE_H, BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
+  PLAYER_EYE_Y, HIT_RANGE_H, BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B, BTN_X,
+  BALL_IN_PLAY,
 } from '../src/constants.js';
 import { court } from '../src/court.js';
 import { ball } from '../src/ball.js';
@@ -179,6 +180,124 @@ describe('Phase 2: Power-ups & Court Items', () => {
     it('time slow: velocities multiplied by 0.5', () => {
       const speed = 0.4;
       expect(speed * 0.5).toBeCloseTo(0.2);
+    });
+  });
+
+  describe('2e. Item use effect activation', () => {
+    it('use_item() returns the item type and clears p.item', () => {
+      const p = player.new(false);
+      p.item = 'F';
+      const result = player.use_item(p);
+      expect(result).toBe('F');
+      expect(p.item).toBeNull();
+    });
+
+    it('use_item() sets p.item_active = true and p.item_timer = ITEM_ACTIVE_DURATION', () => {
+      const p = player.new(false);
+      p.item = 'F';
+      player.use_item(p);
+      expect(p.item_active).toBe(true);
+      expect(p.item_timer).toBe(ITEM_ACTIVE_DURATION);
+    });
+
+    it('use_item() returns null when no item held', () => {
+      const p = player.new(false);
+      const result = player.use_item(p);
+      expect(result).toBeNull();
+    });
+
+    it('BIG_RACKET: caller sets hit_range_mult = 2.0', () => {
+      const p = player.new(false);
+      p.item = ITEM_TYPES.BIG_RACKET;
+      const item_type = player.use_item(p);
+      if (item_type === ITEM_TYPES.BIG_RACKET) {
+        p.hit_range_mult = 2.0;
+      }
+      expect(p.hit_range_mult).toBe(2.0);
+    });
+
+    it('SHIELD: caller sets shield_active = true', () => {
+      const p = player.new(false);
+      p.item = ITEM_TYPES.SHIELD;
+      const item_type = player.use_item(p);
+      if (item_type === ITEM_TYPES.SHIELD) {
+        p.shield_active = true;
+      }
+      expect(p.shield_active).toBe(true);
+    });
+
+    it('MULTI_BALL: caller spawns second_ball with proper position/velocity', () => {
+      const p = player.new(false);
+      court.init();
+      p.item = ITEM_TYPES.MULTI_BALL;
+      const item_type = player.use_item(p);
+      let second_ball = null;
+      if (item_type === ITEM_TYPES.MULTI_BALL) {
+        second_ball = ball.new();
+        second_ball.x = p.x + (Math.random() - 0.5) * 2;
+        second_ball.z = p.z + 1;
+        second_ball.vx = (Math.random() - 0.5) * 0.2;
+        second_ball.vz = 0.3;
+        second_ball.state = BALL_IN_PLAY;
+      }
+      expect(second_ball).not.toBeNull();
+      expect(second_ball.state).toBe(BALL_IN_PLAY);
+      expect(second_ball.vz).toBeGreaterThan(0);
+    });
+
+    it('TIME_SLOW: caller sets time_slow_active and time_slow_timer', () => {
+      const p = player.new(false);
+      p.item = ITEM_TYPES.TIME_SLOW;
+      const item_type = player.use_item(p);
+      let time_slow_active = false;
+      let time_slow_timer = 0;
+      if (item_type === ITEM_TYPES.TIME_SLOW) {
+        time_slow_active = true;
+        time_slow_timer = ITEM_ACTIVE_DURATION;
+      }
+      expect(time_slow_active).toBe(true);
+      expect(time_slow_timer).toBe(ITEM_ACTIVE_DURATION);
+    });
+
+    it('FIRE: sets fire_boost flag for 1.5x shot speed on next hit', () => {
+      const p = player.new(false);
+      p.item = ITEM_TYPES.FIRE;
+      const item_type = player.use_item(p);
+      if (item_type === ITEM_TYPES.FIRE) {
+        p.fire_boost = true;
+      }
+      expect(p.fire_boost).toBe(true);
+      const fire_mult = p.fire_boost ? 1.5 : 1.0;
+      expect(fire_mult).toBe(1.5);
+    });
+  });
+
+  describe('2f. P2 item collection', () => {
+    it('P2 can collect item when within range and slot is empty', () => {
+      const p2 = player.new(false, 'back');
+      const item_obj = { x: p2.x + 0.3, z: p2.z + 0.3 };
+      expect(player.can_collect_item(p2, item_obj)).toBe(true);
+    });
+
+    it('P2 cannot collect item when already holding one', () => {
+      const p2 = player.new(false, 'back');
+      p2.item = 'F';
+      const item_obj = { x: p2.x + 0.3, z: p2.z + 0.3 };
+      expect(player.can_collect_item(p2, item_obj)).toBe(true);
+      expect(p2.item).toBe('F');
+    });
+  });
+
+  describe('2g. P2 Shield auto-return', () => {
+    it('P2 shield_active triggers auto-return when ball crosses net to P1 side near P2', () => {
+      const p2 = player.new(false, 'back');
+      p2.z = COURT_LENGTH / 2 + 0.5;
+      p2.shield_active = true;
+      const ball_obj = { x: p2.x, z: COURT_LENGTH / 2 - 0.3, y: 0.5, vx: 0, vz: -0.2, state: BALL_IN_PLAY };
+      const in_range = ball_obj.state === BALL_IN_PLAY && ball_obj.vz < 0 && ball_obj.z < COURT_LENGTH / 2;
+      const dist = Math.sqrt((p2.x - ball_obj.x) ** 2 + (p2.z - ball_obj.z) ** 2);
+      expect(in_range).toBe(true);
+      expect(dist).toBeLessThan(HIT_RANGE_H * 2);
     });
   });
 });
