@@ -75,6 +75,7 @@ let cheat_code_buffer;
 let cheat_code_active;
 let all_dead_triggered;
 let referee_face;
+let frame_count;
 
 function init_game() {
   court.init();
@@ -139,6 +140,7 @@ function init_game() {
   cheat_code_buffer = [];
   cheat_code_active = false;
   all_dead_triggered = false;
+  frame_count = 0;
 }
 
 function update_special_menu() {
@@ -448,6 +450,17 @@ function update_playing() {
     if (item_type === ITEM_TYPES.TIME_SLOW) {
       time_slow_active = true;
       time_slow_timer = ITEM_ACTIVE_DURATION;
+    } else if (item_type === ITEM_TYPES.BIG_RACKET) {
+      human_player.hit_range_mult = 2.0;
+    } else if (item_type === ITEM_TYPES.SHIELD) {
+      human_player.shield_active = true;
+    } else if (item_type === ITEM_TYPES.MULTI_BALL) {
+      second_ball = ball.new();
+      second_ball.x = human_player.x + (Math.random() - 0.5) * 2;
+      second_ball.z = human_player.z + 1;
+      second_ball.vx = (Math.random() - 0.5) * 0.2;
+      second_ball.vz = -0.3;
+      second_ball.state = BALL_IN_PLAY;
     }
   }
 
@@ -506,6 +519,25 @@ function update_playing() {
     player.move(p2_player, dx2 * speed_mult, dz2 * speed_mult);
     player.update(p2_player);
 
+    if (input2.pressed(BTN_X)) {
+      const item_type = player.use_item(p2_player);
+      if (item_type === ITEM_TYPES.TIME_SLOW) {
+        time_slow_active = true;
+        time_slow_timer = ITEM_ACTIVE_DURATION;
+      } else if (item_type === ITEM_TYPES.BIG_RACKET) {
+        p2_player.hit_range_mult = 2.0;
+      } else if (item_type === ITEM_TYPES.SHIELD) {
+        p2_player.shield_active = true;
+      } else if (item_type === ITEM_TYPES.MULTI_BALL) {
+        second_ball = ball.new();
+        second_ball.x = p2_player.x + (Math.random() - 0.5) * 2;
+        second_ball.z = p2_player.z - 1;
+        second_ball.vx = (Math.random() - 0.5) * 0.2;
+        second_ball.vz = 0.3;
+        second_ball.state = BALL_IN_PLAY;
+      }
+    }
+
     const shot2 = input2.get_shot_type();
     if (shot2 && player.can_hit(p2_player, ball_obj)) {
       if (player.swing(p2_player)) {
@@ -561,6 +593,9 @@ function update_playing() {
     }
     if (player.can_collect_item(human_player, item) && !human_player.item) {
       player.collect_item(human_player, item.type);
+      items.splice(i, 1);
+    } else if (p2_player && player.can_collect_item(p2_player, item) && !p2_player.item) {
+      player.collect_item(p2_player, item.type);
       items.splice(i, 1);
     }
   }
@@ -790,7 +825,7 @@ function draw_game() {
 
   // Items
   for (const item of items) {
-    render.item_box(item);
+    render.item_box(item, frame_count);
   }
 
   // Targets
@@ -842,6 +877,7 @@ function draw_game() {
     rally_length,
     combo_level,
     item: human_player.item,
+    p2_item: p2_player?.item || null,
     target_score: game_mode === STATE_TARGET_PRACTICE ? target_score : null,
     longest_rally: game_mode === STATE_RALLY_CHALLENGE ? longest_rally : null,
     time_slow_active,
@@ -1010,6 +1046,7 @@ function gameLoop() {
     audience_obj.crowd_phase = 0;
   }
 
+  frame_count += 1;
   input1.update();
   input2.update();
   audience_obj.update();

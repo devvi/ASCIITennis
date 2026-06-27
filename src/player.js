@@ -1,4 +1,4 @@
-import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED, HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX, PERFECT_WINDOW, ITEM_COLLECT_RANGE } from './constants.js';
+import { COURT_LENGTH, COURT_WIDTH, PLAYER_IDLE, PLAYER_HITTING, PLAYER_SPEED, HIT_RANGE_H, HIT_HEIGHT_MIN, HIT_HEIGHT_MAX, PERFECT_WINDOW, ITEM_COLLECT_RANGE, ITEM_ACTIVE_DURATION } from './constants.js';
 
 export const player = {
   new(is_ai, side) {
@@ -104,7 +104,7 @@ export const player = {
     const type = p.item;
     p.item = null;
     p.item_active = true;
-    p.item_timer = 300;
+    p.item_timer = ITEM_ACTIVE_DURATION;
     return type;
   },
 

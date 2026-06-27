@@ -228,6 +228,10 @@ export const render = {
         const itemDescs = { F: 'Power shot', B: 'Wide reach', S: 'Auto return', M: 'Extra ball', T: 'Slow motion' };
         ctx.fillText("ITEM: " + opts.item + " (" + itemDescs[opts.item] + ")", 2, 25);
       }
+      if (opts.p2_item) {
+        ctx.fillStyle = '#f44';
+        ctx.fillText("P2 ITEM: " + opts.p2_item, 2, 33);
+      }
       if (opts.target_score !== null && opts.target_score !== undefined) {
         ctx.fillStyle = '#fa0';
         ctx.fillText("SCORE: " + opts.target_score, 2, 33);
@@ -451,9 +455,9 @@ export const render = {
   },
 
   // Phase 2: Items
-  item_box(item) {
+  item_box(item, frame) {
     if (!item) return;
-    const blink = Math.floor(Date.now() / 500) % 2 === 0;
+    const blink = Math.floor((frame || 0) / 15) % 2 === 0;
     ctx.fillStyle = blink ? '#fff' : '#aaa';
     camera.draw_char(item.x, 0.01, item.z, '?');
   },
