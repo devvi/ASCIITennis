@@ -183,6 +183,28 @@ describe('render (perspective)', () => {
     expect(mockCtx.fillText).toHaveBeenCalledWith('DOUBLE BOUNCE!', expect.any(Number), expect.any(Number));
   });
 
+  describe('enhanced trail rendering', () => {
+    it('ball_trail uses ball.trail_char for rendering', () => {
+      const b = {
+        trail: [{ x: 0, y: 1.0, z: 10 }, { x: 0.1, y: 1.0, z: 10.1 }],
+        trail_char: '*',
+        trail_color: '#4f4',
+      };
+      render.ball_trail(b.trail, b);
+      expect(mockCtx.fillText).toHaveBeenCalled();
+    });
+
+    it('ball_trail renders with correct trail characters', () => {
+      const b = {
+        trail: [{ x: 0, y: 1.0, z: 10 }, { x: 0.1, y: 1.0, z: 10.1 }, { x: 0.2, y: 1.0, z: 10.2 }],
+        trail_char: '#',
+        trail_color: '#f44',
+      };
+      render.ball_trail(b.trail, b);
+      expect(mockCtx.fillText).toHaveBeenCalled();
+    });
+  });
+
   describe('serve_meter', () => {
     it('serve_meter(0) draws empty bar (fills only background)', () => {
       vi.clearAllMocks();

@@ -140,6 +140,19 @@ export const SCREEN_SHAKE_INTENSITY = 2;
 export const PERFECT_WINDOW = 5;
 export const COMBO_SPEED_BOOST = 0.02;
 
+// Advanced Returns: Perfect & Smash
+export const PERFECT_SPEED_MULT = 1.3;
+export const SMASH_SPEED_MULT = 1.6;
+export const NET_VOLLEY_RANGE = 1.5;
+export const SMASH_TRAIL_LENGTH = 12;
+export const PERFECT_TRAIL_LENGTH = 8;
+export const SMASH_PARTICLES = 12;
+export const PERFECT_PARTICLES = 10;
+export const SMASH_TRAIL_COLOR = '#f44';
+export const PERFECT_TRAIL_COLOR = '#4f4';
+export const SMASH_TRAIL_CHAR = '#';
+export const PERFECT_TRAIL_CHAR = '*';
+
 // Phase 2: Power-ups & Court Items
 export const ITEM_SPAWN_INTERVAL = 600;
 export const ITEM_COLLECT_RANGE = 1.0;
