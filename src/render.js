@@ -471,14 +471,16 @@ export const render = {
     }
   },
 
-  ball_trail(trail) {
+  ball_trail(trail, ball) {
     if (!trail || trail.length < 2) return;
+    const trail_char = ball?.trail_char || 'o';
+    const trail_color = ball?.trail_color || '#ff0';
     for (let i = 0; i < trail.length - 1; i++) {
       const t = trail[i];
       const alpha = (i + 1) / trail.length * 0.6;
       ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#ff0';
-      camera.draw_char(t.x, t.y, t.z, 'o');
+      ctx.fillStyle = trail_color;
+      camera.draw_char(t.x, t.y, t.z, trail_char);
     }
     ctx.globalAlpha = 1;
   },

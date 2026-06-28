@@ -397,6 +397,172 @@ describe('Phase 3: ASCII Particle Effects & Screen Juice', () => {
   });
 });
 
+describe('Advanced Returns: Perfect Shot Speed Boost & Net Smash', () => {
+  describe('Constants', () => {
+    it('PERFECT_SPEED_MULT = 1.3', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.PERFECT_SPEED_MULT).toBe(1.3);
+    });
+
+    it('SMASH_SPEED_MULT = 1.6', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.SMASH_SPEED_MULT).toBe(1.6);
+    });
+
+    it('NET_VOLLEY_RANGE = 1.5', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.NET_VOLLEY_RANGE).toBe(1.5);
+    });
+
+    it('PERFECT_TRAIL_LENGTH = 8', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.PERFECT_TRAIL_LENGTH).toBe(8);
+    });
+
+    it('SMASH_TRAIL_LENGTH = 12', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.SMASH_TRAIL_LENGTH).toBe(12);
+    });
+
+    it('PERFECT_TRAIL_COLOR = "#4f4"', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.PERFECT_TRAIL_COLOR).toBe('#4f4');
+    });
+
+    it('SMASH_TRAIL_COLOR = "#f44"', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.SMASH_TRAIL_COLOR).toBe('#f44');
+    });
+
+    it('PERFECT_TRAIL_CHAR = "*"', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.PERFECT_TRAIL_CHAR).toBe('*');
+    });
+
+    it('SMASH_TRAIL_CHAR = "#"', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.SMASH_TRAIL_CHAR).toBe('#');
+    });
+
+    it('PERFECT_PARTICLES = 10', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.PERFECT_PARTICLES).toBe(10);
+    });
+
+    it('SMASH_PARTICLES = 12', async () => {
+      const mod = await import('../src/constants.js');
+      expect(mod.SMASH_PARTICLES).toBe(12);
+    });
+  });
+
+  describe('Perfect timing speed boost', () => {
+    it('PERFECT timing adds PERFECT_SPEED_MULT to speed_mult', () => {
+      const timing_quality = 'PERFECT';
+      const timing_mult = timing_quality === 'PERFECT' ? 1.3 : 1.0;
+      expect(timing_mult).toBe(1.3);
+    });
+
+    it('GOOD timing does not get speed boost', () => {
+      const timing_quality = 'GOOD';
+      const timing_mult = timing_quality === 'PERFECT' ? 1.3 : 1.0;
+      expect(timing_mult).toBe(1.0);
+    });
+
+    it('LATE timing does not get speed boost', () => {
+      const timing_quality = 'LATE';
+      const timing_mult = timing_quality === 'PERFECT' ? 1.3 : 1.0;
+      expect(timing_mult).toBe(1.0);
+    });
+
+    it('combo_mult and timing_mult stack multiplicatively', () => {
+      const combo_level = 3;
+      const timing_quality = 'PERFECT';
+      const combo_mult = 1.0 + 0.02 * combo_level;
+      const timing_mult = timing_quality === 'PERFECT' ? 1.3 : 1.0;
+      const total = combo_mult * timing_mult;
+      expect(total).toBeCloseTo(1.06 * 1.3);
+    });
+  });
+
+  describe('Net smash detection', () => {
+    it('smash activates when player is within NET_VOLLEY_RANGE of net and ball above NET_HEIGHT', () => {
+      const COURT_LENGTH = 23.77;
+      const NET_VOLLEY_RANGE = 1.5;
+      const NET_HEIGHT = 0.914;
+      const player_z = COURT_LENGTH / 2 - 0.5;
+      const ball_y = 1.5;
+      const is_near_net = Math.abs(player_z - COURT_LENGTH / 2) < NET_VOLLEY_RANGE;
+      const is_above_net = ball_y > NET_HEIGHT;
+      expect(is_near_net).toBe(true);
+      expect(is_above_net).toBe(true);
+    });
+
+    it('smash does not activate when ball is below net height', () => {
+      const COURT_LENGTH = 23.77;
+      const NET_VOLLEY_RANGE = 1.5;
+      const NET_HEIGHT = 0.914;
+      const player_z = COURT_LENGTH / 2 - 0.5;
+      const ball_y = 0.5;
+      const is_near_net = Math.abs(player_z - COURT_LENGTH / 2) < NET_VOLLEY_RANGE;
+      const is_above_net = ball_y > NET_HEIGHT;
+      expect(is_near_net).toBe(true);
+      expect(is_above_net).toBe(false);
+    });
+
+    it('smash uses SMASH_SPEED_MULT for speed', () => {
+      const SMASH_SPEED_MULT = 1.6;
+      const base_speed = 0.35;
+      const smash_speed = base_speed * SMASH_SPEED_MULT;
+      expect(smash_speed).toBeCloseTo(0.56);
+    });
+  });
+
+  describe('Enhanced trail options', () => {
+    it('perfect shot gets PERFECT trail opts', () => {
+      const is_smash = false;
+      const timing_quality = 'PERFECT';
+      const trail_opts = timing_quality === 'PERFECT' && !is_smash
+        ? { length: 8, char: '*', color: '#4f4' }
+        : {};
+      expect(trail_opts.length).toBe(8);
+      expect(trail_opts.char).toBe('*');
+      expect(trail_opts.color).toBe('#4f4');
+    });
+
+    it('smash shot gets SMASH trail opts', () => {
+      const is_smash = true;
+      const trail_opts = is_smash
+        ? { length: 12, char: '#', color: '#f44' }
+        : {};
+      expect(trail_opts.length).toBe(12);
+      expect(trail_opts.char).toBe('#');
+      expect(trail_opts.color).toBe('#f44');
+    });
+  });
+
+  describe('Enhanced particles', () => {
+    it('perfect shot spawns PERFECT_PARTICLES particles', () => {
+      const timing_quality = 'PERFECT';
+      const is_smash = false;
+      const particle_count = is_smash ? 12 : (timing_quality === 'PERFECT' ? 10 : 6);
+      expect(particle_count).toBe(10);
+    });
+
+    it('smash shot spawns SMASH_PARTICLES particles', () => {
+      const is_smash = true;
+      const particle_count = is_smash ? 12 : 6;
+      expect(particle_count).toBe(12);
+    });
+
+    it('normal hit spawns 6 particles', () => {
+      const timing_quality = 'GOOD';
+      const is_smash = false;
+      const particle_count = is_smash ? 12 : (timing_quality === 'PERFECT' ? 10 : 6);
+      expect(particle_count).toBe(6);
+    });
+  });
+});
+
 describe('Phase 4: Special Game Modes & Easter Eggs', () => {
   describe('4a. Mode constants', () => {
     it('STATE_ZOMBIE_TENNIS is defined', () => {

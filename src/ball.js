@@ -52,7 +52,8 @@ export const ball = {
 
     if (b.state === BALL_IN_PLAY || is_flying) {
       b.trail.push({ x: b.x, y: b.y, z: b.z });
-      if (b.trail.length > 5) b.trail.shift();
+      const max_trail = b.trail_max_length || 5;
+      if (b.trail.length > max_trail) b.trail.shift();
     }
 
     b.vx = b.vx - b.vx * AIR_RESISTANCE + b.spin_x * SPIN_FACTOR;
@@ -162,7 +163,7 @@ export const ball = {
     b.last_bounce_side = null;
   },
 
-  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter, speed_mult) {
+  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter, speed_mult, trail_opts) {
     const params = HIT_PARAMS[hit_type] || HIT_PARAMS[HIT_FLAT];
 
     const dx = target_x - hit_x;
@@ -184,6 +185,11 @@ export const ball = {
     b.state = BALL_IN_PLAY;
     b.last_bounce_side = null;
     b.trail = [];
+    if (trail_opts) {
+      if (trail_opts.length) b.trail_max_length = trail_opts.length;
+      if (trail_opts.char) b.trail_char = trail_opts.char;
+      if (trail_opts.color) b.trail_color = trail_opts.color;
+    }
     if (hitter !== undefined) {
       b.last_hit_by = hitter;
     }
