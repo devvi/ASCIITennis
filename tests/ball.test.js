@@ -536,6 +536,66 @@ describe('ball', () => {
     });
   });
 
+  describe('trail_opts in hit()', () => {
+    it('hit() without trail_opts uses defaults (trail_max=undefined, trail_char="o")', () => {
+      court.init();
+      const b = ball.new();
+      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT);
+      expect(b.trail_char).toBe('o');
+      expect(b.trail_color).toBeUndefined();
+      expect(b.trail_max_length).toBeUndefined();
+    });
+
+    it('hit() with trail_opts.length sets trail_max_length', () => {
+      court.init();
+      const b = ball.new();
+      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0, { length: 10 });
+      expect(b.trail_max_length).toBe(10);
+    });
+
+    it('hit() with trail_opts.char sets trail_char', () => {
+      court.init();
+      const b = ball.new();
+      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0, { char: '*' });
+      expect(b.trail_char).toBe('*');
+    });
+
+    it('hit() with trail_opts.color sets trail_color', () => {
+      court.init();
+      const b = ball.new();
+      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0, { color: '#4f4' });
+      expect(b.trail_color).toBe('#4f4');
+    });
+
+    it('hit() with all trail_opts sets all trail properties', () => {
+      court.init();
+      const b = ball.new();
+      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0, { length: 8, char: '*', color: '#4f4' });
+      expect(b.trail_max_length).toBe(8);
+      expect(b.trail_char).toBe('*');
+      expect(b.trail_color).toBe('#4f4');
+    });
+
+    it('hit() clears trail before setting new trail options', () => {
+      court.init();
+      const b = ball.new();
+      b.trail = [{ x: 0, y: 1, z: 5 }];
+      ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0, { length: 12 });
+      expect(b.trail.length).toBe(0);
+    });
+
+    it('hit() with speed_mult=1.5 produces higher speed than speed_mult=1.0', () => {
+      court.init();
+      const b1 = ball.new();
+      const b2 = ball.new();
+      ball.hit(b1, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0);
+      ball.hit(b2, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.5);
+      const speed1 = Math.sqrt(b1.vx*b1.vx + b1.vz*b1.vz);
+      const speed2 = Math.sqrt(b2.vx*b2.vx + b2.vz*b2.vz);
+      expect(speed2).toBeGreaterThan(speed1);
+    });
+  });
+
   describe('serve power param', () => {
     it('serve with power=1 uses SERVE_SPEED_MAX', () => {
       const b = ball.new();
