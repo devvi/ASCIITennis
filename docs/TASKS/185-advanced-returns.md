@@ -24,27 +24,23 @@
 
 Write test cases first:
 
-1. **`tests/player.test.js` — Timing quality verification**
-   - `swing_with_timing()` returns `'PERFECT'` when ball.z is within 0.5 of player.z
-   - `swing_with_timing()` returns `'GOOD'` when ball.z is within 1.5 of player.z
-   - `swing_with_timing()` returns `'LATE'` when ball.z is further than 1.5
-   - `swing_with_timing()` returns `null` when player is already swinging (hit_timer > 0)
-
-2. **`tests/ball.test.js` — Speed multiplier in hit()**
+1. **`tests/ball.test.js` — Speed multiplier & trail config**
    - `ball.hit()` with `speed_mult = 1.5` produces ball speed 1.5x higher than `speed_mult = 1.0`
    - `ball.hit()` with `speed_mult = 1.0` produces standard speed per HIT_PARAMS
-   - Trail length is set correctly after `hit()` (configurable)
-   - Trail is cleared on `hit()` then refilled during update
+   - `ball.hit()` accepts `trail_opts` parameter setting `trail_max_length`, `trail_char`, `trail_color` on ball
+   - Trail is cleared on `hit()` then refilled during `update()`
+   - `ball.update()` uses configurable `trail_max_length` instead of hardcoded 5
 
-3. **`tests/main.test.js` — Integration tests**
+2. **`tests/main.test.js` — Perfect timing & smash integration**
    - When `swing_with_timing()` returns `'PERFECT'`, the ball speed_mult includes `PERFECT_SPEED_MULT`
-   - When player is within `NET_VOLLEY_RANGE` of net, shot is treated as smash with `SMASH_SPEED_MULT`
+   - Smash activates when player is within `NET_VOLLEY_RANGE` of net AND ball is above `NET_HEIGHT`
+   - Smash shots use `SMASH_TRAIL_LENGTH`, `SMASH_TRAIL_CHAR`, `SMASH_TRAIL_COLOR` values
    - Smash shots have flatter vy trajectory
 
-4. **`tests/render.test.js` — Enhanced trail rendering**
-   - `ball_trail()` accepts configurable trail length
-   - Trail color changes based on shot type (perfect = green, smash = red)
-   - Different trail characters render correctly
+3. **`tests/render.test.js` — Enhanced trail rendering**
+   - `ball_trail()` uses `trail_char` and `trail_color` from ball object (defaults to `'o'` and `'#ff0'`)
+   - Perfect shot trail renders with green color (`PERFECT_TRAIL_COLOR`)
+   - Smash shot trail renders with red color (`SMASH_TRAIL_COLOR`)
 
 ### Phase 2: Data Structures & Constants
 
@@ -121,7 +117,7 @@ Write test cases first:
 
 1. Run all existing tests: `npm test`
 2. Verify perfect shots produce faster ball speed
-3. Verify smash only activates near net with ball above net height
+3. Verify smash only activates near net with ball above net height (and front player z_max constraint allows reaching net volley range)
 4. Verify enhanced trails appear for perfect and smash shots
 5. Verify particle count increases for special shots
-6. Verify no regressions in AI behavior (AI doesn't accidentally trigger smash)
+6. Verify no regressions in AI behavior — `ai.update()` calls `ball.hit()` directly without timing/smash logic, so smash detection in `main.js` must only apply to human player's `get_shot_type()` path

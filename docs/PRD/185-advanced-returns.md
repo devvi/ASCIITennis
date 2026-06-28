@@ -54,6 +54,20 @@ The interface already supports speed multiplication — making PERFECT shots fas
 - No explicit "volley zone" or "net smash" mechanic exists
 - Hitting range is based solely on distance to ball (`HIT_RANGE_H = 2.5`)
 
+## Cross-Cutting Concerns
+
+### Ball Data Structure Changes (`src/ball.js`)
+The `ball.new()` function creates a ball with `trail: []` array and `trail_char: 'o'`. The proposal adds:
+- `trail_max_length` — default 5 (existing hardcoded limit), configurable longer for special shots
+- `trail_color` — default `'#ff0'` (hardcoded in render.js), configurable per shot type
+- `trail_char` — already exists as `'o'`, will be set per shot type
+
+### Player Z-Range Constraints (`src/player.js:59-61`)
+Front players have `z_max = COURT_LENGTH / 2 - 0.5`, meaning they cannot cross the net. Since `NET_VOLLEY_RANGE = 1.5` is less than the z_max constraint distance from net, the `Math.abs(player.z - COURT_LENGTH/2) < NET_VOLLEY_RANGE` check will never trigger for front court players. **Action:** Either increase `NET_VOLLEY_RANGE` to allow detection from the front court limit, or reduce the z_max gap. Current gap: `COURT_LENGTH/2 - (COURT_LENGTH/2 - 0.5) = 0.5` from net. `NET_VOLLEY_RANGE = 1.5` is sufficient to detect from 0.5 away. This works correctly.
+
+### AI Smash Prevention (`src/ai.js`)
+The AI module (`ai.update()`) calls `ball.hit()` directly without timing/smash logic. The plan should ensure the AI does not accidentally trigger smash mechanics. **Action:** Smash detection should only apply to human player shots, or the AI should have a separate flag.
+
 ## Proposed Enhancements
 
 ### 1. Perfect Shot Speed Boost
