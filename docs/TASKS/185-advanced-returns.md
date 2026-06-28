@@ -1,6 +1,7 @@
 # Task Breakdown: Advanced Returns (高级回球)
 
 **Issue:** #185
+**Plan Issue:** #187
 **Related modules:** `src/constants.js`, `src/player.js`, `src/ball.js`, `src/main.js`, `src/render.js`, `tests/ball.test.js`, `tests/player.test.js`, `tests/main.test.js`, `tests/fun.test.js`, `tests/render.test.js`
 
 ## Impact Summary
