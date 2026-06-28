@@ -222,4 +222,37 @@ describe('render (perspective)', () => {
       expect(mockCtx.fillRect).toHaveBeenCalled();
     });
   });
+
+  describe('ball_trail', () => {
+    it('ball_trail() uses trail_char and trail_color from ball object', () => {
+      const trail = [{ x: 0, y: 1, z: 5 }, { x: 0.5, y: 1, z: 6 }, { x: 1, y: 1, z: 7 }];
+      const ball = { trail, trail_char: '*', trail_color: '#4f4' };
+      render.ball_trail(trail, ball);
+      const calls = mockCtx.fillText.mock.calls;
+      const trailCalls = calls.filter(c => c[0] === '*');
+      expect(trailCalls.length).toBeGreaterThan(0);
+      expect(mockCtx._fillStyle).toBe('#4f4');
+    });
+
+    it('ball_trail() defaults to o and #ff0 when no ball object given', () => {
+      vi.clearAllMocks();
+      const trail = [{ x: 0, y: 1, z: 5 }, { x: 0.5, y: 1, z: 6 }];
+      render.ball_trail(trail);
+      const calls = mockCtx.fillText.mock.calls;
+      const trailCalls = calls.filter(c => c[0] === 'o');
+      expect(trailCalls.length).toBeGreaterThan(0);
+      expect(mockCtx._fillStyle).toBe('#ff0');
+    });
+
+    it('ball_trail() with smash trail uses # and red color', () => {
+      vi.clearAllMocks();
+      const trail = [{ x: 0, y: 1, z: 5 }, { x: 0.5, y: 1, z: 6 }, { x: 1, y: 1, z: 7 }];
+      const ball = { trail, trail_char: '#', trail_color: '#f44' };
+      render.ball_trail(trail, ball);
+      const calls = mockCtx.fillText.mock.calls;
+      const trailCalls = calls.filter(c => c[0] === '#');
+      expect(trailCalls.length).toBeGreaterThan(0);
+      expect(mockCtx._fillStyle).toBe('#f44');
+    });
+  });
 });

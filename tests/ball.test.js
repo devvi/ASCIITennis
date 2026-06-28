@@ -6,6 +6,10 @@ import {
   HIT_HEIGHT_MIN, HIT_HEIGHT_MAX,
   SERVE_SPEED_MIN, SERVE_SPEED_MAX, SERVE_S_SPEED_MULT, SERVE_NORMAL_SPEED,
   GRAVITY,
+  PERFECT_SPEED_MULT, SMASH_SPEED_MULT,
+  SMASH_TRAIL_LENGTH, PERFECT_TRAIL_LENGTH,
+  SMASH_TRAIL_CHAR, PERFECT_TRAIL_CHAR,
+  SMASH_TRAIL_COLOR, PERFECT_TRAIL_COLOR,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -109,6 +113,35 @@ describe('ball', () => {
     court.init();
     ball.hit(b, 0, 1.0, 10, 5, 5, 99);
     expect(b.state).toBe(BALL_IN_PLAY);
+  });
+
+  it('speed_mult produces proportional speed', () => {
+    const b1 = ball.new();
+    const b2 = ball.new();
+    court.init();
+    ball.hit(b1, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0);
+    ball.hit(b2, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.5);
+    const speed1 = Math.sqrt(b1.vx*b1.vx + b1.vz*b1.vz);
+    const speed2 = Math.sqrt(b2.vx*b2.vx + b2.vz*b2.vz);
+    expect(speed2).toBeCloseTo(speed1 * 1.5, 2);
+  });
+
+  it('trail_opts sets trail_max_length, trail_char, trail_color', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT, 0, 1.0, { length: 10, char: '*', color: '#4f4' });
+    expect(b.trail_max_length).toBe(10);
+    expect(b.trail_char).toBe('*');
+    expect(b.trail_color).toBe('#4f4');
+  });
+
+  it('hit without trail_opts uses defaults', () => {
+    const b = ball.new();
+    court.init();
+    ball.hit(b, 0, 1.0, 10, 5, 5, HIT_FLAT);
+    expect(b.trail_max_length).toBe(5);
+    expect(b.trail_char).toBe('o');
+    expect(b.trail_color).toBe('#ff0');
   });
 
   describe('serve trajectory (vy recalibrated)', () => {

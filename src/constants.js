@@ -151,6 +151,19 @@ export const ITEM_TYPES = { FIRE: 'F', BIG_RACKET: 'B', SHIELD: 'S', MULTI_BALL:
 export const MAX_PARTICLES = 30;
 export const PARTICLE_LIFE = 5;
 
+// Phase 5: Advanced Returns (perfect timing & smash)
+export const PERFECT_SPEED_MULT = 1.3;
+export const SMASH_SPEED_MULT = 1.6;
+export const NET_VOLLEY_RANGE = 1.5;
+export const PERFECT_TRAIL_LENGTH = 8;
+export const SMASH_TRAIL_LENGTH = 12;
+export const PERFECT_TRAIL_COLOR = '#4f4';
+export const SMASH_TRAIL_COLOR = '#f44';
+export const PERFECT_TRAIL_CHAR = '*';
+export const SMASH_TRAIL_CHAR = '#';
+export const PERFECT_PARTICLES = 10;
+export const SMASH_PARTICLES = 12;
+
 // Phase 4: Special Game Modes
 export const STATE_ZOMBIE_TENNIS = "zombie";
 export const STATE_TARGET_PRACTICE = "target_practice";

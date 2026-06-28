@@ -2,7 +2,7 @@ import {
   STATE_MENU, STATE_SERVING, STATE_PLAYING, STATE_POINT_SCORED, STATE_GAME_OVER, STATE_VIOLATION_REPLAY,
   STATE_KILL_CAM, STATE_MANUAL,
   STATE_ZOMBIE_TENNIS, STATE_TARGET_PRACTICE, STATE_RALLY_CHALLENGE, STATE_GRAVITY_SHIFT, STATE_PONG_MODE,
-  PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH,
+  PLAYER_IDLE, COURT_LENGTH, COURT_WIDTH, SINGLES_WIDTH, NET_HEIGHT,
   BTN_UP, BTN_DOWN, BTN_B, BTN_A, BTN_X, BALL_HELD, BALL_IN_PLAY,
   BALL_OUT, BALL_NET, BALL_DOUBLE_BOUNCE, BALL_REPLAY, BALL_FLYING_OUT,
   REPLAY_FRAME_COUNT,
@@ -13,6 +13,11 @@ import {
   MAX_PARTICLES, PARTICLE_LIFE,
   MAX_ZOMBIES, ZOMBIE_SPEED, NUM_TARGETS, TARGET_RADIUS, GRAVITY_VECTORS,
   PLAYER_EYE_Y, HIT_RANGE_H, AUDIENCE_COUNT, AI_HARD,
+  PERFECT_SPEED_MULT, SMASH_SPEED_MULT, NET_VOLLEY_RANGE,
+  PERFECT_TRAIL_LENGTH, SMASH_TRAIL_LENGTH,
+  PERFECT_TRAIL_CHAR, SMASH_TRAIL_CHAR,
+  PERFECT_TRAIL_COLOR, SMASH_TRAIL_COLOR,
+  PERFECT_PARTICLES, SMASH_PARTICLES,
 } from './constants.js';
 import { court } from './court.js';
 import { camera } from './camera.js';
@@ -477,7 +482,21 @@ function update_playing() {
       const target_z = COURT_LENGTH - 2 - Math.random() * 2;
       const combo_mult = 1.0 + COMBO_SPEED_BOOST * combo_level;
       const fire_mult = human_player.fire_boost ? 1.5 : 1.0;
-      ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0, combo_mult * fire_mult);
+      const timing_mult = timing_quality === 'PERFECT' ? PERFECT_SPEED_MULT : 1.0;
+      const is_smash = Math.abs(human_player.z - COURT_LENGTH / 2) < NET_VOLLEY_RANGE
+        && ball_obj.y > NET_HEIGHT
+        && timing_quality !== null;
+      const smash_mult = is_smash ? SMASH_SPEED_MULT : 1.0;
+      const final_speed_mult = combo_mult * fire_mult * timing_mult * smash_mult;
+
+      let trail_opts = {};
+      if (is_smash) {
+        trail_opts = { length: SMASH_TRAIL_LENGTH, char: SMASH_TRAIL_CHAR, color: SMASH_TRAIL_COLOR };
+      } else if (timing_quality === 'PERFECT') {
+        trail_opts = { length: PERFECT_TRAIL_LENGTH, char: PERFECT_TRAIL_CHAR, color: PERFECT_TRAIL_COLOR };
+      }
+
+      ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0, final_speed_mult, trail_opts);
 
       if (human_player.fire_boost) {
         human_player.fire_boost = false;
@@ -502,7 +521,8 @@ function update_playing() {
       };
 
       // spawn particles on hit
-      for (let i = 0; i < 6 && particles.length < MAX_PARTICLES; i++) {
+      const particle_count = is_smash ? SMASH_PARTICLES : (timing_quality === 'PERFECT' ? PERFECT_PARTICLES : 6);
+      for (let i = 0; i < particle_count && particles.length < MAX_PARTICLES; i++) {
         particles.push({
           x: ball_obj.x,
           y: ball_obj.y,
@@ -861,7 +881,7 @@ function draw_game() {
   if (ball_obj) {
     render.ball(ball_obj);
     if (ball_obj.trail && ball_obj.trail.length > 1) {
-      render.ball_trail(ball_obj.trail);
+      render.ball_trail(ball_obj.trail, ball_obj);
     }
     if (ball_obj.show_speed_lines && ball_obj.state === BALL_IN_PLAY) {
       render.speed_lines(ball_obj);
@@ -871,7 +891,7 @@ function draw_game() {
   if (second_ball) {
     render.ball(second_ball);
     if (second_ball.trail && second_ball.trail.length > 1) {
-      render.ball_trail(second_ball.trail);
+      render.ball_trail(second_ball.trail, second_ball);
     }
   }
 

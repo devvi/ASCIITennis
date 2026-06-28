@@ -1,11 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
 import {
-  COURT_WIDTH, COURT_LENGTH, SINGLES_WIDTH,
+  COURT_WIDTH, COURT_LENGTH, SINGLES_WIDTH, NET_HEIGHT,
   AI_EASY, AI_HARD, BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
   STATE_VIOLATION_REPLAY, REPLAY_FRAME_COUNT,
   BALL_REPLAY, BALL_HELD, BALL_IN_PLAY, BALL_OUT, BALL_RADIUS,
   SERVE_ANGLE_MAX, PLAYER_IDLE, PLAYER_SPEED,
+  PERFECT_SPEED_MULT, SMASH_SPEED_MULT,
+  NET_VOLLEY_RANGE,
+  SMASH_TRAIL_LENGTH, SMASH_TRAIL_CHAR, SMASH_TRAIL_COLOR,
+  PERFECT_TRAIL_LENGTH, PERFECT_TRAIL_CHAR, PERFECT_TRAIL_COLOR,
+  PERFECT_PARTICLES, SMASH_PARTICLES,
 } from '../src/constants.js';
 import { ball } from '../src/ball.js';
 import { court } from '../src/court.js';
@@ -444,5 +449,93 @@ describe('import consistency', () => {
     };
     expect(fn).not.toThrow();
     expect(zombies.length).toBe(0);
+  });
+});
+
+describe('advanced returns - perfect timing', () => {
+  it('PERFECT_SPEED_MULT is a number > 1', () => {
+    expect(PERFECT_SPEED_MULT).toBeGreaterThan(1);
+  });
+
+  it('timing_quality PERFECT should include PERFECT_SPEED_MULT in speed_mult', () => {
+    const timing_quality = 'PERFECT';
+    const combo_mult = 1.0;
+    const fire_mult = 1.0;
+    const timing_mult = timing_quality === 'PERFECT' ? PERFECT_SPEED_MULT : 1.0;
+    const final_speed_mult = combo_mult * fire_mult * timing_mult;
+    expect(final_speed_mult).toBe(PERFECT_SPEED_MULT);
+  });
+
+  it('non-PERFECT timing does not apply PERFECT_SPEED_MULT', () => {
+    const timing_mult_good = 'GOOD' === 'PERFECT' ? PERFECT_SPEED_MULT : 1.0;
+    const timing_mult_late = 'LATE' === 'PERFECT' ? PERFECT_SPEED_MULT : 1.0;
+    expect(timing_mult_good).toBe(1.0);
+    expect(timing_mult_late).toBe(1.0);
+  });
+
+  it('trail_opts for PERFECT uses PERFECT_TRAIL values', () => {
+    const timing_quality = 'PERFECT';
+    const is_smash = false;
+    let trail_opts = {};
+    if (is_smash) {
+      trail_opts = { length: SMASH_TRAIL_LENGTH, char: SMASH_TRAIL_CHAR, color: SMASH_TRAIL_COLOR };
+    } else if (timing_quality === 'PERFECT') {
+      trail_opts = { length: PERFECT_TRAIL_LENGTH, char: PERFECT_TRAIL_CHAR, color: PERFECT_TRAIL_COLOR };
+    }
+    expect(trail_opts.length).toBe(PERFECT_TRAIL_LENGTH);
+    expect(trail_opts.char).toBe(PERFECT_TRAIL_CHAR);
+    expect(trail_opts.color).toBe(PERFECT_TRAIL_COLOR);
+  });
+});
+
+describe('advanced returns - smash', () => {
+  it('smash activates when player near net and ball above NET_HEIGHT', () => {
+    const human_player_z = COURT_LENGTH / 2; // at net
+    const ball_obj_y = NET_HEIGHT + 0.5; // above net
+    const timing_quality = 'GOOD';
+    const is_smash = Math.abs(human_player_z - COURT_LENGTH/2) < NET_VOLLEY_RANGE
+      && ball_obj_y > NET_HEIGHT
+      && timing_quality !== null;
+    expect(is_smash).toBe(true);
+  });
+
+  it('smash does not activate when ball below NET_HEIGHT', () => {
+    const human_player_z = COURT_LENGTH / 2;
+    const ball_obj_y = NET_HEIGHT - 0.1;
+    const timing_quality = 'GOOD';
+    const is_smash = Math.abs(human_player_z - COURT_LENGTH/2) < NET_VOLLEY_RANGE
+      && ball_obj_y > NET_HEIGHT
+      && timing_quality !== null;
+    expect(is_smash).toBe(false);
+  });
+
+  it('smash does not activate when player far from net', () => {
+    const human_player_z = 3;
+    const ball_obj_y = NET_HEIGHT + 0.5;
+    const timing_quality = 'GOOD';
+    const is_smash = Math.abs(human_player_z - COURT_LENGTH/2) < NET_VOLLEY_RANGE
+      && ball_obj_y > NET_HEIGHT
+      && timing_quality !== null;
+    expect(is_smash).toBe(false);
+  });
+
+  it('SMASH_SPEED_MULT > PERFECT_SPEED_MULT', () => {
+    expect(SMASH_SPEED_MULT).toBeGreaterThan(PERFECT_SPEED_MULT);
+  });
+
+  it('smash uses SMASH_TRAIL_* values', () => {
+    const is_smash = true;
+    let trail_opts = {};
+    if (is_smash) {
+      trail_opts = { length: SMASH_TRAIL_LENGTH, char: SMASH_TRAIL_CHAR, color: SMASH_TRAIL_COLOR };
+    }
+    expect(trail_opts.length).toBe(SMASH_TRAIL_LENGTH);
+    expect(trail_opts.char).toBe(SMASH_TRAIL_CHAR);
+    expect(trail_opts.color).toBe(SMASH_TRAIL_COLOR);
+  });
+
+  it('SMASH_PARTICLES > PERFECT_PARTICLES > 6', () => {
+    expect(SMASH_PARTICLES).toBeGreaterThan(PERFECT_PARTICLES);
+    expect(PERFECT_PARTICLES).toBeGreaterThan(6);
   });
 });

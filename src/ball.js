@@ -5,6 +5,7 @@ import {
   GRAVITY, BOUNCE_FACTOR, SPIN_FACTOR, AIR_RESISTANCE,
   HIT_PARAMS, HIT_FLAT, HIT_TOPSPIN, HIT_SLICE, HIT_LOB, COURT_WIDTH,
   SERVE_SPEED_MAX, SERVE_SPEED_MIN, SERVE_S_SPEED_MULT, SERVE_NORMAL_SPEED,
+  PERFECT_TRAIL_CHAR, PERFECT_TRAIL_COLOR,
 } from './constants.js';
 import { court } from './court.js';
 
@@ -21,6 +22,8 @@ export const ball = {
       trail: [],
       show_speed_lines: false,
       trail_char: 'o',
+      trail_max_length: 5,
+      trail_color: '#ff0',
     };
   },
 
@@ -52,7 +55,7 @@ export const ball = {
 
     if (b.state === BALL_IN_PLAY || is_flying) {
       b.trail.push({ x: b.x, y: b.y, z: b.z });
-      if (b.trail.length > 5) b.trail.shift();
+      if (b.trail.length > (b.trail_max_length || 5)) b.trail.shift();
     }
 
     b.vx = b.vx - b.vx * AIR_RESISTANCE + b.spin_x * SPIN_FACTOR;
@@ -162,7 +165,7 @@ export const ball = {
     b.last_bounce_side = null;
   },
 
-  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter, speed_mult) {
+  hit(b, hit_x, hit_y, hit_z, target_x, target_z, hit_type, hitter, speed_mult, trail_opts) {
     const params = HIT_PARAMS[hit_type] || HIT_PARAMS[HIT_FLAT];
 
     const dx = target_x - hit_x;
@@ -184,6 +187,9 @@ export const ball = {
     b.state = BALL_IN_PLAY;
     b.last_bounce_side = null;
     b.trail = [];
+    b.trail_max_length = (trail_opts && trail_opts.length) || 5;
+    b.trail_char = (trail_opts && trail_opts.char) || 'o';
+    b.trail_color = (trail_opts && trail_opts.color) || '#ff0';
     if (hitter !== undefined) {
       b.last_hit_by = hitter;
     }
