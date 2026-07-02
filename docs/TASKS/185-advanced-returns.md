@@ -125,3 +125,7 @@ Write test cases first:
 4. Verify enhanced trails appear for perfect and smash shots
 5. Verify particle count increases for special shots
 6. Verify no regressions in AI behavior (AI doesn't accidentally trigger smash)
+
+## Plan
+
+PLAN_ISSUE: #194
