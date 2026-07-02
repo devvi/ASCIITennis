@@ -28,6 +28,7 @@ import { ai } from './ai.js';
 import { scoring } from './scoring.js';
 import { render, initRender, beginFrame, print, activate_kill_flash, getCtx } from './render.js';
 import { audience } from './audience.js';
+import { play_hit, play_bounce, play_net, play_point_scored, play_serve_release } from './sound.js';
 
 let game_state;
 let previous_game_state;
@@ -270,6 +271,7 @@ function setup_serve() {
 }
 
 function do_serve(timing_quality, angle, power) {
+  play_hit('normal', false);
   if (server === 0) {
     const target_x = human_player.x + angle * SERVE_ANGLE_MAX;
     const target_z = COURT_LENGTH * 0.85;
@@ -285,6 +287,7 @@ function do_serve(timing_quality, angle, power) {
 
 function resolve_point(winner) {
   audience_obj.cheer(rally_length * 10);
+  play_point_scored();
   const result = scoring.award_point(score, winner);
   point_winner = winner;
   point_timer = 60;
@@ -395,6 +398,7 @@ function update_serving() {
         serve_toss_frames = 0;
         ball_obj.y = 1.0;
         ball_obj.state = BALL_HELD;
+        play_serve_release();
       }
     } else {
       serve_toss_frames++;
@@ -497,6 +501,7 @@ function update_playing() {
       }
 
       ball.hit(ball_obj, human_player.x, 1.0, human_player.z, target_x, target_z, shot, 0, final_speed_mult, trail_opts);
+      play_hit(timing_quality, is_smash);
 
       if (is_smash) {
         ball_obj.vy *= 0.5;
@@ -574,6 +579,7 @@ function update_playing() {
         const target_x2 = angle2 * SINGLES_WIDTH * 0.35;
         const target_z2 = 2 + Math.random() * 2;
         ball.hit(ball_obj, p2_player.x, 1.0, p2_player.z, target_x2, target_z2, shot2, 1);
+        play_hit('normal', false);
         rally_hits += 1;
         rally_length += 1;
       }
@@ -582,6 +588,7 @@ function update_playing() {
     const ai_action = ai.update(p2_player, ball_obj);
     if (ai_action) {
       ball.hit(ball_obj, p2_player.x, 1.0, p2_player.z, ai_action.target_x, ai_action.target_z, ai_action.hit_type, 1);
+      play_hit('normal', false);
       rally_hits += 1;
       rally_length += 1;
     }
@@ -624,6 +631,10 @@ function update_playing() {
 
   const gravity = game_mode === STATE_GRAVITY_SHIFT ? GRAVITY_VECTORS[gravity_dir_index] : null;
   ball.update(ball_obj, gravity);
+
+  if (ball_obj.just_bounced && ball_obj.state === BALL_IN_PLAY) {
+    play_bounce();
+  }
 
   // Item collection
   for (let i = items.length - 1; i >= 0; i--) {
@@ -784,6 +795,7 @@ function update_playing() {
       ball_obj.state = BALL_FLYING_OUT;
     }
   } else if (ball_obj.state === BALL_NET) {
+    play_net();
     const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
     if (hitter !== null) {
       resolve_violation_point("net", hitter);
