@@ -8,11 +8,15 @@ const HIT_SOUND_PARAMS = {
 
 let audioCtx = null;
 
-function get_audio_ctx() {
-  if (typeof AudioContext === 'undefined' && typeof webkitAudioContext === 'undefined') return null;
+function get_audio_context() {
   if (!audioCtx) {
-    const AC = AudioContext || webkitAudioContext;
-    audioCtx = new AC();
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    } catch (e) {
+      return null;
+    }
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -20,114 +24,175 @@ function get_audio_ctx() {
   return audioCtx;
 }
 
-function create_tone(ctx, freq, waveform, detune, volume, attack, decay) {
+function play_tone(ctx, freq, waveform, duration, volume, attack, detune_cents) {
   const now = ctx.currentTime;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
   osc.type = waveform;
-  osc.frequency.value = freq;
-  if (detune) osc.detune.value = detune;
-  osc.connect(gain);
+  osc.frequency.setValueAtTime(freq, now);
+  if (detune_cents) {
+    osc.detune.setValueAtTime(detune_cents, now);
+  }
 
   gain.gain.setValueAtTime(0, now);
   gain.gain.linearRampToValueAtTime(volume, now + attack);
-  gain.gain.linearRampToValueAtTime(0, now + attack + decay);
+  gain.gain.linearRampToValueAtTime(0, now + duration);
 
+  osc.connect(gain);
   gain.connect(ctx.destination);
 
   osc.start(now);
-  osc.stop(now + attack + decay + 0.01);
-
-  return { osc, gain };
+  osc.stop(now + duration + 0.05);
 }
 
-function create_noise_burst(ctx, volume, attack, decay) {
-  const bufferSize = ctx.sampleRate * (attack + decay);
-  if (bufferSize <= 0) return;
-  const buffer = ctx.createBuffer(1, Math.ceil(bufferSize), ctx.sampleRate);
+function play_noise_burst(ctx, duration, volume) {
+  const now = ctx.currentTime;
+  const sampleRate = ctx.sampleRate || 44100;
+  const bufferSize = Math.ceil(sampleRate * duration);
+  const buffer = ctx.createBuffer(1, bufferSize, sampleRate);
   const data = buffer.getChannelData(0);
-  for (let i = 0; i < data.length; i++) {
-    data[i] = (Math.random() * 2 - 1) * 0.5;
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * volume;
   }
+
   const source = ctx.createBufferSource();
   source.buffer = buffer;
 
   const gain = ctx.createGain();
-  const now = ctx.currentTime;
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(volume, now + attack);
-  gain.gain.linearRampToValueAtTime(0, now + attack + decay);
+  gain.gain.setValueAtTime(volume, now);
+  gain.gain.linearRampToValueAtTime(0, now + duration);
 
   source.connect(gain);
   gain.connect(ctx.destination);
   source.start(now);
+  source.stop(now + duration + 0.05);
 }
 
 function play_hit(quality, is_smash) {
-  const ctx = get_audio_ctx();
+  const ctx = get_audio_context();
   if (!ctx) return;
 
-  const effective = is_smash ? 'SMASH' : quality;
-  const params = HIT_SOUND_PARAMS[effective] || HIT_SOUND_PARAMS.NORMAL;
+  let params;
+  if (is_smash || quality === 'SMASH') {
+    params = HIT_SOUND_PARAMS.SMASH;
+  } else {
+    params = HIT_SOUND_PARAMS[quality] || HIT_SOUND_PARAMS.NORMAL;
+  }
 
-  const note_count = Math.max(1, params.harmonics + 1);
-  for (let i = 0; i < note_count; i++) {
-    const detune_val = params.detune && params.detune.length > i ? params.detune[i] : 0;
-    const freq_offset = i === 0 ? 1 : 1 + i * 0.5;
-    const vol = i === 0 ? params.volume : params.volume * 0.3;
-    create_tone(ctx, params.freq * freq_offset, params.waveform, detune_val, vol, params.attack, params.decay);
+  if (params.detune && params.detune.length > 0) {
+    for (const d of params.detune) {
+      play_tone(ctx, params.freq, params.waveform, params.decay, params.volume / params.detune.length, params.attack, d);
+    }
+  } else {
+    play_tone(ctx, params.freq, params.waveform, params.decay, params.volume, params.attack);
+  }
+
+  if (params.harmonics > 1) {
+    for (let i = 1; i < params.harmonics; i++) {
+      const harmFreq = params.freq * (i + 1);
+      const harmVol = params.volume * 0.3 / (i + 1);
+      play_tone(ctx, harmFreq, 'sine', params.decay * 0.8, harmVol, params.attack);
+    }
   }
 
   if (params.noise) {
-    create_noise_burst(ctx, params.volume * 0.5, params.attack * 0.5, params.decay * 0.5);
+    play_noise_burst(ctx, params.decay * 0.5, params.volume * 0.3);
   }
 }
 
 function play_bounce() {
-  const ctx = get_audio_ctx();
+  const ctx = get_audio_context();
   if (!ctx) return;
-  create_tone(ctx, 180, 'sine', 0, 0.3, 0.003, 0.08);
+  play_tone(ctx, 150, 'sine', 0.1, 0.4, 0.003);
 }
 
 function play_net() {
-  const ctx = get_audio_ctx();
+  const ctx = get_audio_context();
   if (!ctx) return;
-  create_tone(ctx, 120, 'square', 0, 0.25, 0.002, 0.06);
+  play_tone(ctx, 200, 'sine', 0.08, 0.3, 0.003);
 }
 
 function play_point_scored() {
-  const ctx = get_audio_ctx();
+  const ctx = get_audio_context();
   if (!ctx) return;
 
-  const notes = [523, 659, 784, 1047];
   const now = ctx.currentTime;
-  for (let i = 0; i < notes.length; i++) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = notes[i];
-    osc.connect(gain);
-    const start = now + i * 0.08;
-    gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(0.4, start + 0.005);
-    gain.gain.linearRampToValueAtTime(0, start + 0.2);
-    gain.connect(ctx.destination);
-    osc.start(start);
-    osc.stop(start + 0.21);
-  }
+
+  const g1 = ctx.createGain();
+  g1.gain.setValueAtTime(0, now);
+  g1.gain.linearRampToValueAtTime(0.5, now + 0.005);
+  g1.gain.linearRampToValueAtTime(0, now + 0.15);
+  g1.connect(ctx.destination);
+
+  const o1 = ctx.createOscillator();
+  o1.type = 'triangle';
+  o1.frequency.setValueAtTime(523, now);
+
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(0, now + 0.1);
+  g2.gain.linearRampToValueAtTime(0.5, now + 0.105);
+  g2.gain.linearRampToValueAtTime(0, now + 0.3);
+
+  const o2 = ctx.createOscillator();
+  o2.type = 'triangle';
+  o2.frequency.setValueAtTime(659, now + 0.1);
+
+  o1.connect(g1);
+  o2.connect(g2);
+  g2.connect(ctx.destination);
+
+  o1.start(now);
+  o1.stop(now + 0.17);
+  o2.start(now + 0.1);
+  o2.stop(now + 0.32);
 }
 
 function play_serve_release() {
-  const ctx = get_audio_ctx();
+  const ctx = get_audio_context();
   if (!ctx) return;
-  create_tone(ctx, 880, 'sine', 0, 0.35, 0.002, 0.1);
+  play_tone(ctx, 440, 'triangle', 0.15, 0.5, 0.002);
 }
 
-export {
+function play_serve_charge() {
+  const ctx = get_audio_context();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(200, now);
+  osc.frequency.linearRampToValueAtTime(400, now + 0.3);
+
+  gain.gain.setValueAtTime(0.3, now);
+  gain.gain.linearRampToValueAtTime(0, now + 0.3);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.35);
+}
+
+function play_ui_select() {
+  const ctx = get_audio_context();
+  if (!ctx) return;
+  play_tone(ctx, 880, 'square', 0.05, 0.2, 0.002);
+}
+
+function _reset_audio_context() {
+  audioCtx = null;
+}
+
+export const sound = {
   play_hit,
   play_bounce,
   play_net,
   play_point_scored,
   play_serve_release,
+  play_serve_charge,
+  play_ui_select,
+  _reset_audio_context,
+  _get_audio_context: get_audio_context,
 };

@@ -450,7 +450,7 @@ describe('import consistency', () => {
   describe('sound module integration', () => {
     it('main.js imports sound functions', () => {
       const source = readFileSync('./src/main.js', 'utf-8');
-      expect(source).toContain("import { play_hit, play_bounce, play_net, play_point_scored, play_serve_release } from './sound.js'");
+      expect(source).toContain("import { sound } from './sound.js'");
     });
 
     it('ball.js exports just_bounced flag in new()', async () => {

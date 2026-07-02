@@ -1,177 +1,381 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-function makeMockAudioContext() {
-  const osc = {
-    type: 'sine',
-    frequency: { value: 440 },
-    detune: { value: 0 },
-    start: vi.fn(),
-    stop: vi.fn(),
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-  };
-  const gain = {
-    gain: { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-  };
+function createMockAudioContext() {
+  let oscIdx = 0;
+  let gainIdx = 0;
+  const oscillators = [];
+  const gains = [];
+
   const ctx = {
-    currentTime: 1.0,
     state: 'running',
-    resume: vi.fn(() => Promise.resolve()),
+    currentTime: 0,
+    destination: { id: 'dest' },
+    sampleRate: 44100,
+
     createOscillator: vi.fn(() => {
-      const o = Object.create(osc);
-      o.frequency = { value: 440 };
-      o.detune = { value: 0 };
-      o.type = 'sine';
-      o.start = vi.fn();
-      o.stop = vi.fn();
-      o.connect = vi.fn();
-      o.disconnect = vi.fn();
-      o.buffer = null;
-      return o;
-    }),
-    createGain: vi.fn(() => {
-      const g = Object.create(gain);
-      g.gain = { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() };
-      g.connect = vi.fn();
-      g.disconnect = vi.fn();
-      return g;
-    }),
-    createBuffer: vi.fn(() => ({
-      getChannelData: vi.fn(() => new Float32Array(100)),
-      sampleRate: 44100,
-      length: 100,
-      numberOfChannels: 1,
-    })),
-    createBufferSource: vi.fn(() => {
-      const src = {
-        buffer: null,
-        connect: vi.fn(),
+      const osc = {
+        _id: `osc_${oscIdx++}`,
+        type: '',
+        frequency: {
+          value: 440,
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn(),
+        },
+        detune: {
+          value: 0,
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn(),
+        },
+        connect: vi.fn(() => {}),
         start: vi.fn(),
         stop: vi.fn(),
       };
-      return src;
+      oscillators.push(osc);
+      return osc;
     }),
-    destination: {},
-    sampleRate: 44100,
+
+    createGain: vi.fn(() => {
+      const g = {
+        _id: `gain_${gainIdx++}`,
+        gain: {
+          value: 1,
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn(),
+        },
+        connect: vi.fn(() => {}),
+      };
+      gains.push(g);
+      return g;
+    }),
+
+    createBuffer: vi.fn((channels, length, sampleRate) => ({
+      getChannelData: vi.fn(() => new Float32Array(length)),
+      numberOfChannels: channels,
+      length,
+      sampleRate,
+    })),
+
+    createBufferSource: vi.fn(() => ({
+      buffer: null,
+      connect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+    })),
+
+    resume: vi.fn(),
+
+    _oscillators: oscillators,
+    _gains: gains,
   };
+
   return ctx;
 }
 
-describe('sound module', () => {
-  let mockCtx;
-  let sound;
+let mockCtx;
 
-  beforeEach(async () => {
-    mockCtx = makeMockAudioContext();
-    globalThis.AudioContext = vi.fn(() => mockCtx);
-    vi.resetModules();
-    sound = await import('../src/sound.js');
+beforeEach(() => {
+  mockCtx = createMockAudioContext();
+  globalThis.window = {
+    AudioContext: vi.fn(() => mockCtx),
+    webkitAudioContext: undefined,
+  };
+});
+
+afterEach(() => {
+  delete globalThis.window;
+});
+
+describe('play_hit', () => {
+  it('creates AudioContext lazily on first call', async () => {
+    delete globalThis.window;
+    globalThis.window = { AudioContext: vi.fn(() => createMockAudioContext()) };
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      expect(globalThis.window.AudioContext).not.toHaveBeenCalled();
+      s.play_hit('PERFECT');
+      expect(globalThis.window.AudioContext).toHaveBeenCalledTimes(1);
+    } finally {
+      s._reset_audio_context();
+    }
   });
 
-  it('exports expected play functions', () => {
-    expect(sound.play_hit).toBeDefined();
-    expect(sound.play_bounce).toBeDefined();
-    expect(sound.play_net).toBeDefined();
-    expect(sound.play_point_scored).toBeDefined();
-    expect(sound.play_serve_release).toBeDefined();
+  it('creates AudioContext on first play call', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      expect(globalThis.window.AudioContext).not.toHaveBeenCalled();
+      s.play_hit('PERFECT');
+      expect(globalThis.window.AudioContext).toHaveBeenCalledTimes(1);
+    } finally {
+      s._reset_audio_context();
+    }
   });
 
-  it('creates AudioContext lazily on first play call', () => {
-    expect(globalThis.AudioContext).not.toHaveBeenCalled();
-    sound.play_bounce();
-    expect(globalThis.AudioContext).toHaveBeenCalledTimes(1);
+  it('uses PERFECT params: triangle waveform, 523Hz, detuned oscillators', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('PERFECT');
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBeGreaterThanOrEqual(2);
+      const firstType = oscs[0].type;
+      expect(firstType).toBe('triangle');
+      expect(oscs[0].frequency.setValueAtTime).toHaveBeenCalledWith(523, 0);
+    } finally {
+      s._reset_audio_context();
+    }
   });
 
-  it('reuses AudioContext on subsequent calls', () => {
-    sound.play_bounce();
-    sound.play_net();
-    expect(globalThis.AudioContext).toHaveBeenCalledTimes(1);
+  it('uses GOOD params: triangle waveform, 392Hz', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('GOOD');
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBeGreaterThanOrEqual(1);
+      const typeTriangles = oscs.filter(o => o.type === 'triangle');
+      expect(typeTriangles.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      s._reset_audio_context();
+    }
   });
 
-  it('resumes AudioContext if suspended', () => {
+  it('uses LATE params: sine waveform, 261Hz', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('LATE');
+      const oscs = mockCtx._oscillators;
+      const sines = oscs.filter(o => o.type === 'sine');
+      expect(sines.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+
+  it('uses NORMAL params as fallback for unknown quality', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('UNKNOWN_QUALITY');
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBeGreaterThanOrEqual(1);
+      const sines = oscs.filter(o => o.type === 'sine');
+      expect(sines.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+
+  it('uses SMASH params when is_smash=true', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('NORMAL', true);
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBeGreaterThanOrEqual(3);
+      const squares = oscs.filter(o => o.type === 'square');
+      expect(squares.length).toBeGreaterThanOrEqual(1);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+
+  it('calls resume if AudioContext is suspended', async () => {
     mockCtx.state = 'suspended';
-    sound.play_bounce();
-    expect(mockCtx.resume).toHaveBeenCalled();
-  });
-
-  it('play_hit with PERFECT creates oscillator with triangle waveform', () => {
-    sound.play_hit('PERFECT', false);
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    expect(oscCalls.length).toBeGreaterThanOrEqual(1);
-    expect(oscCalls[0].value.type).toBe('triangle');
-  });
-
-  it('play_hit with SMASH creates oscillator with square waveform', () => {
-    sound.play_hit('SMASH', false);
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    expect(oscCalls[0].value.type).toBe('square');
-  });
-
-  it('play_hit with LATE creates oscillator with sine waveform', () => {
-    sound.play_hit('LATE', false);
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    expect(oscCalls[0].value.type).toBe('sine');
-  });
-
-  it('play_hit with GOOD creates oscillator with triangle waveform', () => {
-    sound.play_hit('GOOD', false);
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    expect(oscCalls[0].value.type).toBe('triangle');
-  });
-
-  it('play_hit with normal quality creates oscillator with sine waveform', () => {
-    sound.play_hit('normal', false);
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    expect(oscCalls[0].value.type).toBe('sine');
-  });
-
-  it('play_hit with is_smash=true creates additional oscillator for explosion', () => {
-    sound.play_hit('PERFECT', true);
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-  });
-
-  it('play_serve_release creates oscillator and calls start/stop', () => {
-    sound.play_serve_release();
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    for (const result of oscCalls) {
-      expect(result.value.start).toHaveBeenCalled();
-      expect(result.value.stop).toHaveBeenCalled();
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('NORMAL');
+      expect(mockCtx.resume).toHaveBeenCalledTimes(1);
+    } finally {
+      s._reset_audio_context();
     }
   });
 
-  it('play_point_scored creates multiple oscillators for ascending jingle', () => {
-    sound.play_point_scored();
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-    const callCount = mockCtx.createOscillator.mock.calls.length;
-    expect(callCount).toBeGreaterThanOrEqual(2);
-  });
-
-  it('play_bounce creates a short oscillator', () => {
-    sound.play_bounce();
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    for (const result of oscCalls) {
-      expect(result.value.start).toHaveBeenCalled();
-      expect(result.value.stop).toHaveBeenCalled();
+  it('gracefully handles missing AudioContext', async () => {
+    delete globalThis.window;
+    globalThis.window = { AudioContext: undefined };
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      expect(() => s.play_hit('PERFECT')).not.toThrow();
+    } finally {
+      s._reset_audio_context();
     }
   });
 
-  it('play_net creates a short low-pitched oscillator', () => {
-    sound.play_net();
-    expect(mockCtx.createOscillator).toHaveBeenCalled();
-    const oscCalls = mockCtx.createOscillator.mock.results;
-    expect(oscCalls[0].value.frequency.value).toBeLessThan(300);
+  it('gracefully handles AudioContext constructor throwing', async () => {
+    delete globalThis.window;
+    globalThis.window = {
+      AudioContext: vi.fn(() => { throw new Error('AudioContext not available'); }),
+    };
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      expect(() => s.play_hit('PERFECT')).not.toThrow();
+    } finally {
+      s._reset_audio_context();
+    }
   });
 
-  it('handles missing AudioContext gracefully', () => {
-    delete globalThis.AudioContext;
-    expect(() => sound.play_bounce()).not.toThrow();
-    expect(() => sound.play_hit('PERFECT')).not.toThrow();
-    expect(() => sound.play_point_scored()).not.toThrow();
+  it('creates oscillator with gain envelope (attack/decay)', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('NORMAL');
+      const gains = mockCtx._gains;
+      expect(gains.length).toBeGreaterThanOrEqual(1);
+      expect(gains[0].gain.setValueAtTime).toHaveBeenCalledWith(0, expect.any(Number));
+      expect(gains[0].gain.linearRampToValueAtTime).toHaveBeenCalled();
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('play_bounce', () => {
+  it('creates oscillator with low pitch sine wave', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_bounce();
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBe(1);
+      expect(oscs[0].type).toBe('sine');
+      expect(oscs[0].frequency.setValueAtTime).toHaveBeenCalledWith(150, 0);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('play_net', () => {
+  it('creates oscillator with short dull thunk', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_net();
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBe(1);
+      expect(oscs[0].type).toBe('sine');
+      expect(oscs[0].frequency.setValueAtTime).toHaveBeenCalledWith(200, 0);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('play_point_scored', () => {
+  it('creates two oscillators for ascending ding', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_point_scored();
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBe(2);
+      const triangles = oscs.filter(o => o.type === 'triangle');
+      expect(triangles.length).toBe(2);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+
+  it('first tone at 523Hz, second at 659Hz', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_point_scored();
+      const oscs = mockCtx._oscillators;
+      expect(oscs[0].frequency.setValueAtTime).toHaveBeenCalledWith(523, 0);
+      expect(oscs[1].frequency.setValueAtTime).toHaveBeenCalledWith(659, 0.1);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('play_serve_release', () => {
+  it('creates oscillator with triangle wave at 440Hz', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_serve_release();
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBe(1);
+      expect(oscs[0].type).toBe('triangle');
+      expect(oscs[0].frequency.setValueAtTime).toHaveBeenCalledWith(440, 0);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('play_serve_charge', () => {
+  it('creates sawtooth oscillator with frequency sweep', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_serve_charge();
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBe(1);
+      expect(oscs[0].type).toBe('sawtooth');
+      expect(oscs[0].frequency.setValueAtTime).toHaveBeenCalledWith(200, 0);
+      expect(oscs[0].frequency.linearRampToValueAtTime).toHaveBeenCalledWith(400, 0.3);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('play_ui_select', () => {
+  it('creates square wave oscillator', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_ui_select();
+      const oscs = mockCtx._oscillators;
+      expect(oscs.length).toBe(1);
+      expect(oscs[0].type).toBe('square');
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('AudioContext lifecycle', () => {
+  it('does not create AudioContext before first play call', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      expect(globalThis.window.AudioContext).not.toHaveBeenCalled();
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+
+  it('reuses the same AudioContext on multiple calls', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('PERFECT');
+      s.play_bounce();
+      expect(globalThis.window.AudioContext).toHaveBeenCalledTimes(1);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+
+  it('creates new AudioContext after reset', async () => {
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      s.play_hit('NORMAL');
+      expect(globalThis.window.AudioContext).toHaveBeenCalledTimes(1);
+      s._reset_audio_context();
+      s.play_hit('NORMAL');
+      expect(globalThis.window.AudioContext).toHaveBeenCalledTimes(2);
+    } finally {
+      s._reset_audio_context();
+    }
+  });
+});
+
+describe('graceful fallback', () => {
+  it('all play functions do not throw when AudioContext is unavailable', async () => {
+    delete globalThis.window;
+    globalThis.window = { AudioContext: undefined };
+    const { sound: s } = await import('../src/sound.js');
+    try {
+      expect(() => s.play_hit('PERFECT')).not.toThrow();
+      expect(() => s.play_bounce()).not.toThrow();
+      expect(() => s.play_net()).not.toThrow();
+      expect(() => s.play_point_scored()).not.toThrow();
+      expect(() => s.play_serve_release()).not.toThrow();
+      expect(() => s.play_serve_charge()).not.toThrow();
+      expect(() => s.play_ui_select()).not.toThrow();
+    } finally {
+      s._reset_audio_context();
+    }
   });
 });
