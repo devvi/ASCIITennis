@@ -12,12 +12,37 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      - name: Skip deploy if research/plan PR
+        id: check-deploy
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: |
+          COMMIT_MSG=$(jq -r '.head_commit.message // empty' "$GITHUB_EVENT_PATH")
+          if [ -z "$COMMIT_MSG" ]; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PR_NUM=$(echo "$COMMIT_MSG" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+          if [ -z "$PR_NUM" ]; then
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PR_TITLE=$(gh pr view "$PR_NUM" --repo "$GITHUB_REPOSITORY" --json title --jq '.title' 2>/dev/null)
+          if [[ "$PR_TITLE" == Research* ]] || [[ "$PR_TITLE" == Plan* ]]; then
+            echo "Skipping main deploy for research/plan PR #$PR_NUM: $PR_TITLE"
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Inject git info into version.js
+        if: steps.check-deploy.outputs.should_deploy == 'true'
         run: |
           HASH=$(git rev-parse --short HEAD)
           DATE=$(git log -1 --format=%ad --date=format:'%Y-%m-%d')
@@ -27,6 +52,7 @@ jobs:
           EOF
 
       - name: Deploy to gh-pages root
+        if: steps.check-deploy.outputs.should_deploy == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.MY_GITHUB_TOKEN }}

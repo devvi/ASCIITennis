@@ -9,6 +9,9 @@ concurrency:
 
 jobs:
   deploy:
+    if: |
+      !startsWith(github.event.pull_request.title, 'Research') &&
+      !startsWith(github.event.pull_request.title, 'Plan')
     runs-on: ubuntu-latest
     permissions:
       contents: write
