@@ -16,6 +16,7 @@ export const ball = {
       spin_x: 0, spin_z: 0,
       state: BALL_HELD,
       bounces: 0,
+      just_bounced: false,
       last_hit_by: null,
       last_bounce_side: null,
       trail: [],
@@ -25,6 +26,7 @@ export const ball = {
   },
 
   update(b, gravity_override) {
+    b.just_bounced = false;
     const is_replay = b.state === BALL_REPLAY;
     const is_flying = b.state === BALL_FLYING_OUT;
     if (b.state !== BALL_IN_PLAY && !is_replay && !is_flying) return;
@@ -74,6 +76,7 @@ export const ball = {
     b.show_speed_lines = speed > 0.4;
 
     if (b.y < BALL_RADIUS) {
+      b.just_bounced = true;
       b.y = BALL_RADIUS;
       b.vy = -b.vy * BOUNCE_FACTOR;
       b.vx = b.vx * 0.8;
