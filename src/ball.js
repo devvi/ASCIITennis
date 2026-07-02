@@ -21,6 +21,7 @@ export const ball = {
       trail: [],
       show_speed_lines: false,
       trail_char: 'o',
+      just_bounced: false,
     };
   },
 
@@ -28,6 +29,8 @@ export const ball = {
     const is_replay = b.state === BALL_REPLAY;
     const is_flying = b.state === BALL_FLYING_OUT;
     if (b.state !== BALL_IN_PLAY && !is_replay && !is_flying) return;
+
+    b.just_bounced = false;
 
     if (is_flying) {
       b.vx = b.vx - b.vx * AIR_RESISTANCE + (b.spin_x || 0) * SPIN_FACTOR;
@@ -79,6 +82,7 @@ export const ball = {
       b.vx = b.vx * 0.8;
       b.vz = b.vz * 0.8;
       b.bounces += 1;
+      b.just_bounced = true;
 
       if (!is_replay) {
         if (!court.is_in_bounds(b.x, b.z)) {

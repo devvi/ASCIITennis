@@ -634,4 +634,33 @@ describe('ball', () => {
       expect(b2.vy).toBeLessThan(b1.vy);
     });
   });
+
+  describe('just_bounced flag', () => {
+    it('ball.new() initializes just_bounced to false', () => {
+      const b = ball.new();
+      expect(b.just_bounced).toBe(false);
+    });
+
+    it('just_bounced is true after a bounce', () => {
+      court.init();
+      const b = ball.new();
+      b.state = BALL_IN_PLAY;
+      b.y = BALL_RADIUS - 0.01;
+      b.vy = -0.01;
+      ball.update(b);
+      expect(b.just_bounced).toBe(true);
+    });
+
+    it('just_bounced resets to false on next update after bounce', () => {
+      court.init();
+      const b = ball.new();
+      b.state = BALL_IN_PLAY;
+      b.y = BALL_RADIUS - 0.01;
+      b.vy = -0.01;
+      ball.update(b);
+      expect(b.just_bounced).toBe(true);
+      ball.update(b);
+      expect(b.just_bounced).toBe(false);
+    });
+  });
 });
