@@ -2,7 +2,7 @@
 
 **Issue:** #198
 **Related modules:** `src/sound.js` (new), `src/main.js`, `src/constants.js`, `src/ball.js`
-**PLAN_ISSUE:** TBD (to be set by plan phase)
+**PLAN_ISSUE:** #200
 
 ## Research Summary
 
