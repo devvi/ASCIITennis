@@ -399,6 +399,7 @@ function update_serving() {
         serve_toss_frames = 0;
         ball_obj.y = 1.0;
         ball_obj.state = BALL_HELD;
+        sound.play_serve_release();
       }
     } else {
       serve_toss_frames++;
@@ -638,10 +639,6 @@ function update_playing() {
     sound.play_bounce();
   }
 
-  if (ball_obj.state === BALL_NET) {
-    sound.play_net();
-  }
-
   // Item collection
   for (let i = items.length - 1; i >= 0; i--) {
     const item = items[i];
@@ -801,6 +798,7 @@ function update_playing() {
       ball_obj.state = BALL_FLYING_OUT;
     }
   } else if (ball_obj.state === BALL_NET) {
+    sound.play_net();
     const hitter = rally_hits === 0 ? server : ball_obj.last_hit_by;
     if (hitter !== null) {
       resolve_violation_point("net", hitter);

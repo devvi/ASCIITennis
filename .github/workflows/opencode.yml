@@ -44,13 +44,13 @@ jobs:
             and TASK documents in docs/PRD/ and docs/TASKS/, commit and push
             them, then create a research PR with the findings. Do NOT close the
             parent issue with Closes/Fixes/Resolves.
-            The actual parent issue number is $PARENT_ISSUE.
+            The actual parent issue number is ${{ env.PARENT_ISSUE }}.
             IMPORTANT: The research PR title MUST follow this exact format:
-            "Research: <feature-name> (parent #$PARENT_ISSUE)"
+            "Research: <feature-name> (parent #${{ env.PARENT_ISSUE }})"
             For example: "Research: UI optimization (parent #161)"
             This is required for the auto-chain workflow to detect and
             trigger the plan phase after merge. Do NOT use other prefixes
-            like "Issue:" or "Feature:". Use $PARENT_ISSUE as the issue number, do not guess or hallucinate it.
+            like "Issue:" or "Feature:". Use ${{ env.PARENT_ISSUE }} as the issue number, do not guess or hallucinate it.
       - name: Validate and fix research PR title
         env:
           GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
@@ -102,13 +102,7 @@ jobs:
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      (
-        startsWith(github.event.pull_request.title, 'Research') ||
-        (
-          startsWith(github.event.pull_request.head.ref, 'opencode/issue') &&
-          !startsWith(github.event.pull_request.title, 'Plan')
-        )
-      )
+      startsWith(github.event.pull_request.title, 'Research')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -145,14 +139,14 @@ jobs:
           use_github_token: true
           prompt: |
             Read the PRD and TASK docs from docs/PRD/ and docs/TASKS/.
-            Execute the plan phase for parent issue #$PARENT_ISSUE:
+            Execute the plan phase for parent issue #${{ env.PARENT_ISSUE }}:
             create DESIGN document in docs/DESIGN/,
             append phases to docs/TASKS/, create a plan issue, commit and push,
             then create a plan PR.
             IMPORTANT: The plan PR title MUST follow this exact format:
-            "Plan: <feature-name> (parent #$PARENT_ISSUE)"
+            "Plan: <feature-name> (parent #${{ env.PARENT_ISSUE }})"
             The plan PR body MUST NOT contain "Closes", "Fixes", or "Resolves"
-            for #$PARENT_ISSUE. Use "Parent: #$PARENT_ISSUE" instead.
+            for #${{ env.PARENT_ISSUE }}. Use "Parent: #${{ env.PARENT_ISSUE }}" instead.
       - name: Validate plan PR title
         id: validate-plan
         env:
@@ -192,13 +186,7 @@ jobs:
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      (
-        startsWith(github.event.pull_request.title, 'Plan') ||
-        (
-          startsWith(github.event.pull_request.head.ref, 'opencode/issue') &&
-          !startsWith(github.event.pull_request.title, 'Research')
-        )
-      )
+      startsWith(github.event.pull_request.title, 'Plan')
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -277,6 +265,16 @@ jobs:
           if [[ "$PR_TITLE" == Research* ]] || [[ "$PR_TITLE" == \#* ]]; then
             echo "Posting /opencode plan to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
+            echo "Waiting for plan PR creation and enabling auto-merge..."
+            sleep 15
+            PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,headRefName,createdAt \
+              --jq 'map(select(.headRefName | test("opencode/issue'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
+            if [ -n "$PLAN_PR" ] && [ "$PLAN_PR" != "null" ]; then
+              echo "Enabling auto-merge on plan PR #$PLAN_PR"
+              gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
+            else
+              echo "No plan PR found for parent #$PARENT yet, skipping auto-merge"
+            fi
           elif [[ "$PR_TITLE" == Plan* ]]; then
             echo "Posting /opencode implement to parent issue #$PARENT"
             gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode implement this"
@@ -287,6 +285,16 @@ jobs:
             elif [[ "$PR_BODY" == *"Research"* ]] || [[ "$PR_BODY" == *"findings"* ]]; then
               echo "Detected research PR by body content, posting /opencode plan"
               gh issue comment "$PARENT" --repo "$GITHUB_REPOSITORY" --body "/opencode plan this"
+              echo "Waiting for plan PR creation and enabling auto-merge..."
+              sleep 15
+              PLAN_PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json number,headRefName,createdAt \
+                --jq 'map(select(.headRefName | test("opencode/issue'"$PARENT"'"))) | sort_by(.createdAt) | last | .number')
+              if [ -n "$PLAN_PR" ] && [ "$PLAN_PR" != "null" ]; then
+                echo "Enabling auto-merge on plan PR #$PLAN_PR"
+                gh pr merge "$PLAN_PR" --repo "$GITHUB_REPOSITORY" --auto --merge
+              else
+                echo "No plan PR found for parent #$PARENT yet, skipping auto-merge"
+              fi
             else
               echo "PR #$PR_NUM has opencode branch but unrecognized body, skipping"
             fi
