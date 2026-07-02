@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
+
 import {
   COURT_WIDTH, COURT_LENGTH, SINGLES_WIDTH,
   AI_EASY, AI_HARD, BTN_UP, BTN_DOWN, BTN_LEFT, BTN_RIGHT, BTN_A, BTN_B,
@@ -444,5 +445,19 @@ describe('import consistency', () => {
     };
     expect(fn).not.toThrow();
     expect(zombies.length).toBe(0);
+  });
+
+  describe('sound module integration', () => {
+    it('main.js imports sound functions', () => {
+      const source = readFileSync('./src/main.js', 'utf-8');
+      expect(source).toContain("import { play_hit, play_bounce, play_net, play_point_scored, play_serve_release } from './sound.js'");
+    });
+
+    it('ball.js exports just_bounced flag in new()', async () => {
+      const mod = await import('../src/ball.js');
+      const b = mod.ball.new();
+      expect(b).toHaveProperty('just_bounced');
+      expect(b.just_bounced).toBe(false);
+    });
   });
 });
